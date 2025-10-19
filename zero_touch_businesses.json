@@ -1,0 +1,57 @@
+{
+  "generated_at": "2025-10-18",
+  "focus": "Zero-touch AI businesses with minimal startup and hands-off operation",
+  "notes": [
+    "EIN is FREE (excluded from costs)",
+    "Business licenses ~$200 (included where needed)",
+    "95%+ automation minimum",
+    "Truly passive = can run weeks/months untouched"
+  ],
+  "businesses": [
+    {
+      "name": "AI Kindle eBook Empire",
+      "startup_cost": 0,
+      "monthly_revenue": 1500,
+      "automation": 98,
+      "hours_week": 0,
+      "truly_passive": true,
+      "description": "ChatGPT writes ebooks, Canva for covers, Amazon KDP auto-delivers. Publish once, earn forever.",
+      "tools": ["ChatGPT Free", "Canva Free", "Amazon KDP"],
+      "success_rate": 0.75
+    },
+    {
+      "name": "AI Prompt Marketplace",
+      "startup_cost": 0,
+      "monthly_revenue": 800,
+      "automation": 99,
+      "hours_week": 0,
+      "truly_passive": true,
+      "description": "Sell ChatGPT/Midjourney prompts on PromptBase. Create once, sell infinitely with zero maintenance.",
+      "tools": ["ChatGPT Free", "PromptBase", "PromptHero"],
+      "success_rate": 0.70
+    },
+    {
+      "name": "Crypto Arbitrage Bot (Pionex)",
+      "startup_cost": 0,
+      "monthly_revenue": 600,
+      "automation": 100,
+      "hours_week": 0.5,
+      "truly_passive": true,
+      "description": "Free bot trades crypto price differences automatically. Zero fees, only 10% of profits. Completely hands-off.",
+      "tools": ["Pionex Free Bot"],
+      "success_rate": 0.65
+    },
+    {
+      "name": "Pinterest Affiliate Automation",
+      "startup_cost": 0,
+      "monthly_revenue": 1200,
+      "automation": 92,
+      "hours_week": 1,
+      "truly_passive": true,
+      "description": "AI-generated pins link to affiliates. Pinterest algorithm distributes for years passively.",
+      "tools": ["Canva Free", "Pinterest", "Amazon Associates"],
+      "success_rate": 0.78
+    },
+    {
+      "name": "YouTube Shorts (Faceless)",
+      "startup_cost

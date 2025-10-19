@@ -1,0 +1,16 @@
+[project]
+name = "blank-business-builder"
+version = "0.1.0"
+description = "Lightweight onboarding assistant that guides small business creation steps and evaluates business ideas with quantum-inspired optimization."
+authors = [{ name = "Corporation of Light" }]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+blank-business-builder = "blank_business_builder.cli:main"
+bbb = "blank_business_builder.cli:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"

@@ -1,0 +1,76 @@
+# Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
+#
+# Database Migration Workflow
+
+name: Database Migrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to run migrations'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      migration_direction:
+        description: 'Migration direction'
+        required: true
+        type: choice
+        options:
+          - upgrade
+          - downgrade
+
+jobs:
+  migrate:
+    name: Run Database Migration
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install alembic
+
+    - name: Configure kubectl
+      uses: azure/setup-kubectl@v3
+
+    - name: Set up kubeconfig
+      run: |
+        mkdir -p $HOME/.kube
+        if [ "${{ github.event.inputs.environment }}" == "production" ]; then
+          echo "${{ secrets.KUBE_CONFIG_PRODUCTION }}" | base64 -d > $HOME/.kube/config
+        else
+          echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 -d > $HOME/.kube/config
+        fi
+
+    - name: Run migration
+      run: |
+        NAMESPACE="bbb-${{ github.event.inputs.environment }}"
+        DATABASE_URL=$(kubectl get secret bbb-secrets -n $NAMESPACE -o jsonpath='{.data.DATABASE_URL}' | base64 -d)
+
+        if [ "${{ github.event.inputs.migration_direction }}" == "upgrade" ]; then
+          alembic upgrade head
+        else
+          alembic downgrade -1
+        fi
+      env:
+        DATABASE_URL: ${{ env.DATABASE_URL }}
+
+    - name: Notify migration status
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        text: 'Database migration ${{ github.event.inputs.migration_direction }} completed on ${{ github.event.inputs.environment }}'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      if: always()

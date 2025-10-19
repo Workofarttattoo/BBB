@@ -1,0 +1,23 @@
+# Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
+#
+# Code Owners - Require review from these users
+
+# Default owners for everything
+* @joshua-cole @corporation-of-light
+
+# Infrastructure and deployment
+/k8s/ @joshua-cole
+/.github/ @joshua-cole
+/Dockerfile @joshua-cole
+/docker-compose.yml @joshua-cole
+
+# Database and migrations
+/alembic/ @joshua-cole
+/src/blank_business_builder/database.py @joshua-cole
+
+# Security and authentication
+/src/blank_business_builder/auth.py @joshua-cole
+/src/blank_business_builder/payments.py @joshua-cole
+
+# Tests
+/tests/ @joshua-cole

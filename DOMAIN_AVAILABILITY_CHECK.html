@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BBB Domain Availability Checker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 3em;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.3em;
+            opacity: 0.9;
+            margin-bottom: 40px;
+        }
+
+        .domains-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .domain-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .domain-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .domain-name {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #f093fb;
+        }
+
+        .domain-info {
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .domain-price {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 15px 0;
+            color: #ffd700;
+        }
+
+        .check-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .check-btn {
+            display: block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .check-btn:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        .recommendation {
+            background: rgba(240, 147, 251, 0.3);
+            border: 3px solid #f093fb;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .pros-cons {
+            margin: 20px 0;
+        }
+
+        .pros-cons h4 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .pros-cons li {
+            margin-left: 20px;
+            margin-bottom: 5px;
+        }
+
+        .summary-box {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            margin-top: 40px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .summary-box h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .action-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px 50px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-size: 1.3em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            margin: 5px;
+            font-weight: 600;
+        }
+
+        .badge-premium {
+            background: rgba(255, 215, 0, 0.3);
+            border: 2px solid gold;
+        }
+
+        .badge-affordable {
+            background: rgba(76, 175, 80, 0.3);
+            border: 2px solid #4caf50;
+        }
+
+        .badge-recommended {
+            background: rgba(240, 147, 251, 0.3);
+            border: 2px solid #f093fb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 BBB Domain Availability Checker</h1>
+        <div class="subtitle">Check availability for Better Business Builder domains</div>
+
+        <div class="domains-grid">
+            <!-- BBB.ai -->
+            <div class="domain-card">
+                <div class="recommendation">⭐ BEST OPTION</div>
+                <div class="domain-name">BBB.ai</div>
+                <span class="badge badge-premium">Premium</span>
+                <div class="domain-info">
+                    <strong>Perfect for AI-powered business builder!</strong><br>
+                    Short, memorable, professional .ai extension
+                </div>
+                <div class="domain-price">~$5,000 - $50,000</div>
+                <div class="pros-cons">
+                    <h4>✅ Pros:</h4>
+                    <ul>
+                        <li>Ultra-premium domain</li>
+                        <li>Perfect .ai extension</li>
+                        <li>3-character perfection</li>
+                        <li>Investor-friendly</li>
+                    </ul>
+                    <h4>❌ Cons:</h4>
+                    <ul>
+                        <li>High cost</li>
+                        <li>May already be taken</li>
+                    </ul>
+                </div>
+                <div class="check-links">
+                    <a href="https://www.name.com/domain/search/BBB.ai" target="_blank" class="check-btn">Check on Name.com</a>
+                    <a href="https://www.godaddy.com/domainsearch/find?domainToCheck=BBB.ai" target="_blank" class="check-btn">Check on GoDaddy</a>
+                    <a href="https://www.namecheap.com/domains/registration/results/?domain=BBB.ai" target="_blank" class="check-btn">Check on Namecheap</a>
+                    <a href="https://www.sedo.com/search/?keyword=BBB.ai" target="_blank" class="check-btn">Check on Sedo Marketplace</a>
+                </div>
+            </div>
+
+            <!-- BBB.navy -->
+            <div class="domain-card">
+                <div class="recommendation">💎 UNIQUE OPTION</div>
+                <div class="domain-name">BBB.navy</div>
+                <span class="badge badge-affordable">Affordable</span>
+                <div class="domain-info">
+                    <strong>Unique .navy TLD - likely available!</strong><br>
+                    Professional, nautical theme (navigate business waters)
+                </div>
+                <div class="domain-price">~$20 - $60/year</div>
+                <div class="pros-cons">
+                    <h4>✅ Pros:</h4>
+                    <ul>
+                        <li>Likely available</li>
+                        <li>Affordable ($20-60/year)</li>
+                        <li>Unique positioning</li>
+                        <li>Memorable</li>
+                    </ul>
+                    <h4>❌ Cons:</h4>
+                    <ul>
+                        <li>Less common TLD</li>
+                        <li>Not AI-focused</li>
+                    </ul>
+                </div>
+                <div class="check-links">
+                    <a href="https://www.name.com/domain/search/BBB.navy" target="_blank" class="check-btn">Check on Name.com</a>
+                    <a href="https://www.godaddy.com/domainsearch/find?domainToCheck=BBB.navy" target="_blank" class="check-btn">Check on GoDaddy</a>
+                    <a href="https://www.namecheap.com/domains/registration/results/?domain=BBB.navy" target="_blank" class="check-btn">Check on Namecheap</a>
+                </div>
+            </div>
+
+            <!-- bbb.aios.is -->
+            <div class="domain-card">
+                <div class="recommendation">🚀 IMMEDIATE START</div>
+                <div class="domain-name">bbb.aios.is</div>
+                <span class="badge badge-recommended">Owned - Ready!</span>
+                <div class="domain-info">
+                    <strong>You already own aios.is!</strong><br>
+                    Deploy immediately, zero cost
+                </div>
+                <div class="domain-price">$0 (You own it!)</div>
+                <div class="pros-cons">
+                    <h4>✅ Pros:</h4>
+                    <ul>
+                        <li>Zero cost</li>
+                        <li>Deploy today</li>
+                        <li>AiOS ecosystem</li>
+                        <li>Professional subdomain</li>
+                    </ul>
+                    <h4>❌ Cons:</h4>
+                    <ul>
+                        <li>Longer URL</li>
+                        <li>Tied to AiOS brand</li>
+                    </ul>
+                </div>
+                <div class="check-links">
+                    <a href="#deploy" class="check-btn">✅ Ready to Deploy!</a>
+                </div>
+            </div>
+
+            <!-- BBB.co -->
+            <div class="domain-card">
+                <div class="domain-name">BBB.co</div>
+                <span class="badge badge-premium">Premium</span>
+                <div class="domain-info">
+                    <strong>Popular .co alternative</strong><br>
+                    Often used for companies/startups
+                </div>
+                <div class="domain-price">~$2,000 - $20,000</div>
+                <div class="check-links">
+                    <a href="https://www.name.com/domain/search/BBB.co" target="_blank" class="check-btn">Check on Name.com</a>
+                    <a href="https://www.godaddy.com/domainsearch/find?domainToCheck=BBB.co" target="_blank" class="check-btn">Check on GoDaddy</a>
+                </div>
+            </div>
+
+            <!-- BBB.io -->
+            <div class="domain-card">
+                <div class="domain-name">BBB.io</div>
+                <span class="badge badge-premium">Premium</span>
+                <div class="domain-info">
+                    <strong>Tech-focused .io extension</strong><br>
+                    Popular with SaaS companies
+                </div>
+                <div class="domain-price">~$3,000 - $25,000</div>
+                <div class="check-links">
+                    <a href="https://www.name.com/domain/search/BBB.io" target="_blank" class="check-btn">Check on Name.com</a>
+                    <a href="https://www.godaddy.com/domainsearch/find?domainToCheck=BBB.io" target="_blank" class="check-btn">Check on GoDaddy</a>
+                </div>
+            </div>
+
+            <!-- BetterBusinessBuilder.ai -->
+            <div class="domain-card">
+                <div class="domain-name">BetterBusinessBuilder.ai</div>
+                <span class="badge badge-affordable">Mid-Range</span>
+                <div class="domain-info">
+                    <strong>Full brand name + .ai</strong><br>
+                    Descriptive and clear
+                </div>
+                <div class="domain-price">~$500 - $5,000</div>
+                <div class="check-links">
+                    <a href="https://www.name.com/domain/search/BetterBusinessBuilder.ai" target="_blank" class="check-btn">Check on Name.com</a>
+                    <a href="https://www.godaddy.com/domainsearch/find?domainToCheck=BetterBusinessBuilder.ai" target="_blank" class="check-btn">Check on GoDaddy</a>
+                </div>
+            </div>
+
+            <!-- BuildBetter.ai -->
+            <div class="domain-card">
+                <div class="domain-name">BuildBetter.ai</div>
+                <span class="badge badge-affordable">Good Alternative</span>
+                <div class="domain-info">
+                    <strong>Actionable, memorable</strong><br>
+                    "Build Better" message
+                </div>
+                <div class="domain-price">~$200 - $2,000</div>
+                <div class="check-links">
+                    <a href="https://www.name.com/domain/search/BuildBetter.ai" target="_blank" class="check-btn">Check on Name.com</a>
+                    <a href="https://www.godaddy.com/domainsearch/find?domainToCheck=BuildBetter.ai" target="_blank" class="check-btn">Check on GoDaddy</a>
+                </div>
+            </div>
+
+            <!-- BBB.biz -->
+            <div class="domain-card">
+                <div class="domain-name">BBB.biz</div>
+                <span class="badge badge-affordable">Budget-Friendly</span>
+                <div class="domain-info">
+                    <strong>Business-focused .biz TLD</strong><br>
+                    Affordable option
+                </div>
+                <div class="domain-price">~$50 - $500</div>
+                <div class="check-links">
+                    <a href="https://www.name.com/domain/search/BBB.biz" target="_blank" class="check-btn">Check on Name.com</a>
+                    <a href="https://www.godaddy.com/domainsearch/find?domainToCheck=BBB.biz" target="_blank" class="check-btn">Check on GoDaddy</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-box">
+            <h2>🎯 My Recommendation</h2>
+            <p style="font-size: 1.3em; line-height: 1.8; margin-bottom: 30px;">
+                <strong>Start NOW with bbb.aios.is</strong> (you own it, zero cost)<br><br>
+
+                <strong>Then acquire one of these when profitable:</strong><br>
+                1️⃣ <strong>BBB.ai</strong> - If you can afford it (best brand)<br>
+                2️⃣ <strong>BBB.navy</strong> - Unique, affordable, memorable<br>
+                3️⃣ <strong>BuildBetter.ai</strong> - Great alternative if BBB.ai is taken<br>
+            </p>
+
+            <div style="text-align: center;">
+                <a href="#" onclick="checkAll()" class="action-btn">🔍 Check All Domains</a>
+                <a href="https://www.namecheap.com" target="_blank" class="action-btn">Go to Namecheap</a>
+            </div>
+        </div>
+
+        <div class="summary-box" style="margin-top: 30px;">
+            <h2>💡 Quick Decision Matrix</h2>
+            <div style="font-size: 1.2em; line-height: 2;">
+                <strong>If budget is NO issue:</strong> → BBB.ai<br>
+                <strong>If you want unique + affordable:</strong> → BBB.navy<br>
+                <strong>If you want to start TODAY:</strong> → bbb.aios.is<br>
+                <strong>If BBB.ai is taken:</strong> → BuildBetter.ai<br>
+                <strong>If you want ecosystem branding:</strong> → bbb.aios.is → BBB.ai later
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function checkAll() {
+            const domains = [
+                'BBB.ai',
+                'BBB.navy',
+                'BBB.co',
+                'BBB.io',
+                'BetterBusinessBuilder.ai',
+                'BuildBetter.ai'
+            ];
+
+            domains.forEach(domain => {
+                window.open(`https://www.namecheap.com/domains/registration/results/?domain=${domain}`, '_blank');
+            });
+        }
+    </script>
+</body>
+</html>

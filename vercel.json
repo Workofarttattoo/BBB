@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "name": "better-business-builder",
+  "builds": [
+    {
+      "src": "src/blank_business_builder/main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "src/blank_business_builder/main.py"
+    }
+  ],
+  "env": {
+    "PYTHONPATH": "src",
+    "DATABASE_URL": "@database_url",
+    "SECRET_KEY": "@secret_key",
+    "STRIPE_SECRET_KEY": "@stripe_secret_key",
+    "OPENAI_API_KEY": "@openai_api_key"
+  },
+  "regions": ["iad1"],
+  "github": {
+    "silent": true
+  }
+}
