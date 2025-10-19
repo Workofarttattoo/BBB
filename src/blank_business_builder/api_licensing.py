@@ -19,6 +19,7 @@ router = APIRouter(prefix="/api/licensing", tags=["Licensing"])
 class LicenseAgreement(Base):
     """Revenue share agreement records."""
     __tablename__ = "license_agreements"
+    __table_args__ = {"extend_existing": True}
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(String, index=True)
@@ -39,6 +40,7 @@ class LicenseAgreement(Base):
 class RevenueReport(Base):
     """Monthly revenue reporting for revenue share users."""
     __tablename__ = "revenue_reports"
+    __table_args__ = {"extend_existing": True}
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(String, index=True)
@@ -67,6 +69,7 @@ class RevenueReport(Base):
 class PurchasedLicense(Base):
     """Purchased license records."""
     __tablename__ = "purchased_licenses"
+    __table_args__ = {"extend_existing": True}
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(String, index=True)
