@@ -283,29 +283,37 @@ def get_current_user(
 
 
 def require_license_access(current_user: User = Depends(get_current_user)) -> User:
-    """Ensure the user has an active license or revenue share agreement."""
-    if current_user.license_status in {"licensed", "revenue_share"}:
+    """Ensure the user has accepted 50% revenue share or purchased a license."""
+    # Check if user has purchased a full license
+    if current_user.license_status == "licensed":
         return current_user
 
+    # Check if user has accepted 50% revenue share agreement
+    if current_user.license_status == "revenue_share":
+        return current_user
+
+    # Allow trial period (14 days)
     if current_user.license_status == "trial":
         if current_user.trial_expires_at and current_user.trial_expires_at > datetime.utcnow():
             return current_user
 
+    # No valid license or agreement
     raise HTTPException(
         status_code=status.HTTP_402_PAYMENT_REQUIRED,
-        detail="License required. Accept revenue share or purchase license to unlock full access."
+        detail="License required. Choose one: (1) Accept 50% revenue share agreement, or (2) Purchase a full license. Contact support for pricing."
     )
 
 
 def require_quantum_access(current_user: User = Depends(require_license_access)) -> User:
-    """Ensure the current user can access quantum capabilities."""
-    if RoleBasedAccessControl.has_feature(current_user.subscription_tier, "quantum"):
-        return current_user
+    """Ensure the current user can access quantum capabilities.
 
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="Upgrade to Pro or Enterprise to use quantum features."
-    )
+    Quantum features require either:
+    1. 50% revenue share agreement, OR
+    2. Purchased full license
+    """
+    # License check already done by require_license_access dependency
+    # All licensed/revenue_share users get quantum features
+    return current_user
 
 
 # Rate limiting decorator

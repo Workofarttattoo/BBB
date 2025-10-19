@@ -1,0 +1,286 @@
+BETTER BUSINESS BUILDER (BBB) PROPRIETARY LICENSE AGREEMENT
+Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light)
+All Rights Reserved. PATENT PENDING.
+
+================================================================================
+IMPORTANT LEGAL NOTICE - READ CAREFULLY BEFORE USING THIS SOFTWARE
+================================================================================
+
+This software and all associated documentation, code, algorithms, and materials
+(collectively, the "Software") are proprietary and confidential property of
+Joshua Hendricks Cole, operating as Corporation of Light ("Licensor").
+
+ALL RIGHTS ARE RESERVED. This is NOT open source software.
+
+================================================================================
+1. GRANT OF LICENSE
+================================================================================
+
+Subject to your compliance with the terms of this Agreement, Licensor grants
+you a limited, non-exclusive, non-transferable, revocable license to use the
+Software under ONE of the following options:
+
+OPTION 1: REVENUE SHARE AGREEMENT (50%)
+   - You may use the Software for commercial purposes
+   - You agree to pay Licensor 50% of ALL gross revenue generated using,
+     with, or through the Software
+   - Revenue share payments due monthly within 15 days of month end
+   - You must provide quarterly financial statements showing revenue
+   - Licensor retains audit rights to verify revenue reporting
+   - This agreement continues perpetually while you use the Software
+
+OPTION 2: PURCHASED LICENSE
+   - You may purchase a full commercial license
+   - One-time payment grants perpetual commercial use rights
+   - No revenue sharing required after license purchase
+   - Contact Licensor for current pricing and terms
+   - License is non-transferable and applies to single legal entity
+
+OPTION 3: 14-DAY TRIAL
+   - Free evaluation period for 14 days from registration
+   - Full feature access during trial period
+   - Must choose Option 1 or 2 before trial expires
+   - Continued use after trial requires selecting Option 1 or 2
+
+================================================================================
+2. INTELLECTUAL PROPERTY RIGHTS
+================================================================================
+
+The Software contains proprietary information and trade secrets of Licensor,
+including but not limited to:
+
+- Quantum-optimized feature prioritization algorithms (PATENT PENDING)
+- All 26 implemented quantum features and their implementations
+- AI/ML models, training data, and algorithms
+- Multi-region deployment architecture
+- Security and encryption implementations
+- Database schemas and data structures
+- API designs and implementations
+- User interfaces and user experience designs
+- Documentation and technical specifications
+
+Licensor retains ALL ownership rights, title, and interest in and to the
+Software, including all intellectual property rights, patents, copyrights,
+trade secrets, trademarks, and any derivative works.
+
+YOU ACQUIRE NO OWNERSHIP RIGHTS TO THE SOFTWARE.
+
+================================================================================
+3. RESTRICTIONS
+================================================================================
+
+You may NOT, under any circumstances:
+
+a) Modify, adapt, translate, or create derivative works of the Software
+b) Reverse engineer, decompile, or disassemble the Software
+c) Remove, alter, or obscure any copyright, trademark, or proprietary notices
+d) Rent, lease, loan, sublicense, or transfer the Software to third parties
+e) Use the Software to create competing products or services
+f) Copy or reproduce the Software except as expressly permitted
+g) Publish, distribute, or make the Software available to third parties
+h) Use the Software in violation of any applicable laws or regulations
+i) Bypass, disable, or circumvent any licensing or security mechanisms
+j) Use the Software after trial expiration without selecting Option 1 or 2
+
+================================================================================
+4. REVENUE SHARE TERMS (Option 1)
+================================================================================
+
+If you select the Revenue Share Agreement:
+
+4.1 REVENUE DEFINITION
+"Revenue" means ALL income, receipts, and consideration of any kind received
+by you that is generated using, with, through, or facilitated by the Software,
+including but not limited to:
+- Sales of products or services
+- Subscription fees
+- Advertising revenue
+- Affiliate commissions
+- Licensing fees
+- Consulting or service fees
+- Any other business income where the Software was used
+
+4.2 PAYMENT OBLIGATIONS
+- 50% of gross revenue (before expenses) is owed to Licensor
+- Payments due within 15 days following the end of each calendar month
+- Late payments subject to 5% monthly interest
+- Payment method: Wire transfer, ACH, or as specified by Licensor
+
+4.3 REPORTING REQUIREMENTS
+- Monthly revenue reports due with each payment
+- Quarterly financial statements certified by authorized officer
+- Annual financial audit if revenue exceeds $100,000
+- Full cooperation with Licensor's audit requests
+
+4.4 AUDIT RIGHTS
+Licensor may audit your financial records annually to verify revenue reporting.
+You must provide access to all relevant records. If audit reveals underpayment
+exceeding 5%, you pay audit costs plus penalties.
+
+================================================================================
+5. PURCHASED LICENSE TERMS (Option 2)
+================================================================================
+
+If you purchase a full license:
+
+5.1 LICENSE GRANT
+- Perpetual right to use the Software commercially
+- No revenue sharing obligations
+- Includes updates and support for 12 months from purchase
+- Renewal of support optional after initial 12 months
+
+5.2 PRICING AND PAYMENT
+- Contact Licensor for current pricing: josh@corporationoflight.com
+- Pricing varies based on:
+  * Number of users
+  * Deployment scale
+  * Support requirements
+  * Custom feature requests
+
+5.3 LICENSE SCOPE
+- Single legal entity only (subsidiaries require separate licenses)
+- Specific deployment environment (production, staging, development)
+- User count as specified in purchase agreement
+- Geographic region as specified in purchase agreement
+
+================================================================================
+6. PATENT PENDING TECHNOLOGY
+================================================================================
+
+The Software incorporates patent-pending technology, including quantum-inspired
+optimization algorithms for business feature prioritization. The underlying
+methods, systems, and processes are subject to pending patent applications.
+
+Use of the Software does NOT grant you any rights to the pending patents.
+All patent rights remain exclusively with Licensor.
+
+If patents are granted, this license automatically includes a license to
+practice the patented technology solely within the scope of using the Software
+as permitted under your chosen license option.
+
+================================================================================
+7. WARRANTY DISCLAIMER
+================================================================================
+
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+
+Licensor does not warrant that:
+- The Software will meet your requirements
+- Operation will be uninterrupted or error-free
+- Defects will be corrected
+- The Software is free from viruses or harmful components
+
+================================================================================
+8. LIMITATION OF LIABILITY
+================================================================================
+
+IN NO EVENT SHALL LICENSOR BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL,
+CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING LOST PROFITS, LOST DATA, OR
+BUSINESS INTERRUPTION, ARISING OUT OF OR RELATED TO THIS AGREEMENT OR USE
+OF THE SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+LICENSOR'S TOTAL LIABILITY SHALL NOT EXCEED THE GREATER OF:
+(a) Amounts paid by you to Licensor in the 12 months preceding the claim, OR
+(b) $1,000 USD
+
+================================================================================
+9. INDEMNIFICATION
+================================================================================
+
+You agree to indemnify, defend, and hold harmless Licensor from any claims,
+damages, losses, liabilities, and expenses (including attorney fees) arising
+from:
+- Your use or misuse of the Software
+- Your violation of this Agreement
+- Your violation of any third-party rights
+- Your violation of applicable laws or regulations
+
+================================================================================
+10. TERMINATION
+================================================================================
+
+This Agreement terminates automatically if you:
+- Fail to make required revenue share payments (Option 1)
+- Violate any terms of this Agreement
+- Use the Software beyond trial period without selecting Option 1 or 2
+
+Upon termination:
+- Your license to use the Software immediately ceases
+- You must cease all use and delete all copies
+- Payment obligations through termination date remain due
+- Sections 2, 7, 8, 9, and 11 survive termination
+
+Licensor may terminate this Agreement at any time for convenience with 30
+days written notice.
+
+================================================================================
+11. GENERAL PROVISIONS
+================================================================================
+
+11.1 GOVERNING LAW
+This Agreement is governed by the laws of the United States and the state
+where Licensor is domiciled, without regard to conflict of law provisions.
+
+11.2 DISPUTE RESOLUTION
+Any disputes shall be resolved through binding arbitration under the rules
+of the American Arbitration Association. Judgment on the award may be entered
+in any court having jurisdiction.
+
+11.3 ENTIRE AGREEMENT
+This Agreement constitutes the entire agreement between you and Licensor
+regarding the Software and supersedes all prior agreements and understandings.
+
+11.4 AMENDMENTS
+Licensor may modify this Agreement by providing 30 days notice. Continued
+use after modifications constitutes acceptance.
+
+11.5 SEVERABILITY
+If any provision is found unenforceable, the remaining provisions continue
+in full force and effect.
+
+11.6 EXPORT COMPLIANCE
+You agree to comply with all applicable export and import laws and regulations.
+
+11.7 NO WAIVER
+Failure to enforce any provision does not constitute a waiver of that provision
+or any other provision.
+
+11.8 ASSIGNMENT
+You may not assign this Agreement without Licensor's prior written consent.
+Licensor may assign this Agreement at any time.
+
+================================================================================
+12. CONTACT INFORMATION
+================================================================================
+
+For licensing inquiries, support, or legal questions:
+
+Joshua Hendricks Cole
+Corporation of Light
+Email: josh@corporationoflight.com
+
+For purchased licenses: Contact the email above with:
+- Your organization name and size
+- Intended use case and scale
+- Number of users
+- Requested support level
+
+For revenue share agreements: Contact the email above to execute formal
+revenue share agreement documents.
+
+================================================================================
+ACKNOWLEDGMENT
+================================================================================
+
+BY INSTALLING, COPYING, OR USING THE SOFTWARE, YOU ACKNOWLEDGE THAT YOU HAVE
+READ THIS AGREEMENT, UNDERSTAND IT, AND AGREE TO BE BOUND BY ITS TERMS.
+
+IF YOU DO NOT AGREE TO THESE TERMS, DO NOT INSTALL, COPY, OR USE THE SOFTWARE.
+
+================================================================================
+Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light)
+All Rights Reserved. PATENT PENDING.
+Last Updated: January 2025
+================================================================================
