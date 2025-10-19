@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Better Business Builder - AI-Powered Business Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #667eea;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 80px 20px;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .hero p {
+            font-size: 20px;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: white;
+            color: #667eea;
+            padding: 15px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 16px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .features {
+            background: white;
+            padding: 80px 20px;
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 36px;
+            margin-bottom: 60px;
+            color: #333;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.1);
+        }
+
+        .feature-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .feature-card p {
+            color: #666;
+        }
+
+        .pricing {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 80px 20px;
+            color: white;
+        }
+
+        .pricing h2 {
+            text-align: center;
+            font-size: 36px;
+            margin-bottom: 60px;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .pricing-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+
+        .pricing-card.featured {
+            border: 2px solid white;
+            transform: scale(1.05);
+        }
+
+        .pricing-card h3 {
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        .price {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .price-desc {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 30px;
+        }
+
+        .features-list {
+            text-align: left;
+            margin: 30px 0;
+        }
+
+        .features-list li {
+            list-style: none;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .features-list li:before {
+            content: "✓ ";
+            color: #4caf50;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .btn-white {
+            background: white;
+            color: #667eea;
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 20px;
+            transition: transform 0.3s;
+        }
+
+        .btn-white:hover {
+            transform: translateY(-3px);
+        }
+
+        footer {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin: 60px 0;
+            text-align: center;
+        }
+
+        .stat {
+            color: white;
+        }
+
+        .stat-number {
+            font-size: 48px;
+            font-weight: bold;
+            color: #4caf50;
+        }
+
+        .stat-label {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .nav-links {
+                gap: 15px;
+            }
+
+            .pricing-card.featured {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">🚀 BBB</div>
+                <ul class="nav-links">
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#pricing">Pricing</a></li>
+                    <li><a href="#docs">Docs</a></li>
+                    <li><a href="https://github.com/workofarttattoo/BBB" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="hero">
+        <div class="container">
+            <h1>Better Business Builder</h1>
+            <p>AI-Powered Business Planning & Marketing Automation with 26 Quantum-Optimized Features</p>
+            <a href="#pricing" class="cta-button">Get Started Free</a>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-number">26</div>
+            <div class="stat-label">Quantum Features</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number">1024x</div>
+            <div class="stat-label">Quantum Advantage</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number">14</div>
+            <div class="stat-label">Days Free Trial</div>
+        </div>
+    </div>
+
+    <section id="features" class="features">
+        <div class="container">
+            <h2>26 Quantum-Optimized Features</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>🤖 Smart Lead Nurturing</h3>
+                    <p>AI-driven qualification with automatic follow-ups and scoring</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🔄 Multi-Channel Marketing</h3>
+                    <p>Automated campaigns across email, social, SMS, and web</p>
+                </div>
+                <div class="feature-card">
+                    <h3>💳 Payment Gateway Suite</h3>
+                    <p>Stripe, PayPal, Square integration for seamless checkout</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🌍 Multi-Region Deployment</h3>
+                    <p>Global CDN with automatic failover and load balancing</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🔐 SOC 2 & GDPR Compliance</h3>
+                    <p>Enterprise security and data privacy built-in</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📊 Custom Reports</h3>
+                    <p>Drag-and-drop report builder with real-time data</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🎙️ Voice Assistant</h3>
+                    <p>Natural language business commands</p>
+                </div>
+                <div class="feature-card">
+                    <h3>👥 Team Collaboration</h3>
+                    <p>Shared workspaces, permissions, and activity tracking</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📱 Native Mobile Apps</h3>
+                    <p>iOS and Android apps for on-the-go management</p>
+                </div>
+                <div class="feature-card">
+                    <h3>💰 Revenue Prediction</h3>
+                    <p>ML-powered financial forecasting</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🤖 Autonomous Agents</h3>
+                    <p>AI agents that work 24/7 on your behalf</p>
+                </div>
+                <div class="feature-card">
+                    <h3>A/B Testing</h3>
+                    <p>Statistical significance testing for all campaigns</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="pricing" class="pricing">
+        <div class="container">
+            <h2>Simple, Transparent Pricing</h2>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>14-Day Trial</h3>
+                    <div class="price">Free</div>
+                    <div class="price-desc">No credit card required</div>
+                    <ul class="features-list">
+                        <li>All 26 features</li>
+                        <li>Full functionality</li>
+                        <li>14 days access</li>
+                    </ul>
+                    <a href="#" class="btn-white">Start Trial</a>
+                </div>
+
+                <div class="pricing-card featured">
+                    <h3>Revenue Share</h3>
+                    <div class="price">50%</div>
+                    <div class="price-desc">of your gross revenue</div>
+                    <ul class="features-list">
+                        <li>All 26 features</li>
+                        <li>Unlimited users</li>
+                        <li>No upfront cost</li>
+                        <li>Monthly invoicing</li>
+                    </ul>
+                    <a href="#" class="btn-white">Choose Plan</a>
+                </div>
+
+                <div class="pricing-card">
+                    <h3>Purchased License</h3>
+                    <div class="price">$2,999+</div>
+                    <div class="price-desc">one-time, perpetual access</div>
+                    <ul class="features-list">
+                        <li>All 26 features</li>
+                        <li>Perpetual license</li>
+                        <li>No revenue share</li>
+                        <li>Support included</li>
+                    </ul>
+                    <a href="mailto:josh@corporationoflight.com" class="btn-white">Get Quote</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>Better Business Builder © 2025 Corporation of Light</p>
+            <p>Patent Pending Technology | All Rights Reserved</p>
+            <p>
+                <a href="LICENSE" style="color: #4caf50; text-decoration: none;">License Terms</a> |
+                <a href="LICENSING_SYSTEM.md" style="color: #4caf50; text-decoration: none;">Licensing Guide</a> |
+                <a href="DNS_SETUP_NAMECHEAP.md" style="color: #4caf50; text-decoration: none;">DNS Setup</a>
+            </p>
+        </div>
+    </footer>
+</body>
+</html>
