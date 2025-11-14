@@ -1,0 +1,27 @@
+# Expert System Requirements
+# Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
+
+# Core dependencies
+numpy>=1.24.0
+
+# Vector databases (at least one required)
+chromadb>=0.4.0  # Persistent vector database with DuckDB backend
+faiss-cpu>=1.7.4  # High-performance similarity search (use faiss-gpu for GPU acceleration)
+
+# Optional: Deep learning for fine-tuning
+torch>=2.0.0  # PyTorch for neural fine-tuning
+sentence-transformers>=2.2.0  # For better embeddings
+
+# Optional: Advanced NLP
+transformers>=4.30.0  # Hugging Face transformers
+accelerate>=0.20.0  # For distributed training
+
+# Optional: Database and storage
+sqlalchemy>=2.0.0
+alembic>=1.11.0
+
+# Existing BBB requirements (include these as well)
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+python-multipart>=0.0.6
