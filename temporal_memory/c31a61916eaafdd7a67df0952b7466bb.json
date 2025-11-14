@@ -1,0 +1,1 @@
+{"key": "daily_snapshot", "value": {"day": 0, "customers": 1562, "mrr": 0.023937580348325264, "total_revenue": 1.0329747955328463, "conversion_rate": 2.4967151766232374, "churn_rate": 0.05, "average_price": 1.532495540865894e-05, "daily_visitors": 18, "new_customers": 369, "churned_customers": 108}, "generation": 0, "timestamp": "2025-11-13T13:41:43.724328"}

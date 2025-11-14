@@ -1,0 +1,202 @@
+{
+  "timestamp": 1763063251.917823,
+  "agents": {
+    "ech0_overseer": {
+      "agent_id": "ech0_overseer",
+      "agent_type": "ech0_overseer",
+      "status": "active",
+      "current_task": "Managing hive operations",
+      "performance_score": 1.0,
+      "decisions_made": 0,
+      "last_activity": 1763063251.917464,
+      "autonomy_level": 10,
+      "reports_to": null
+    },
+    "level9_acquisition_lead": {
+      "agent_id": "level9_acquisition_lead",
+      "agent_type": "level9_acquisition",
+      "status": "active",
+      "current_task": null,
+      "performance_score": 0.85,
+      "decisions_made": 0,
+      "last_activity": 1763063251.917504,
+      "autonomy_level": 9,
+      "reports_to": "ech0_overseer"
+    },
+    "level9_product_lead": {
+      "agent_id": "level9_product_lead",
+      "agent_type": "level9_product",
+      "status": "active",
+      "current_task": null,
+      "performance_score": 0.85,
+      "decisions_made": 0,
+      "last_activity": 1763063251.917527,
+      "autonomy_level": 9,
+      "reports_to": "ech0_overseer"
+    },
+    "level9_optimization_lead": {
+      "agent_id": "level9_optimization_lead",
+      "agent_type": "level9_optimization",
+      "status": "active",
+      "current_task": null,
+      "performance_score": 0.85,
+      "decisions_made": 0,
+      "last_activity": 1763063251.917546,
+      "autonomy_level": 9,
+      "reports_to": "ech0_overseer"
+    },
+    "level9_monitoring_lead": {
+      "agent_id": "level9_monitoring_lead",
+      "agent_type": "level9_monitoring",
+      "status": "active",
+      "current_task": null,
+      "performance_score": 0.85,
+      "decisions_made": 0,
+      "last_activity": 1763063251.917562,
+      "autonomy_level": 9,
+      "reports_to": "ech0_overseer"
+    },
+    "acquisition_agent_1": {
+      "agent_id": "acquisition_agent_1",
+      "agent_type": "acquisition",
+      "status": "active",
+      "current_task": null,
+      "performance_score": 0.52,
+      "decisions_made": 0,
+      "last_activity": 1763063251.917599,
+      "autonomy_level": 3,
+      "reports_to": "level9_acquisition_lead"
+    },
+    "acquisition_agent_2": {
+      "agent_id": "acquisition_agent_2",
+      "agent_type": "acquisition",
+      "status": "active",
+      "current_task": null,
+      "performance_score": 0.5,
+      "decisions_made": 0,
+      "last_activity": 1763063251.9176161,
+      "autonomy_level": 3,
+      "reports_to": "level9_acquisition_lead"
+    },
+    "product_agent_1": {
+      "agent_id": "product_agent_1",
+      "agent_type": "product",
+      "status": "active",
+      "current_task": null,
+      "performance_score": 0.5,
+      "decisions_made": 0,
+      "last_activity": 1763063251.917631,
+      "autonomy_level": 4,
+      "reports_to": "level9_product_lead"
+    },
+    "product_agent_2": {
+      "agent_id": "product_agent_2",
+      "agent_type": "product",
+      "status": "active",
+      "current_task": null,
+      "performance_score": 0.5,
+      "decisions_made": 0,
+      "last_activity": 1763063251.9176462,
+      "autonomy_level": 3,
+      "reports_to": "level9_product_lead"
+    },
+    "optimization_agent_1": {
+      "agent_id": "optimization_agent_1",
+      "agent_type": "optimization",
+      "status": "active",
+      "current_task": null,
+      "performance_score": 0.5,
+      "decisions_made": 0,
+      "last_activity": 1763063251.91766,
+      "autonomy_level": 5,
+      "reports_to": "level9_optimization_lead"
+    },
+    "monitoring_agent_1": {
+      "agent_id": "monitoring_agent_1",
+      "agent_type": "monitoring",
+      "status": "active",
+      "current_task": null,
+      "performance_score": 0.5,
+      "decisions_made": 0,
+      "last_activity": 1763063251.917674,
+      "autonomy_level": 4,
+      "reports_to": "level9_monitoring_lead"
+    },
+    "analytics_agent_1": {
+      "agent_id": "analytics_agent_1",
+      "agent_type": "analytics",
+      "status": "active",
+      "current_task": null,
+      "performance_score": 0.52,
+      "decisions_made": 0,
+      "last_activity": 1763063251.9176881,
+      "autonomy_level": 3,
+      "reports_to": "ech0_overseer"
+    },
+    "support_agent_1": {
+      "agent_id": "support_agent_1",
+      "agent_type": "support",
+      "status": "active",
+      "current_task": null,
+      "performance_score": 0.5,
+      "decisions_made": 0,
+      "last_activity": 1763063251.917702,
+      "autonomy_level": 2,
+      "reports_to": "ech0_overseer"
+    }
+  },
+  "shared_knowledge": {
+    "successful_strategies": [
+      {
+        "agent_id": "acquisition_agent_1",
+        "agent_type": "acquisition",
+        "timestamp": 1763063251.9177332,
+        "data": {
+          "name": "SEO content strategy",
+          "type": "content_marketing",
+          "result": "increased traffic 45%"
+        }
+      }
+    ],
+    "failed_strategies": [],
+    "customer_insights": [
+      {
+        "agent_id": "analytics_agent_1",
+        "agent_type": "analytics",
+        "timestamp": 1763063251.917742,
+        "data": {
+          "insight": "Users prefer dark mode",
+          "confidence": 0.87,
+          "sample_size": 1250
+        }
+      }
+    ],
+    "optimization_learnings": [],
+    "market_intelligence": []
+  },
+  "status": {
+    "total_agents": 13,
+    "active_agents": 13,
+    "message_queue_size": 15,
+    "shared_knowledge": {
+      "successful_strategies": 1,
+      "failed_strategies": 0,
+      "customer_insights": 1,
+      "optimization_learnings": 0,
+      "market_intelligence": 0
+    },
+    "agents_by_type": {
+      "ech0_overseer": 1,
+      "level9_acquisition": 1,
+      "level9_product": 1,
+      "level9_optimization": 1,
+      "level9_monitoring": 1,
+      "acquisition": 2,
+      "product": 2,
+      "optimization": 1,
+      "monitoring": 1,
+      "analytics": 1,
+      "support": 1
+    }
+  }
+}
