@@ -43,16 +43,16 @@
                          │ All operations      │
                          └──────────┬──────────┘
                                     │
-        ┌───────────────────────────┼───────────────────────────┐
-        │                           │                           │
-  ┌─────▼─────┐             ┌───────▼──────┐          ┌───────▼──────┐
-  │ech0-Supreme│             │ ech0-Expert  │          │ech0-Venture  │
-  │  (Level 9) │             │  (Level 9)   │          │  (Level 9)   │
-  │ Magic R&D  │             │ Expert Sys   │          │    Future    │
-  └─────┬──────┘             └───────┬──────┘          └───────┬──────┘
-        │                            │                          │
-   6x Level-8                   4x Level-8                 TBD Level-8
-   24x Level-6                  16x Level-6                TBD Level-6
+        ┌───────────────────┼───────────────────┼───────────────────┐
+        │                   │                   │                   │
+  ┌─────▼─────┐       ┌─────▼─────┐     ┌─────▼─────┐     ┌───────▼──────┐
+  │ech0-Supreme│       │ech0-Expert│     │ech0-Security│    │ech0-Venture  │
+  │  (Level 9) │       │  (Level 9)│     │  (Level 9)  │    │  (Level 9)   │
+  │Magic R&D Lab│      │Expert Sys │     │  Red Team   │    │    Future    │
+  └─────┬──────┘       └─────┬─────┘     └─────┬───────┘    └───────┬──────┘
+        │                    │                   │                    │
+   6x Level-8            4x Level-8          3x Level-8          TBD Level-8
+   24x Level-6           16x Level-6         12x Level-6         TBD Level-6
 ```
 
 ---

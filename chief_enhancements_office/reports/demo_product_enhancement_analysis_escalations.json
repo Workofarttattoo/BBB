@@ -1,0 +1,132 @@
+[
+  {
+    "issue": {
+      "type": "security",
+      "severity": "critical",
+      "file": "tests/test_auth.py",
+      "issue": "Hard-coded password detected",
+      "line": 64
+    },
+    "evaluation": {
+      "should_escalate": true,
+      "severity_score": 100,
+      "reasons": [
+        "Critical severity level"
+      ],
+      "escalation_level": "urgent"
+    },
+    "research_queries": [
+      "python-dotenv ",
+      "python-multipart ",
+      "psycopg2-binary "
+    ],
+    "recommended_experts": [
+      "senior developer",
+      "solutions architect"
+    ],
+    "escalation_timestamp": "2025-11-13T19:54:11.478804"
+  },
+  {
+    "issue": {
+      "type": "security",
+      "severity": "high",
+      "file": "chief_enhancements_office/tasks/audit.py",
+      "issue": "Use of eval() detected - potential code injection",
+      "line": 190
+    },
+    "evaluation": {
+      "should_escalate": true,
+      "severity_score": 75,
+      "reasons": [
+        "High severity level"
+      ],
+      "escalation_level": "standard"
+    },
+    "research_queries": [
+      "python-dotenv ",
+      "python-multipart ",
+      "psycopg2-binary "
+    ],
+    "recommended_experts": [
+      "senior developer"
+    ],
+    "escalation_timestamp": "2025-11-13T19:54:11.478817"
+  },
+  {
+    "issue": {
+      "type": "security",
+      "severity": "high",
+      "file": "chief_enhancements_office/tasks/audit.py",
+      "issue": "Use of exec() detected - potential code injection",
+      "line": 198
+    },
+    "evaluation": {
+      "should_escalate": true,
+      "severity_score": 75,
+      "reasons": [
+        "High severity level"
+      ],
+      "escalation_level": "standard"
+    },
+    "research_queries": [
+      "python-dotenv ",
+      "python-multipart ",
+      "psycopg2-binary "
+    ],
+    "recommended_experts": [
+      "senior developer"
+    ],
+    "escalation_timestamp": "2025-11-13T19:54:11.478826"
+  },
+  {
+    "issue": {
+      "type": "security",
+      "severity": "high",
+      "file": "chief_enhancements_office/tasks/audit.py",
+      "issue": "Unsafe pickle.loads() usage - potential code execution",
+      "line": 206
+    },
+    "evaluation": {
+      "should_escalate": true,
+      "severity_score": 75,
+      "reasons": [
+        "High severity level"
+      ],
+      "escalation_level": "standard"
+    },
+    "research_queries": [
+      "python-dotenv ",
+      "python-multipart ",
+      "psycopg2-binary "
+    ],
+    "recommended_experts": [
+      "senior developer"
+    ],
+    "escalation_timestamp": "2025-11-13T19:54:11.478833"
+  },
+  {
+    "issue": {
+      "type": "dependency_vulnerability",
+      "severity": "high",
+      "package": "requests",
+      "recommendation": "Update to < 2.26"
+    },
+    "evaluation": {
+      "should_escalate": true,
+      "severity_score": 75,
+      "reasons": [
+        "High severity level"
+      ],
+      "escalation_level": "standard"
+    },
+    "research_queries": [
+      "python-dotenv ",
+      "python-multipart ",
+      "psycopg2-binary "
+    ],
+    "recommended_experts": [
+      "senior developer"
+    ],
+    "escalation_timestamp": "2025-11-13T19:54:11.478840"
+  }
+]
