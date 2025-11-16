@@ -1,3 +1,14 @@
-autonomous_business.log
-temporal_memory/
+
+# Log files
 *.log
+
+# PID files
+*.pid
+
+# Python cache
+__pycache__/
+*.pyc
+
+# IDE files
+.vscode/
+.idea/

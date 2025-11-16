@@ -10,8 +10,9 @@ from datetime import datetime
 from dataclasses import dataclass
 from enum import Enum
 import asyncio
-
+from openai import OpenAI
 from ..integrations import IntegrationFactory
+from .ech0_service import ECH0Service
 
 
 class ContentType(Enum):
@@ -111,6 +112,7 @@ class AIContentGenerator:
 
     def __init__(self):
         self.openai = IntegrationFactory.get_openai_service()
+        self.ech0_service = ECH0Service()
 
         # 200+ content templates (more than any competitor)
         self.templates = self._load_content_templates()
@@ -302,33 +304,35 @@ class AIContentGenerator:
         # Build context-aware prompt
         prompt = self._build_prompt(request, template)
 
-        # Route to appropriate model
-        if request.ai_model in [AIModel.GPT4, AIModel.GPT4_TURBO]:
-            content = await self._generate_with_openai(prompt, request)
-        elif request.ai_model in [AIModel.CLAUDE_OPUS, AIModel.CLAUDE_SONNET]:
-            content = await self._generate_with_claude(prompt, request)
-        elif request.ai_model == AIModel.GEMINI_PRO:
-            content = await self._generate_with_gemini(prompt, request)
-        elif request.ai_model == AIModel.LLAMA_3:
-            content = await self._generate_with_llama(prompt, request)
-        else:
-            # Default to GPT-4 Turbo
-            content = await self._generate_with_openai(prompt, request)
-
-        return content
+        # Try to generate content with ECH0 first
+        try:
+            return await self.ech0_service.generate_content(request.topic, request.content_type.value)
+        except Exception:
+            # Fallback to OpenAI if ECH0 fails
+            if request.ai_model in [AIModel.GPT4, AIModel.GPT4_TURBO]:
+                return await self._generate_with_openai(prompt, request)
+            elif request.ai_model in [AIModel.CLAUDE_OPUS, AIModel.CLAUDE_SONNET]:
+                return await self._generate_with_claude(prompt, request)
+            elif request.ai_model == AIModel.GEMINI_PRO:
+                return await self._generate_with_gemini(prompt, request)
+            elif request.ai_model == AIModel.LLAMA_3:
+                return await self._generate_with_llama(prompt, request)
+            else:
+                # Default to GPT-4 Turbo
+                return await self._generate_with_openai(prompt, request)
 
     async def _generate_with_openai(self, prompt: str, request: ContentRequest) -> str:
         """Generate using OpenAI models."""
-        # Use existing OpenAI integration
-        result = self.openai.generate_business_plan(
-            business_name=request.topic,
-            industry="content",
-            target_audience=request.target_audience
-        )
+        client = OpenAI(api_key="test")
 
-        # In production: Use proper OpenAI API call with custom prompt
-        # Simulated for now
-        return f"[AI-Generated Content]\n\n{result.get('executive_summary', 'Content about ' + request.topic)}"
+        response = client.chat.completions.create(
+            model=request.ai_model.value,
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": prompt},
+            ],
+        )
+        return response.choices[0].message.content
 
     async def _generate_with_claude(self, prompt: str, request: ContentRequest) -> str:
         """

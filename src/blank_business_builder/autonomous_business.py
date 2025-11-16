@@ -28,6 +28,11 @@ from enum import Enum
 from typing import Dict, List, Optional, Callable
 import logging
 
+from .features.market_research import MarketResearch
+from .features.email_service import EmailService
+from .features.payment_processor import PaymentProcessor
+from .features.social_media import SocialMedia
+
 logger = logging.getLogger(__name__)
 
 
@@ -106,7 +111,11 @@ class Level6BusinessAgent:
         agent_id: str,
         role: AgentRole,
         business_concept: str,
-        autonomy_level: int = 6
+        autonomy_level: int = 6,
+        market_research: MarketResearch = None,
+        email_service: EmailService = None,
+        payment_processor: PaymentProcessor = None,
+        social_media: SocialMedia = None
     ):
         self.agent_id = agent_id
         self.role = role
@@ -115,6 +124,10 @@ class Level6BusinessAgent:
         self.knowledge_graph: Dict[str, Dict] = {}
         self.performance = AgentPerformance(agent_id=agent_id, role=role)
         self.active = True
+        self.market_research = market_research
+        self.email_service = email_service
+        self.payment_processor = payment_processor
+        self.social_media = social_media
 
     async def execute_task(self, task: AutonomousTask) -> Dict:
         """
@@ -187,6 +200,10 @@ class Level6BusinessAgent:
 
     async def _plan_research(self, task: AutonomousTask) -> Dict:
         """Research agent: Market analysis, competitor tracking."""
+        competitor_urls = ["https://www.competitor1.com", "https://www.competitor2.com"]
+        scraped_data = self.market_research.scrape_competitors(competitor_urls)
+        search_results = self.market_research.google_search(self.business_concept)
+
         return {
             "action": "market_research",
             "steps": [
@@ -197,11 +214,20 @@ class Level6BusinessAgent:
                 "Generate insights report"
             ],
             "estimated_time": 30,  # minutes
-            "confidence": 0.90
+            "confidence": 0.90,
+            "scraped_data": scraped_data,
+            "search_results": search_results
         }
 
     async def _plan_marketing(self, task: AutonomousTask) -> Dict:
         """Marketing agent: Content creation, SEO, advertising."""
+        await self.email_service.send_email(
+            from_email="marketing@mybusiness.com",
+            to_emails=["customer@example.com"],
+            subject="Check out our new blog post!",
+            html_content="<p>We've just published a new blog post that you might find interesting.</p>"
+        )
+        await self.social_media.post_tweet("Check out our new blog post!")
         return {
             "action": "content_marketing",
             "steps": [
@@ -217,6 +243,12 @@ class Level6BusinessAgent:
 
     async def _plan_sales(self, task: AutonomousTask) -> Dict:
         """Sales agent: Lead generation, outreach, closing deals."""
+        await self.email_service.send_email(
+            from_email="sales@mybusiness.com",
+            to_emails=["lead@example.com"],
+            subject="Following up on your interest",
+            html_content="<p>I'd love to schedule a quick call to discuss how we can help you.</p>"
+        )
         return {
             "action": "sales_outreach",
             "steps": [
@@ -262,6 +294,11 @@ class Level6BusinessAgent:
 
     async def _plan_finance(self, task: AutonomousTask) -> Dict:
         """Finance agent: Revenue tracking, invoicing, reporting."""
+        checkout_url = self.payment_processor.create_checkout_session(
+            price_id="price_12345",  # Replace with a real Price ID
+            success_url="https://example.com/success",
+            cancel_url="https://example.com/cancel"
+        )
         return {
             "action": "financial_management",
             "steps": [
@@ -272,7 +309,8 @@ class Level6BusinessAgent:
                 "Optimize pricing strategy"
             ],
             "estimated_time": 25,
-            "confidence": 0.95
+            "confidence": 0.95,
+            "checkout_url": checkout_url
         }
 
     async def _act(self, action_plan: Dict) -> Dict:
@@ -354,13 +392,33 @@ class AutonomousBusinessOrchestrator:
     User onboards → Agents deploy → Business runs autonomously → User gets paid.
     """
 
-    def __init__(self, business_concept: str, founder_name: str):
+    def __init__(
+        self,
+        business_concept: str,
+        founder_name: str,
+        market_research_api_key: str,
+        sendgrid_api_key: str,
+        stripe_api_key: str,
+        twitter_consumer_key: str,
+        twitter_consumer_secret: str,
+        twitter_access_token: str,
+        twitter_access_token_secret: str
+    ):
         self.business_concept = business_concept
         self.founder_name = founder_name
         self.agents: Dict[str, Level6BusinessAgent] = {}
         self.task_queue: List[AutonomousTask] = []
         self.metrics = BusinessMetrics()
         self.running = False
+        self.market_research = MarketResearch(api_key=market_research_api_key)
+        self.email_service = EmailService(api_key=sendgrid_api_key)
+        self.payment_processor = PaymentProcessor(api_key=stripe_api_key)
+        self.social_media = SocialMedia(
+            consumer_key=twitter_consumer_key,
+            consumer_secret=twitter_consumer_secret,
+            access_token=twitter_access_token,
+            access_token_secret=twitter_access_token_secret
+        )
 
     async def deploy_agents(self) -> None:
         """Deploy Level 6 agents for all business roles."""
@@ -373,7 +431,11 @@ class AutonomousBusinessOrchestrator:
                 agent_id=agent_id,
                 role=role,
                 business_concept=self.business_concept,
-                autonomy_level=6
+                autonomy_level=6,
+                market_research=self.market_research if role == AgentRole.RESEARCHER else None,
+                email_service=self.email_service if role in [AgentRole.MARKETER, AgentRole.SALES] else None,
+                payment_processor=self.payment_processor if role == AgentRole.FINANCE else None,
+                social_media=self.social_media if role == AgentRole.MARKETER else None
             )
             self.agents[agent_id] = agent
             logger.info(f"✓ Deployed {role.value} agent: {agent_id}")
@@ -628,7 +690,14 @@ class AutonomousBusinessOrchestrator:
 async def launch_autonomous_business(
     business_concept: str,
     founder_name: str,
-    duration_hours: float = 24.0
+    duration_hours: float = 24.0,
+    market_research_api_key: str = None,
+    sendgrid_api_key: str = None,
+    stripe_api_key: str = None,
+    twitter_consumer_key: str = None,
+    twitter_consumer_secret: str = None,
+    twitter_access_token: str = None,
+    twitter_access_token_secret: str = None
 ) -> Dict:
     """
     Launch a fully autonomous business.
@@ -637,11 +706,27 @@ async def launch_autonomous_business(
         business_concept: Type of business to run
         founder_name: Owner's name
         duration_hours: How long to run autonomously
-
+        market_research_api_key: API key for market research service
+        sendgrid_api_key: API key for SendGrid
+        stripe_api_key: API key for Stripe
+        twitter_consumer_key: Twitter consumer key
+        twitter_consumer_secret: Twitter consumer secret
+        twitter_access_token: Twitter access token
+        twitter_access_token_secret: Twitter access token secret
     Returns:
         Final business metrics after autonomous operation
     """
-    orchestrator = AutonomousBusinessOrchestrator(business_concept, founder_name)
+    orchestrator = AutonomousBusinessOrchestrator(
+        business_concept,
+        founder_name,
+        market_research_api_key,
+        sendgrid_api_key,
+        stripe_api_key,
+        twitter_consumer_key,
+        twitter_consumer_secret,
+        twitter_access_token,
+        twitter_access_token_secret
+    )
 
     # Deploy Level 6 agents
     await orchestrator.deploy_agents()
@@ -659,7 +744,14 @@ if __name__ == "__main__":
         result = await launch_autonomous_business(
             business_concept="AI Chatbot Integration Service",
             founder_name="Joshua Cole",
-            duration_hours=0.1  # 6 minutes for demo
+            duration_hours=0.1,  # 6 minutes for demo
+            market_research_api_key="test",
+            sendgrid_api_key="test",
+            stripe_api_key="test",
+            twitter_consumer_key="test",
+            twitter_consumer_secret="test",
+            twitter_access_token="test",
+            twitter_access_token_secret="test"
         )
 
         print("\n" + "="*60)

@@ -19,11 +19,11 @@ passlib[bcrypt]==1.7.4
 python-dotenv==1.0.0
 
 # Payment Processing
-stripe==7.10.0
+stripe==9.6.0
 
 # API Integrations
 sendgrid==6.11.0
-openai==1.10.0
+openai==1.25.2
 anthropic==0.8.1
 requests==2.31.0
 httpx==0.26.0
@@ -52,9 +52,9 @@ pydantic==2.5.3
 pydantic-settings==2.1.0
 
 # Quantum Features Dependencies
-numpy==1.26.3
-scipy==1.11.4
-scikit-learn==1.4.0
+numpy==1.26.4
+scipy==1.13.0
+scikit-learn==1.4.2
 gzip  # Built-in Python library
 
 # Development
@@ -64,3 +64,13 @@ mypy==1.8.0
 flake8==7.0.0
 bandit==1.7.5
 safety==2.3.5
+
+rich==13.7.1
+scrapingbee==2.2.0
+starkbank-ecdsa==2.3.0
+streamlit==1.33.0
+tenacity==8.2.3
+tweepy==4.14.0
+typing_extensions==4.11.0
+tzdata==2024.1
+urllib3==2.2.1
