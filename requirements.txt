@@ -51,6 +51,10 @@ cryptography==42.0.0
 pydantic==2.5.3
 pydantic-settings==2.1.0
 
+# Fiverr Autonomous Manager
+selenium==4.16.0
+webdriver-manager==4.0.1
+
 # Quantum Features Dependencies
 numpy==1.26.4
 scipy==1.13.0

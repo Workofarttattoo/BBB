@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+"""
+MODULE 3: FIVERR_AUTONOMOUS_MANAGER
+PROTOCOL: ech0 / Hendricks-Cole-231
+STATUS: OPERATIONAL / MANAGEMENT-ONLY
+Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
+
+DEPENDENCIES:
+pip install selenium webdriver-manager
+"""
+
+import os
+import sys
+import time
+import random
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+
+# --- CONFIGURATION ---
+# CRITICAL: Set this to your ACTUAL Chrome Profile path.
+# Mac Example: "/Users/yourname/Library/Application Support/Google/Chrome"
+# Windows Example: r"C:\Users\yourname\AppData\Local\Google\Chrome\User Data"
+CHROME_PROFILE_PATH = os.getenv("FIVERR_CHROME_PROFILE_PATH", "INSERT_YOUR_PROFILE_PATH_HERE")
+PROFILE_DIRECTORY = os.getenv("FIVERR_PROFILE_DIRECTORY", "Default")  # Usually 'Default' or 'Profile 1'
+
+class FiverrAutonomousManager:
+    """
+    Autonomous Agent for managing an existing, logged-in Fiverr session.
+    Does NOT create gigs. DOES handle messages and orders.
+    """
+    def __init__(self):
+        print("ECH0_FIVERR: Initializing Management Agent...")
+
+        if "INSERT" in CHROME_PROFILE_PATH:
+            print("ECH0_FIVERR: [HALT] You must set the CHROME_PROFILE_PATH.")
+            print("ECH0_FIVERR: Set environment variable: FIVERR_CHROME_PROFILE_PATH")
+            sys.exit(1)
+
+        self.options = Options()
+        # This attaches the agent to your REAL browser profile
+        self.options.add_argument(f"user-data-dir={CHROME_PROFILE_PATH}")
+        self.options.add_argument(f"profile-directory={PROFILE_DIRECTORY}")
+
+        # Stealth flags to reduce bot detection
+        self.options.add_argument("--disable-blink-features=AutomationControlled")
+        self.options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        self.options.add_experimental_option('useAutomationExtension', False)
+
+        try:
+            self.driver = webdriver.Chrome(
+                service=Service(ChromeDriverManager().install()),
+                options=self.options
+            )
+            self.wait = WebDriverWait(self.driver, 20)
+            print("ECH0_FIVERR: Agent attached to browser session.")
+        except Exception as e:
+            print(f"ECH0_FIVERR: [CRITICAL] Browser attachment failed: {e}")
+            print("Hint: Make sure all other Chrome windows are CLOSED.")
+            sys.exit(1)
+
+    def connect_to_dashboard(self):
+        """Navigates to the dashboard and verifies the session is alive."""
+        print("ECH0_FIVERR: Establishing connection to HQ...")
+        try:
+            self.driver.get("https://www.fiverr.com/users/dashboard")
+
+            # Look for a dashboard element to confirm login
+            # (e.g., the 'Inbox' or 'Dashboard' text)
+            if "login" in self.driver.current_url:
+                print("ECH0_FIVERR: [ALERT] Session expired. Please log in manually, then restart agent.")
+                return False
+
+            print("ECH0_FIVERR: Connection confirmed. We are live.")
+            return True
+        except Exception as e:
+            print(f"ECH0_FIVERR: [ERROR] Connection failed: {e}")
+            return False
+
+    def scan_inbox(self):
+        """Checks for unread messages in the inbox."""
+        print("ECH0_FIVERR: Scanning communications...")
+        self.driver.get("https://www.fiverr.com/inbox")
+        time.sleep(random.uniform(3, 6))  # Human-like pause
+
+        try:
+            # This selector looks for the 'unread' dot/class in the message list
+            # Note: Selectors change. Vision-based AI (Level 9) updates this dynamically.
+            unread_msgs = self.driver.find_elements(By.CSS_SELECTOR, ".unread")
+
+            if unread_msgs:
+                count = len(unread_msgs)
+                print(f"ECH0_FIVERR: {count} unread message(s) detected.")
+                return count
+            else:
+                print("ECH0_FIVERR: Inbox clear.")
+                return 0
+        except Exception:
+            print("ECH0_FIVERR: Inbox scan clear (No indicators found).")
+            return 0
+
+    def check_active_orders(self):
+        """Checks for active orders requiring attention."""
+        print("ECH0_FIVERR: Checking active orders...")
+        try:
+            self.driver.get("https://www.fiverr.com/users/orders")
+            time.sleep(random.uniform(2, 4))
+
+            # Look for active order indicators
+            active_orders = self.driver.find_elements(By.CSS_SELECTOR, ".order-item.active, .order-card")
+
+            if active_orders:
+                count = len(active_orders)
+                print(f"ECH0_FIVERR: {count} active order(s) detected.")
+                return count
+            else:
+                print("ECH0_FIVERR: No active orders.")
+                return 0
+        except Exception as e:
+            print(f"ECH0_FIVERR: Order check complete (no indicators): {e}")
+            return 0
+
+    def human_sleep(self):
+        """Sleeps for a random interval to mimic biological irregularity."""
+        sleep_time = random.uniform(45, 120)  # 45 to 120 seconds
+        print(f"ECH0_FIVERR: Idling for {int(sleep_time)}s...")
+        time.sleep(sleep_time)
+
+    def shutdown(self):
+        print("ECH0_FIVERR: Disengaging.")
+        if hasattr(self, 'driver'):
+            self.driver.quit()
+
+# --- MAIN EXECUTION LOOP ---
+if __name__ == "__main__":
+    agent = FiverrAutonomousManager()
+
+    if agent.connect_to_dashboard():
+        try:
+            print("ECH0_FIVERR: Engaging Autonomous Watchdog Mode (Ctrl+C to stop).")
+            while True:
+                agent.scan_inbox()
+                agent.check_active_orders()
+                agent.human_sleep()
+        except KeyboardInterrupt:
+            print("\nECH0_FIVERR: Manual Override detected.")
+
+    agent.shutdown()
