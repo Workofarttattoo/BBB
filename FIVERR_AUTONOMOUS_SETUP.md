@@ -176,7 +176,41 @@ The watchdog mimics biological irregularity:
 
 This prevents pattern detection by Fiverr's anti-automation systems.
 
-### 4. Session Recovery
+### 4. Advanced Human Behavior Simulation ⭐ NEW
+
+The system includes a sophisticated human behavior simulator (`human_behavior_simulator.py`) that makes the bot virtually undetectable:
+
+#### Mouse Movement Patterns
+- **Bezier Curves**: Mouse moves along natural curved paths, not straight lines
+- **Speed Variation**: Faster movement far from target, slows down when approaching
+- **Occasional Misclicks**: 1 in 7-15 clicks is slightly off target, then corrected
+- **Random Fidgeting**: Occasional random mouse movements when idle
+
+#### Interaction Patterns
+- **Inefficient Navigation**: Doesn't always take the most direct path
+- **Distraction Behavior**: Looks at 1-3 irrelevant elements before clicking target (40% of time)
+- **Reading Pauses**: Calculates realistic reading time based on content length
+- **Natural Scrolling**: Scrolls in bursts with pauses, not smoothly
+
+#### Typing Behavior
+- **Variable Speed**: Typing speed varies (0.08-0.15s per character)
+- **Faster Mid-Word**: Types faster in middle of words (human pattern)
+- **Occasional Typos**: 5% chance of typo, then backspace and correction
+- **Post-Type Pause**: Natural pause after completing text entry
+
+#### Page Arrival Behavior
+- **Initial Orientation Pause**: 0.5-1.5 seconds on page load
+- **Exploratory Scrolling**: Scrolls down, pauses, sometimes scrolls back up
+- **Variable Attention**: Different pause lengths simulating reading/scanning
+
+Example misclick pattern:
+```
+Normal clicks: 1, 2, 3, 4, 5, 6, 7 → MISCLICK (30px offset) → Correction → 1, 2, 3, 4, 5, 6 → MISCLICK → etc.
+```
+
+This ensures the bot appears completely human to detection algorithms.
+
+### 5. Session Recovery
 
 If the Chrome session expires or fails:
 1. Watchdog detects failure after 3 consecutive errors
@@ -185,7 +219,7 @@ If the Chrome session expires or fails:
 4. Reinitializes agent with fresh session
 5. Continues monitoring
 
-### 5. Statistics Tracking
+### 6. Statistics Tracking
 
 Real-time statistics saved to `/Users/noone/.ech0/fiverr_watchdog_stats.json`:
 ```json
