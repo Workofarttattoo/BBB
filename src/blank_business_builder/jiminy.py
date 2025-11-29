@@ -1,4 +1,8 @@
-"""Embedded Jiminy Cricket module for ethical checkpoints."""
+"""
+Embedded Jiminy Cricket module for ethical checkpoints.
+
+Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
+"""
 
 from __future__ import annotations
 

@@ -1,6 +1,18 @@
+"""
+Payment processor for Stripe integration.
+
+Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
+"""
 
 from __future__ import annotations
-import stripe
+
+try:
+    import stripe
+    STRIPE_AVAILABLE = True
+except ImportError:
+    stripe = None
+    STRIPE_AVAILABLE = False
+
 from ..ech0_service import ECH0Service
 
 class PaymentProcessor:

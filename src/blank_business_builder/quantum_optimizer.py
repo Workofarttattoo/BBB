@@ -1,4 +1,8 @@
-"""Quantum-inspired optimizer to rank business ideas."""
+"""
+Quantum-inspired optimizer to rank business ideas.
+
+Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
+"""
 
 from __future__ import annotations
 

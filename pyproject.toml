@@ -1,16 +1,136 @@
+# Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
+
 [project]
 name = "blank-business-builder"
 version = "0.1.0"
 description = "Lightweight onboarding assistant that guides small business creation steps and evaluates business ideas with quantum-inspired optimization."
-authors = [{ name = "Corporation of Light" }]
+authors = [{ name = "Corporation of Light", email = "josh@thegavl.com" }]
 readme = "README.md"
 requires-python = ">=3.9"
-dependencies = []
+license = { text = "Proprietary" }
+keywords = ["business", "automation", "AI", "quantum-optimization"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: Other/Proprietary License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+dependencies = [
+    # Core Framework
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "websockets>=12.0",
+    "python-multipart>=0.0.6",
+
+    # Database
+    "sqlalchemy>=2.0.25",
+    "psycopg2-binary>=2.9.9",
+    "asyncpg>=0.29.0",
+    "alembic>=1.13.1",
+    "redis>=5.0.1",
+
+    # Authentication
+    "python-jose[cryptography]>=3.3.0",
+    "PyJWT>=2.8.0",
+    "passlib[bcrypt]>=1.7.4",
+    "python-dotenv>=1.0.0",
+
+    # Payment Processing
+    "stripe>=9.6.0",
+
+    # API Integrations
+    "sendgrid>=6.11.0",
+    "openai>=1.25.2",
+    "anthropic>=0.8.1",
+    "requests>=2.31.0",
+    "httpx>=0.26.0",
+    "twilio>=9.0.0",
+    "tweepy>=4.14.0",
+
+    # Web Scraping & Automation
+    "selenium>=4.16.0",
+    "webdriver-manager>=4.0.1",
+    "scrapingbee>=2.2.0",
+
+    # Data Processing
+    "numpy>=1.26.4",
+    "scipy>=1.13.0",
+    "scikit-learn>=1.4.2",
+    "networkx>=3.2.1",
+    "feedparser>=6.0.10",
+
+    # Utilities
+    "pydantic>=2.5.3",
+    "pydantic-settings>=2.1.0",
+    "rich>=13.7.1",
+    "tenacity>=8.2.3",
+
+    # Monitoring
+    "prometheus-client>=0.19.0",
+    "sentry-sdk[fastapi]>=1.40.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.4",
+    "pytest-asyncio>=0.23.3",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "locust>=2.19.1",
+    "black>=24.1.1",
+    "isort>=5.13.2",
+    "mypy>=1.8.0",
+    "flake8>=7.0.0",
+    "bandit>=1.7.5",
+    "safety>=2.3.5",
+]
+
+llm = [
+    "ollama>=0.2.0",
+    "flask>=3.0.0",
+]
+
+all = [
+    "blank-business-builder[dev,llm]",
+]
 
 [project.scripts]
 blank-business-builder = "blank_business_builder.cli:main"
 bbb = "blank_business_builder.cli:main"
 
+[project.urls]
+Homepage = "https://thegavl.com"
+Repository = "https://github.com/thegavl/BBB"
+Documentation = "https://thegavl.com/docs/bbb"
+
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-v --tb=short"
+
+[tool.black]
+line-length = 100
+target-version = ["py39", "py310", "py311", "py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.9"
+strict = false
+warn_return_any = true
+warn_unused_ignores = true

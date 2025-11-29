@@ -1,6 +1,18 @@
+"""
+Social media integration for automated posting.
+
+Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
+"""
 
 from __future__ import annotations
-import tweepy
+
+try:
+    import tweepy
+    TWEEPY_AVAILABLE = True
+except ImportError:
+    tweepy = None
+    TWEEPY_AVAILABLE = False
+
 from ..ech0_service import ECH0Service
 
 class SocialMedia:

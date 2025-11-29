@@ -1,8 +1,21 @@
+"""
+Email service for marketing and sales communications.
+
+Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
+"""
 
 from __future__ import annotations
 from typing import List
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+
+try:
+    from sendgrid import SendGridAPIClient
+    from sendgrid.helpers.mail import Mail
+    SENDGRID_AVAILABLE = True
+except ImportError:
+    SendGridAPIClient = None
+    Mail = None
+    SENDGRID_AVAILABLE = False
+
 from ..ech0_service import ECH0Service
 
 class EmailService:

@@ -1,4 +1,8 @@
-"""Lightweight onboarding assistant that guides new business setup."""
+"""
+Lightweight onboarding assistant that guides new business setup.
+
+Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
+"""
 
 from __future__ import annotations
 

@@ -1,7 +1,19 @@
+"""
+Market research agent using web scraping and ECH0 intelligence.
+
+Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
+"""
 
 from __future__ import annotations
 from typing import Dict, List
-from scrapingbee import ScrapingBeeClient
+
+try:
+    from scrapingbee import ScrapingBeeClient
+    SCRAPINGBEE_AVAILABLE = True
+except ImportError:
+    ScrapingBeeClient = None
+    SCRAPINGBEE_AVAILABLE = False
+
 from ..ech0_service import ECH0Service
 
 class MarketResearch:

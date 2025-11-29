@@ -1,3 +1,8 @@
+"""
+ECH0 Service integration for Blank Business Builder.
+
+Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
+"""
 
 from __future__ import annotations
 import asyncio
@@ -5,7 +10,12 @@ import random
 from typing import Dict
 
 # It is assumed that ech0_local_brain is available in the python path
-from ech0_local_brain import ECH0LocalBrain
+try:
+    from ech0_local_brain import ECH0LocalBrain
+    ECH0_AVAILABLE = True
+except ImportError:
+    ECH0LocalBrain = None
+    ECH0_AVAILABLE = False
 
 
 class ECH0Service:

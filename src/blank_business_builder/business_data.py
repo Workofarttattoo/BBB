@@ -1,4 +1,8 @@
-"""Curated library of starter business ideas for evaluation."""
+"""
+Curated library of starter business ideas for evaluation.
+
+Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
+"""
 
 from __future__ import annotations
 
