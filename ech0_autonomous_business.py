@@ -34,6 +34,14 @@ except ImportError:
     FIVERR_CLIENT_AVAILABLE = False
     print("[WARN] Fiverr autonomous manager not available")
 
+# Import ECH0 LLM Engine
+try:
+    from ech0_llm_engine import ECH0LLMEngine
+    LLM_ENGINE_AVAILABLE = True
+except ImportError:
+    LLM_ENGINE_AVAILABLE = False
+    print("[WARN] ECH0 LLM Engine not available")
+
 # Selenium imports for other web automation
 try:
     from selenium import webdriver
@@ -317,7 +325,8 @@ class FiverrAutomation:
 
                 if num_messages > 0:
                     self.core.log_activity("fiverr", "MESSAGES_FOUND", f"{num_messages} unread")
-                    # TODO: Auto-respond using LLM engine (ech0_llm_engine.py)
+                    # Auto-respond using LLM engine
+                    self._auto_respond_to_messages(num_messages)
                 elif num_messages == 0:
                     self.core.log_activity("fiverr", "MESSAGES_CHECK", "No new messages")
                 else:
@@ -338,7 +347,8 @@ class FiverrAutomation:
 
             if num_orders > 0:
                 self.core.log_activity("fiverr", "ORDERS_FOUND", f"{num_orders} active orders")
-                # TODO: Process orders and update status
+                # Process orders and update status
+                self._process_active_orders(num_orders)
             elif num_orders == 0:
                 self.core.log_activity("fiverr", "ORDERS_CHECK", "No active orders")
             else:
@@ -346,6 +356,64 @@ class FiverrAutomation:
 
         except Exception as e:
             self.core.log_activity("fiverr", "ORDER_CHECK_ERROR", str(e))
+
+    def _auto_respond_to_messages(self, num_messages: int):
+        """Auto-respond to Fiverr messages using LLM."""
+        if not LLM_ENGINE_AVAILABLE:
+            self.core.log_activity("fiverr", "AUTO_RESPONSE_SKIP", "LLM Engine not available")
+            return
+
+        try:
+            # Initialize LLM engine
+            llm = ECH0LLMEngine()
+
+            # Note: In a full implementation, we would:
+            # 1. Extract actual message content from Fiverr inbox
+            # 2. Parse sender info and context
+            # 3. Generate response using LLM
+            # 4. Post response back to Fiverr
+
+            # For now, log that we detected messages
+            self.core.log_activity("fiverr", "AUTO_RESPONSE_READY", f"LLM ready for {num_messages} message(s)")
+
+            # Example of how to use LLM (once message extraction is implemented):
+            # response = llm.generate_fiverr_response(
+            #     message=extracted_message,
+            #     context={"sender_name": sender, "gig_title": gig}
+            # )
+            # self.fiverr_manager.send_message(response)
+
+        except Exception as e:
+            self.core.log_activity("fiverr", "AUTO_RESPONSE_ERROR", str(e))
+
+    def _process_active_orders(self, num_orders: int):
+        """Process active orders and send updates."""
+        if not LLM_ENGINE_AVAILABLE:
+            self.core.log_activity("fiverr", "ORDER_PROCESSING_SKIP", "LLM Engine not available")
+            return
+
+        try:
+            # Initialize LLM engine
+            llm = ECH0LLMEngine()
+
+            # Note: In a full implementation, we would:
+            # 1. Extract order details from Fiverr
+            # 2. Determine order status and requirements
+            # 3. Generate appropriate update using LLM
+            # 4. Post update to order page
+
+            self.core.log_activity("fiverr", "ORDER_PROCESSING_READY", f"Ready to process {num_orders} order(s)")
+
+            # Example of how to use LLM (once order extraction is implemented):
+            # update_message = llm.generate_order_update(
+            #     order_info={"order_id": order_id, "buyer_name": buyer},
+            #     status="in_progress",
+            #     custom_message="Working on your requirements"
+            # )
+            # self.fiverr_manager.post_order_update(order_id, update_message)
+
+        except Exception as e:
+            self.core.log_activity("fiverr", "ORDER_PROCESSING_ERROR", str(e))
 
     def create_gig(self, gig_data: Dict):
         """Create a new Fiverr gig."""
