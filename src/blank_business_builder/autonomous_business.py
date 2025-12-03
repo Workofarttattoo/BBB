@@ -201,8 +201,13 @@ class Level6BusinessAgent:
     async def _plan_research(self, task: AutonomousTask) -> Dict:
         """Research agent: Market analysis, competitor tracking."""
         competitor_urls = ["https://www.competitor1.com", "https://www.competitor2.com"]
-        scraped_data = self.market_research.scrape_competitors(competitor_urls)
-        search_results = self.market_research.google_search(self.business_concept)
+
+        scraped_data = {}
+        search_results = {}
+
+        if self.market_research:
+            scraped_data = await self.market_research.scrape_competitors(competitor_urls)
+            search_results = await self.market_research.google_search(self.business_concept)
 
         return {
             "action": "market_research",
