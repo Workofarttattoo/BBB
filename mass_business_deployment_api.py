@@ -63,6 +63,9 @@ class MassDeploymentRequest(BaseModel):
     owner_email: str = Field(..., description="Owner email for all businesses")
     auto_fold_inactive: bool = Field(default=True, description="Auto-fold inactive businesses")
     template_name: Optional[str] = Field(default="default", description="Business template")
+    scaling_approved: bool = Field(default=False, description="Whether this deployment is approved by scaling orchestrator")
+    profitability_verified: bool = Field(default=False, description="Whether profitability requirements are met")
+    risk_assessment: Optional[str] = Field(default=None, description="Risk assessment from scaling system")
 
 
 class DeploymentStatus(BaseModel):
@@ -94,6 +97,123 @@ businesses: Dict[str, Business] = {}
 # Database sharding configuration
 NUM_SHARDS = 50  # 50 database shards
 BUSINESSES_PER_SHARD = 20_000  # Each shard handles 20K businesses
+
+
+# Scaling control configuration
+SCALING_ORCHESTRATOR_URL = "http://localhost:8002"  # Scaling orchestrator service
+PROFITABILITY_MONITOR_URL = "http://localhost:8001"  # Profitability monitor service
+
+
+async def check_scaling_approval(request: MassDeploymentRequest) -> Dict[str, Any]:
+    """
+    Check with scaling orchestrator whether this deployment is approved.
+
+    Returns:
+        dict: {'approved': bool, 'reason': str, 'scaling_limit': int}
+    """
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            # Get current scaling status
+            response = await client.get(f"{SCALING_ORCHESTRATOR_URL}/status")
+            if response.status_code == 200:
+                scaling_status = response.json()
+
+                current_phase = scaling_status.get('current_phase', 'pilot')
+                active_businesses = scaling_status.get('active_businesses', 0)
+
+                # Phase-based limits
+                phase_limits = {
+                    'pilot': 5,
+                    'validation': 25,
+                    'scale_100': 100,
+                    'scale_1000': 1000,
+                    'scale_10000': 10000,
+                    'scale_100000': 100000,
+                    'scale_million': 1000000
+                }
+
+                max_allowed = phase_limits.get(current_phase, 5)
+                available_slots = max_allowed - active_businesses
+
+                if request.count > available_slots:
+                    return {
+                        'approved': False,
+                        'reason': f"Scaling limit exceeded. Current phase '{current_phase}' allows max {max_allowed} businesses. {active_businesses} active, {available_slots} slots available.",
+                        'scaling_limit': available_slots
+                    }
+
+                # Check profitability requirements
+                if not await check_profitability_requirements():
+                    return {
+                        'approved': False,
+                        'reason': "Profitability requirements not met. Must prove profitability of existing businesses before scaling.",
+                        'scaling_limit': 0
+                    }
+
+                return {
+                    'approved': True,
+                    'reason': f"Approved for {request.count} businesses in {current_phase} phase.",
+                    'scaling_limit': request.count
+                }
+            else:
+                # Fallback: allow small deployments if orchestrator is unavailable
+                if request.count <= 10:
+                    return {
+                        'approved': True,
+                        'reason': "Scaling orchestrator unavailable, allowing small deployment.",
+                        'scaling_limit': request.count
+                    }
+                else:
+                    return {
+                        'approved': False,
+                        'reason': "Scaling orchestrator unavailable. Cannot approve large deployments.",
+                        'scaling_limit': 0
+                    }
+
+    except Exception as e:
+        # Emergency fallback
+        print(f"⚠️ Scaling check error: {e}")
+        if request.count <= 5:
+            return {
+                'approved': True,
+                'reason': f"Emergency approval for small deployment ({request.count} businesses).",
+                'scaling_limit': request.count
+            }
+        return {
+            'approved': False,
+            'reason': f"Scaling system error: {e}",
+            'scaling_limit': 0
+        }
+
+
+async def check_profitability_requirements() -> bool:
+    """
+    Check if current businesses meet profitability requirements for scaling.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(f"{PROFITABILITY_MONITOR_URL}/portfolio/summary")
+            if response.status_code == 200:
+                portfolio = response.json()
+
+                # Require at least 60% of businesses to be profitable
+                total_businesses = portfolio.get('total_businesses', 0)
+                profitable_businesses = portfolio.get('profitable_businesses', 0)
+
+                if total_businesses == 0:
+                    return True  # No businesses yet, allow initial deployment
+
+                profitability_ratio = profitable_businesses / total_businesses
+                min_required_ratio = 0.6  # 60% must be profitable
+
+                return profitability_ratio >= min_required_ratio
+            else:
+                # If monitor is unavailable, allow small scaling
+                return True
+
+    except Exception as e:
+        print(f"⚠️ Profitability check error: {e}")
+        return True  # Allow scaling if check fails
 
 
 def get_shard_id(business_id: str) -> int:
@@ -181,28 +301,32 @@ async def auto_fold_inactive_businesses() -> int:
 
 async def process_mass_deployment(
     deployment_id: str,
-    request: MassDeploymentRequest
+    request: MassDeploymentRequest,
+    actual_count: int
 ) -> None:
     """
-    Background task to process mass deployment.
+    Background task to process mass deployment with scaling controls.
 
     Splits into batches for fiber-gig parallel processing.
+    Only deploys the approved number of businesses.
     """
     try:
         deployment = deployments[deployment_id]
         deployment.status = "running"
 
+        print(f"🚀 Starting mass deployment: {actual_count} businesses approved")
+
         # Calculate optimal batch size for fiber-gig performance
         # Process 10K businesses per batch across multiple workers
         batch_size = 10_000
-        num_batches = (request.count + batch_size - 1) // batch_size
+        num_batches = (actual_count + batch_size - 1) // batch_size
 
         all_business_ids = []
 
         # Create businesses in parallel batches
         tasks = []
         for batch_id in range(num_batches):
-            batch_count = min(batch_size, request.count - (batch_id * batch_size))
+            batch_count = min(batch_size, actual_count - (batch_id * batch_size))
             task = create_business_batch(
                 batch_id=batch_id,
                 count=batch_count,
@@ -242,25 +366,54 @@ async def deploy_businesses_mass(
     background_tasks: BackgroundTasks
 ) -> DeploymentStatus:
     """
-    Deploy up to 1 million businesses instantly.
+    Deploy businesses with intelligent scaling controls.
+
+    Automatically checks profitability and scaling readiness before deployment.
 
     Example:
     ```bash
     curl -X POST "http://localhost:8000/deploy/mass" \\
       -H "Content-Type: application/json" \\
       -d '{
-        "count": 1000000,
+        "count": 100,
         "business_type": "5_gig",
         "owner_email": "josh@flowstate.work",
         "auto_fold_inactive": true
       }'
     ```
     """
+
+    # Check scaling approval and profitability requirements
+    scaling_check = await check_scaling_approval(request)
+    if not scaling_check['approved']:
+        # Return rejected deployment status
+        deployment_id = f"deploy_{int(time.time()*1000)}_rejected_{random.randint(1000, 9999)}"
+        deployment = DeploymentStatus(
+            deployment_id=deployment_id,
+            total_requested=request.count,
+            total_created=0,
+            total_active=0,
+            total_folded=0,
+            total_revenue_generating=0,
+            started_at=datetime.now(),
+            completed_at=datetime.now(),
+            status="rejected",
+            error=scaling_check['reason']
+        )
+        deployments[deployment_id] = deployment
+        return deployment
+
+    # Adjust deployment count based on scaling limits
+    actual_count = min(request.count, scaling_check.get('scaling_limit', request.count))
+
+    if actual_count != request.count:
+        print(f"⚠️ Scaling limit applied: requested {request.count}, approved {actual_count}")
+
     deployment_id = f"deploy_{int(time.time()*1000)}_{random.randint(1000, 9999)}"
 
     deployment = DeploymentStatus(
         deployment_id=deployment_id,
-        total_requested=request.count,
+        total_requested=actual_count,  # Use actual approved count
         total_created=0,
         total_active=0,
         total_folded=0,
@@ -275,7 +428,8 @@ async def deploy_businesses_mass(
     background_tasks.add_task(
         process_mass_deployment,
         deployment_id,
-        request
+        request,
+        actual_count
     )
 
     return deployment
