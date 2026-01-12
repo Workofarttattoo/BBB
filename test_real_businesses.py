@@ -54,7 +54,7 @@ def main():
     print("🌐 BUSINESSES BY WEBSITE:")
     print("-" * 30)
 
-    websites = ["qulab.aios.is", "agi.aios.is", "flow.aios.is", "aios.is", "workofarttattoo.com"]
+    websites = ["n3ph1l1m.com", "ech0.aios.is", "flowstatus.work", "chattertech.ai", "red-team-tools.aios.is", "workofarttattoo.com"]
     for website in websites:
         businesses = library.get_businesses_by_website(website)
         if businesses:
