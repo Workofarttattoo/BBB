@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
-BBB Real Business Library - Using Actual ECH0-PRIME Businesses
+BBB Real Business Library - Using Owned Domains & ECH0-PRIME Businesses
 Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
 
-Business models based on real ECH0-PRIME ventures:
-- QulabInfinite: Materials science & healthcare breakthroughs
-- Echo-Prime-AGI: Advanced AI systems & consulting
-- flowstatus.work: Workflow automation & business optimization
-- aios.is: AI-powered business intelligence & services
+Business models based on owned domains and real ECH0-PRIME ventures:
+- workofarttattoo.com: Tattoo business (OWNED)
+- aios.is: AI business platform (OWNED)
+- Subdomains for business ventures until domains are purchased
 """
 
 import json
@@ -53,7 +52,7 @@ class BBBRealBusinessLibrary:
             # QulabInfinite - Materials Science & Healthcare
             RealBusinessModel(
                 name="QulabInfinite Materials Science",
-                website="qulabinfinite.com",
+                website="qulab.aios.is",
                 category="Healthcare & Materials Science",
                 description="Revolutionary materials discovery platform using quantum computing to solve humanity's most deadly diseases through novel materials and drug development",
                 startup_cost=50000,
@@ -87,7 +86,7 @@ class BBBRealBusinessLibrary:
 
             RealBusinessModel(
                 name="QulabInfinite Drug Discovery",
-                website="qulabinfinite.com",
+                website="qulab.aios.is",
                 category="Healthcare Innovation",
                 description="AI-powered drug discovery platform targeting the most deadly diseases: cancer, Alzheimer's, heart disease, diabetes, and infectious diseases",
                 startup_cost=75000,
@@ -122,7 +121,7 @@ class BBBRealBusinessLibrary:
             # Echo-Prime-AGI - AI Systems
             RealBusinessModel(
                 name="Echo-Prime-AGI Enterprise",
-                website="ech0-prime-agi.com",
+                website="agi.aios.is",
                 category="Enterprise AI Solutions",
                 description="Deploy ECH0-PRIME cognitive architecture for enterprise clients, providing autonomous business operations, strategic planning, and AI-driven decision making",
                 startup_cost=25000,
@@ -156,7 +155,7 @@ class BBBRealBusinessLibrary:
 
             RealBusinessModel(
                 name="Echo-Prime-AGI Consulting",
-                website="ech0-prime-agi.com",
+                website="agi.aios.is",
                 category="AI Strategy Consulting",
                 description="Strategic consulting services using ECH0-PRIME to optimize business operations, predict market trends, and develop competitive strategies",
                 startup_cost=10000,
@@ -191,7 +190,7 @@ class BBBRealBusinessLibrary:
             # flowstatus.work - Workflow Platform
             RealBusinessModel(
                 name="FlowStatus Workflow Automation",
-                website="flowstatus.work",
+                website="flow.aios.is",
                 category="Business Process Automation",
                 description="AI-powered workflow optimization platform that automates business processes, predicts bottlenecks, and continuously improves operational efficiency",
                 startup_cost=30000,
@@ -225,7 +224,7 @@ class BBBRealBusinessLibrary:
 
             RealBusinessModel(
                 name="FlowStatus Business Intelligence",
-                website="flowstatus.work",
+                website="flow.aios.is",
                 category="Business Intelligence",
                 description="Real-time business intelligence platform using ECH0-PRIME to provide predictive analytics, automated reporting, and strategic insights",
                 startup_cost=40000,
@@ -329,7 +328,7 @@ class BBBRealBusinessLibrary:
             # Additional Real Business Models
             RealBusinessModel(
                 name="ECH0-PRIME Healthcare AI",
-                website="ech0-prime-agi.com/healthcare",
+                website="health.aios.is",
                 category="Healthcare AI",
                 description="Specialized AI solutions for healthcare providers, combining QulabInfinite's materials science with ECH0-PRIME's cognitive capabilities",
                 startup_cost=60000,
