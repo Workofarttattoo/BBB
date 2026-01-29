@@ -20,6 +20,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+from typing import List
 
 # Import human behavior simulator
 try:
@@ -146,6 +147,77 @@ class FiverrAutonomousManager:
             print(f"ECH0_FIVERR: Inbox scan clear (No indicators found): {e}")
             return 0
 
+    def check_account_health(self) -> List[str]:
+        """
+        Inspect visible Fiverr banners for account health issues.
+
+        Returns a list of human-readable alerts so the operator can react if
+        Fiverr shows warnings such as "account disabled" or "limited" states.
+        This is intentionally lightweight—no scraping of private data—so it can
+        run quickly before other actions.
+        """
+        print("ECH0_FIVERR: Running account health diagnostics...")
+
+        # Navigate to the dashboard where Fiverr typically surfaces account notices.
+        try:
+            self.driver.get("https://www.fiverr.com/users/dashboard")
+            if self.human:
+                self.human.natural_page_arrival_behavior()
+            else:
+                time.sleep(random.uniform(1, 3))
+        except Exception as e:
+            print(f"ECH0_FIVERR: [WARN] Unable to open dashboard for health check: {e}")
+            return ["Dashboard unreachable; retry before proceeding."]
+
+        health_alerts: List[str] = []
+
+        # Fiverr uses a few common patterns for restriction banners. Keep the
+        # selectors broad so minor UI tweaks still surface meaningful signals.
+        potential_banner_selectors = [
+            "[class*='banner']",
+            "[class*='alert']",
+            "[data-testid*='banner']",
+        ]
+
+        page_text = self.driver.page_source.lower()
+        known_alert_phrases = [
+            "account disabled",
+            "account restricted",
+            "limited account",
+            "violation",
+            "review your account",
+            "contact support",
+            "temporarily disabled",
+        ]
+
+        for selector in potential_banner_selectors:
+            try:
+                banners = self.driver.find_elements(By.CSS_SELECTOR, selector)
+            except Exception:
+                banners = []
+
+            for banner in banners:
+                text = banner.text.strip()
+                if text:
+                    lower_text = text.lower()
+                    if any(phrase in lower_text for phrase in known_alert_phrases):
+                        health_alerts.append(text)
+
+        # Fallback: even if a specific banner selector fails, scan the full
+        # page source for known phrases to avoid false negatives.
+        for phrase in known_alert_phrases:
+            if phrase in page_text and all(phrase not in alert.lower() for alert in health_alerts):
+                health_alerts.append(f"Detected potential issue: '{phrase}' present on page.")
+
+        if health_alerts:
+            print("ECH0_FIVERR: Account health warnings detected:")
+            for alert in health_alerts:
+                print(f" - {alert}")
+        else:
+            print("ECH0_FIVERR: Account health nominal. No restriction banners visible.")
+
+        return health_alerts
+
     def check_active_orders(self):
         """Checks for active orders requiring attention."""
         print("ECH0_FIVERR: Checking active orders...")
@@ -198,8 +270,16 @@ class FiverrAutonomousManager:
 
     def shutdown(self):
         print("ECH0_FIVERR: Disengaging.")
-        if hasattr(self, 'driver'):
-            self.driver.quit()
+        driver = getattr(self, "driver", None)
+        if not driver:
+            return
+
+        try:
+            driver.quit()
+        except Exception:
+            # If the driver is already closed or failed to initialize, avoid
+            # raising during shutdown.
+            pass
 
 # --- MAIN EXECUTION LOOP ---
 if __name__ == "__main__":
