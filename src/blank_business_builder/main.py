@@ -4,12 +4,14 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 """
 from fastapi import FastAPI, Depends, HTTPException, status, Request, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime, timedelta
+import asyncio
 import uvicorn
 import os
+from pathlib import Path
 
 from .database import get_db, User, Business, BusinessPlan, MarketingCampaign
 from .auth import (
@@ -22,6 +24,7 @@ from .auth import (
 )
 from .payments import StripeService, handle_webhook_event
 from .integrations import IntegrationFactory
+from .self_healing import build_self_healing_orchestrator, self_healing_enabled
 from pydantic import BaseModel
 try:
     from pydantic import EmailStr as _EmailStr  # type: ignore
@@ -46,6 +49,83 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+async def start_self_healing():
+    if not self_healing_enabled():
+        return
+    orchestrator = build_self_healing_orchestrator()
+    app.state.self_healing_orchestrator = orchestrator
+    app.state.self_healing_task = asyncio.create_task(orchestrator.run())
+
+
+@app.on_event("shutdown")
+async def stop_self_healing():
+    orchestrator = getattr(app.state, "self_healing_orchestrator", None)
+    task = getattr(app.state, "self_healing_task", None)
+    if orchestrator:
+        await orchestrator.stop()
+    if task:
+        task.cancel()
+
+PACKAGE_DIR = Path(__file__).resolve().parent
+REPO_ROOT = PACKAGE_DIR.parents[2]
+LAB_PAGES = {
+    "business-builder": PACKAGE_DIR / "business_builder_gui.html",
+    "dashboard": PACKAGE_DIR / "dashboard.html",
+    "quantum-features": PACKAGE_DIR / "quantum_features_dashboard.html",
+    "bbb-realtime": REPO_ROOT / "bbb_realtime_dashboard.html",
+    "bbb-unified-library": REPO_ROOT / "bbb_unified_library_dashboard.html",
+    "disaster-recovery": REPO_ROOT / "disaster_recovery_dashboard.html",
+    "quantum-analysis": REPO_ROOT / "quantum_analysis_dashboard.html",
+    "test-dashboard": REPO_ROOT / "test_dashboard.html",
+    "website-status": REPO_ROOT / "website_status_dashboard.html",
+    "zero-touch-businesses": REPO_ROOT / "zero_touch_businesses_dashboard.html",
+}
+LAB_ASSETS = {
+    "quantum_optimization_results.json": REPO_ROOT / "quantum_optimization_results.json",
+    "PHASE_2_COMPLETE.md": REPO_ROOT / "PHASE_2_COMPLETE.md",
+}
+
+
+@app.get("/labs")
+async def list_labs():
+    """List available lab dashboards."""
+    return {
+        "labs": [
+            {"slug": slug, "path": f"/labs/{slug}"}
+            for slug in sorted(LAB_PAGES.keys())
+        ]
+    }
+
+
+@app.get("/labs/{lab_slug}")
+async def serve_lab(lab_slug: str):
+    """Serve lab dashboards as static HTML."""
+    lab_path = LAB_PAGES.get(lab_slug)
+    if not lab_path:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lab not found.")
+    if not lab_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Lab file missing on server."
+        )
+    return FileResponse(lab_path)
+
+
+@app.get("/labs/assets/{asset_name}")
+async def serve_lab_asset(asset_name: str):
+    """Serve data files referenced by lab dashboards."""
+    asset_path = LAB_ASSETS.get(asset_name)
+    if not asset_path:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found.")
+    if not asset_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Asset file missing on server."
+        )
+    return FileResponse(asset_path)
 
 
 # Pydantic models for request/response
