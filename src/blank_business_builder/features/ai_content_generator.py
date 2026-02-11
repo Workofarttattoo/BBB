@@ -12,7 +12,7 @@ from enum import Enum
 import asyncio
 from openai import OpenAI
 from ..integrations import IntegrationFactory
-from .ech0_service import ECH0Service
+from ..ech0_service import ECH0Service
 
 
 class ContentType(Enum):
@@ -40,7 +40,6 @@ class AIModel(Enum):
     CLAUDE_OPUS = "claude-opus"
     CLAUDE_SONNET = "claude-sonnet"
     GEMINI_PRO = "gemini-pro"
-    LLAMA_3 = "llama-3-70b"
 
 
 @dataclass
@@ -315,8 +314,6 @@ class AIContentGenerator:
                 return await self._generate_with_claude(prompt, request)
             elif request.ai_model == AIModel.GEMINI_PRO:
                 return await self._generate_with_gemini(prompt, request)
-            elif request.ai_model == AIModel.LLAMA_3:
-                return await self._generate_with_llama(prompt, request)
             else:
                 # Default to GPT-4 Turbo
                 return await self._generate_with_openai(prompt, request)
@@ -349,14 +346,6 @@ class AIContentGenerator:
         """
         # In production: Google Gemini API integration
         return f"[Gemini-Generated Content]\n\nWell-researched content about {request.topic}"
-
-    async def _generate_with_llama(self, prompt: str, request: ContentRequest) -> str:
-        """
-        Generate using Llama 3 70B.
-        Open-source model, good for cost optimization.
-        """
-        # In production: Llama API integration (Together AI, Replicate, etc.)
-        return f"[Llama-Generated Content]\n\nContent about {request.topic}"
 
     def _build_prompt(self, request: ContentRequest, template: Dict) -> str:
         """
