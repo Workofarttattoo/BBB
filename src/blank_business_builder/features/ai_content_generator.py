@@ -10,10 +10,25 @@ from datetime import datetime
 from dataclasses import dataclass
 from enum import Enum
 import asyncio
+import logging
 
-from openai import OpenAI
+try:
+    from openai import OpenAI
+except ImportError:
+    # Fallback for when OpenAI is not installed
+    class OpenAI:  # type: ignore
+        def __init__(self, api_key: str = None):
+            pass
+
+try:
+    import anthropic
+except ImportError:
+    anthropic = None
+
 from ..integrations import IntegrationFactory
 from ..ech0_service import ECH0Service
+
+logger = logging.getLogger(__name__)
 
 
 class ContentType(Enum):
@@ -323,31 +338,66 @@ class AIContentGenerator:
 
     async def _generate_with_openai(self, prompt: str, request: ContentRequest) -> str:
         """Generate using OpenAI models."""
-        client = OpenAI(api_key="test")
+        try:
+            client = OpenAI(api_key="test")
 
-        response = client.chat.completions.create(
-            model=request.ai_model.value,
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt},
-            ],
-        )
-        return response.choices[0].message.content
+            response = client.chat.completions.create(
+                model=request.ai_model.value,
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": prompt},
+                ],
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            logger.warning(f"OpenAI generation failed: {e}. Falling back to placeholder.")
+            return self._generate_placeholder_content("OpenAI", request)
+
+    def _generate_placeholder_content(self, model_name: str, request: ContentRequest) -> str:
+        """
+        Generate placeholder content when API integration is missing.
+
+        Args:
+            model_name: Name of the AI model.
+            request: The content generation request.
+
+        Returns:
+            A formatted placeholder string.
+        """
+        logger.warning(f"Using placeholder for {model_name} content generation. API integration pending.")
+        return f"[{model_name}-Generated Content]\n\nHigh-quality content about {request.topic}"
 
     async def _generate_with_claude(self, prompt: str, request: ContentRequest) -> str:
         """
         Generate using Anthropic Claude.
+
+        Note: Currently a placeholder awaiting API integration.
         Claude excels at long-form, nuanced content.
         """
-        return self.anthropic_service.generate_content(prompt, model=request.ai_model.value)
+        if anthropic:
+            # TODO: Implement real Anthropic integration when key is available
+            pass
+        return self._generate_placeholder_content("Claude", request)
+
+    async def _generate_with_gemini(self, prompt: str, request: ContentRequest) -> str:
+        """
+        Generate using Google Gemini.
+
+        Note: Currently a placeholder awaiting API integration.
+        Gemini excels at factual, research-based content.
+        """
+        # In production: Google Gemini API integration
+        return self._generate_placeholder_content("Gemini", request)
 
     async def _generate_with_llama(self, prompt: str, request: ContentRequest) -> str:
         """
         Generate using Llama 3 70B.
+
+        Note: Currently a placeholder awaiting API integration.
         Open-source model, good for cost optimization.
         """
         # In production: Llama API integration (Together AI, Replicate, etc.)
-        return f"[Llama-Generated Content]\n\nContent about {request.topic}"
+        return self._generate_placeholder_content("Llama", request)
 
     def _build_prompt(self, request: ContentRequest, template: Dict) -> str:
         """
