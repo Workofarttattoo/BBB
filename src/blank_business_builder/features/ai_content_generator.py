@@ -10,9 +10,10 @@ from datetime import datetime
 from dataclasses import dataclass
 from enum import Enum
 import asyncio
+
 from openai import OpenAI
 from ..integrations import IntegrationFactory
-from .ech0_service import ECH0Service
+from ..ech0_service import ECH0Service
 
 
 class ContentType(Enum):
@@ -313,8 +314,6 @@ class AIContentGenerator:
                 return await self._generate_with_openai(prompt, request)
             elif request.ai_model in [AIModel.CLAUDE_OPUS, AIModel.CLAUDE_SONNET]:
                 return await self._generate_with_claude(prompt, request)
-            elif request.ai_model == AIModel.GEMINI_PRO:
-                return await self._generate_with_gemini(prompt, request)
             elif request.ai_model == AIModel.LLAMA_3:
                 return await self._generate_with_llama(prompt, request)
             else:
@@ -341,14 +340,6 @@ class AIContentGenerator:
         """
         # In production: Anthropic API integration
         return f"[Claude-Generated Content]\n\nHigh-quality content about {request.topic}"
-
-    async def _generate_with_gemini(self, prompt: str, request: ContentRequest) -> str:
-        """
-        Generate using Google Gemini.
-        Gemini excels at factual, research-based content.
-        """
-        # In production: Google Gemini API integration
-        return f"[Gemini-Generated Content]\n\nWell-researched content about {request.topic}"
 
     async def _generate_with_llama(self, prompt: str, request: ContentRequest) -> str:
         """
