@@ -33,6 +33,7 @@ from .features.email_service import EmailService
 from .features.payment_processor import PaymentProcessor
 from .features.social_media import SocialMedia
 from .prompt_registry import PromptRegistry
+from .hive_mind_coordinator import HiveMindCoordinator, AgentType
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,9 @@ class AgentRole(Enum):
     HR = "hr"  # Human resources: Money flow, budget allocation, agent resource management
     META_MANAGER = "meta_manager"  # Manager: Supervises worker agents
     EXECUTIVE = "executive"  # Meta-Meta Manager: Supervises Meta Managers
+    DEEP_RESEARCHER = "deep_researcher"  # Deep dive academic/market research
+    OSINT_SPECIALIST = "osint_specialist"  # Competitor/Market OSINT
+    CREATIVE_DIRECTOR = "creative_director"  # Creative Meta Agent (Design, A/V, Music)
     ORCHESTRATOR = "orchestrator"  # Coordinates all agents
 
 
@@ -120,7 +124,8 @@ class Level6BusinessAgent:
         email_service: EmailService = None,
         payment_processor: PaymentProcessor = None,
         social_media: SocialMedia = None,
-        prompt_registry: PromptRegistry = None
+        prompt_registry: PromptRegistry = None,
+        hive_mind: HiveMindCoordinator = None
     ):
         self.agent_id = agent_id
         self.role = role
@@ -134,6 +139,41 @@ class Level6BusinessAgent:
         self.payment_processor = payment_processor
         self.social_media = social_media
         self.prompt_registry = prompt_registry or PromptRegistry()
+        self.hive_mind = hive_mind
+
+        # Register with HiveMind
+        if self.hive_mind:
+            # Map role to hive AgentType where possible, else default to ANALYTICS/SUPPORT
+            hive_role_map = {
+                AgentRole.RESEARCHER: AgentType.ANALYTICS,
+                AgentRole.DEEP_RESEARCHER: AgentType.ANALYTICS,
+                AgentRole.OSINT_SPECIALIST: AgentType.MONITORING,
+                AgentRole.MARKETER: AgentType.ACQUISITION,
+                AgentRole.SALES: AgentType.ACQUISITION,
+                AgentRole.FULFILLMENT: AgentType.PRODUCT,
+                AgentRole.SUPPORT: AgentType.SUPPORT,
+                AgentRole.FINANCE: AgentType.ANALYTICS,
+                AgentRole.HR: AgentType.OPTIMIZATION,
+                AgentRole.META_MANAGER: AgentType.LEVEL9_OPTIMIZATION,
+                AgentRole.EXECUTIVE: AgentType.ECH0_OVERSEER,
+                AgentRole.CREATIVE_DIRECTOR: AgentType.PRODUCT
+            }
+            self.hive_mind.register_agent(
+                self.agent_id,
+                hive_role_map.get(self.role, AgentType.ANALYTICS),
+                autonomy_level=self.autonomy_level
+            )
+
+    @property
+    def current_shift(self) -> int:
+        """Determine current 8-hour shift (1, 2, or 3)."""
+        hour = datetime.now().hour
+        if 0 <= hour < 8:
+            return 1
+        elif 8 <= hour < 16:
+            return 2
+        else:
+            return 3
 
     async def execute_task(self, task: AutonomousTask) -> Dict:
         """
@@ -207,6 +247,12 @@ class Level6BusinessAgent:
             return await self._plan_meta_manager(task)
         elif self.role == AgentRole.EXECUTIVE:
             return await self._plan_executive(task)
+        elif self.role == AgentRole.DEEP_RESEARCHER:
+            return await self._plan_deep_research(task)
+        elif self.role == AgentRole.OSINT_SPECIALIST:
+            return await self._plan_osint(task)
+        elif self.role == AgentRole.CREATIVE_DIRECTOR:
+            return await self._plan_creative_director(task)
         else:
             return {"action": "generic_execution", "confidence": 0.7}
 
@@ -260,6 +306,10 @@ class Level6BusinessAgent:
 
     async def _plan_sales(self, task: AutonomousTask) -> Dict:
         """Sales agent: Lead generation, outreach, closing deals."""
+        # Inject detailed sales tactics
+        sales_tactics = self.prompt_registry.get_prompt("sales_tactics")
+        comm_guidelines = self.prompt_registry.get_prompt("communication_guidelines")
+
         await self.email_service.send_email(
             from_email="sales@mybusiness.com",
             to_emails=["lead@example.com"],
@@ -270,13 +320,15 @@ class Level6BusinessAgent:
             "action": "sales_outreach",
             "steps": [
                 "Generate lead list (100 prospects)",
-                "Craft personalized cold emails",
-                "Schedule sales calls",
-                "Conduct discovery calls",
-                "Send proposals and close deals"
+                "Craft personalized cold emails with custom hooks",
+                "Schedule sales calls (Shift " + str(self.current_shift) + ")",
+                "Conduct discovery calls using active listening",
+                "Ask for the sale explicitly (at least once)",
+                "Counter objections with pain-point rebuttals"
             ],
+            "context": f"{sales_tactics}\n{comm_guidelines}",
             "estimated_time": 60,
-            "confidence": 0.82
+            "confidence": 0.88
         }
 
     async def _plan_fulfillment(self, task: AutonomousTask) -> Dict:
@@ -370,17 +422,76 @@ class Level6BusinessAgent:
         """Executive (Meta-Meta): Strategic direction."""
         strategy = self.prompt_registry.get_prompt("executive_strategy")
 
+        # Adjust plan based on shift
+        shift_focus = {
+            1: "Review overnight performance and set daily goals",
+            2: "Mid-day course correction and resource optimization",
+            3: "End-of-day analysis and preparation for next cycle"
+        }
+
         return {
             "action": "executive_oversight",
             "steps": [
+                f"Shift {self.current_shift} Focus: {shift_focus.get(self.current_shift, 'General oversight')}",
                 "Review overall business health metrics",
-                "Set strategic direction for next 24h",
-                "Evaluate Meta Manager performance",
-                "Approve major pivot decisions"
+                "Set strategic direction based on current scale",
+                "Evaluate Meta Manager performance"
             ],
             "strategy_used": strategy,
             "estimated_time": 10,
             "confidence": 0.98
+        }
+
+    async def _plan_deep_research(self, task: AutonomousTask) -> Dict:
+        """Deep Research Agent: Academic and market deep dives."""
+        strategy = self.prompt_registry.get_prompt("deep_research_strategy")
+
+        return {
+            "action": "deep_research",
+            "steps": [
+                "Query academic databases and whitepapers",
+                "Cross-reference data sources for integrity",
+                "Synthesize complex findings",
+                "Generate actionable intelligence report"
+            ],
+            "strategy_used": strategy,
+            "estimated_time": 120,
+            "confidence": 0.92
+        }
+
+    async def _plan_osint(self, task: AutonomousTask) -> Dict:
+        """OSINT Specialist: Competitor intelligence."""
+        strategy = self.prompt_registry.get_prompt("osint_strategy")
+
+        return {
+            "action": "osint_gathering",
+            "steps": [
+                "Monitor competitor social media channels",
+                "Analyze public filings and news mentions",
+                "Identify potential vulnerabilities or opportunities",
+                "Update competitive landscape map"
+            ],
+            "strategy_used": strategy,
+            "estimated_time": 45,
+            "confidence": 0.89
+        }
+
+    async def _plan_creative_director(self, task: AutonomousTask) -> Dict:
+        """Creative Director: Design, A/V, Music."""
+        strategy = self.prompt_registry.get_prompt("creative_director_strategy")
+
+        return {
+            "action": "creative_direction",
+            "steps": [
+                "Coordinate text-to-image generation for ads",
+                "Oversee text-to-video production",
+                "Manage voiceover synthesis",
+                "Generate background music (text-to-music)",
+                "Review social media aesthetic consistency"
+            ],
+            "strategy_used": strategy,
+            "estimated_time": 90,
+            "confidence": 0.94
         }
 
     async def _act(self, action_plan: Dict) -> Dict:
@@ -587,6 +698,7 @@ class AutonomousBusinessOrchestrator:
         )
         self.prompt_registry = PromptRegistry()
         self.ceo = ChiefEnhancementOfficer(self)
+        self.hive_mind = HiveMindCoordinator()
 
     async def deploy_agents(self) -> None:
         """Deploy Level 6 agents for all business roles."""
@@ -604,13 +716,33 @@ class AutonomousBusinessOrchestrator:
                 email_service=self.email_service if role in [AgentRole.MARKETER, AgentRole.SALES] else None,
                 payment_processor=self.payment_processor if role == AgentRole.FINANCE else None,
                 social_media=self.social_media if role == AgentRole.MARKETER else None,
-                prompt_registry=self.prompt_registry
+                prompt_registry=self.prompt_registry,
+                hive_mind=self.hive_mind
             )
             self.agents[agent_id] = agent
             logger.info(f"✓ Deployed {role.value} agent: {agent_id}")
 
         # Generate initial tasks
         await self._generate_initial_tasks()
+
+    async def scale_up_agents(self, role: AgentRole, count: int = 1):
+        """Dynamically scale up agents for a specific role (No max limit)."""
+        for i in range(count):
+            agent_id = f"{role.value}_agent_{int(time.time())}_{i}"
+            agent = Level6BusinessAgent(
+                agent_id=agent_id,
+                role=role,
+                business_concept=self.business_concept,
+                autonomy_level=6,
+                market_research=self.market_research if role == AgentRole.RESEARCHER else None,
+                email_service=self.email_service if role in [AgentRole.MARKETER, AgentRole.SALES] else None,
+                payment_processor=self.payment_processor if role == AgentRole.FINANCE else None,
+                social_media=self.social_media if role == AgentRole.MARKETER else None,
+                prompt_registry=self.prompt_registry,
+                hive_mind=self.hive_mind
+            )
+            self.agents[agent_id] = agent
+            logger.info(f"⚡ Scaled up: Added new {role.value} agent: {agent_id}")
 
     async def _generate_initial_tasks(self) -> None:
         """Generate initial task plan for business launch."""
@@ -687,6 +819,30 @@ class AutonomousBusinessOrchestrator:
             role=AgentRole.EXECUTIVE,
             description="Define strategic roadmap for Q1",
             priority=10
+        ))
+
+        # Deep Research setup
+        self.task_queue.append(AutonomousTask(
+            task_id="deep_res_001",
+            role=AgentRole.DEEP_RESEARCHER,
+            description="Conduct initial deep dive into market fundamentals",
+            priority=8
+        ))
+
+        # OSINT setup
+        self.task_queue.append(AutonomousTask(
+            task_id="osint_001",
+            role=AgentRole.OSINT_SPECIALIST,
+            description="Map initial competitor landscape via OSINT",
+            priority=8
+        ))
+
+        # Creative Director setup
+        self.task_queue.append(AutonomousTask(
+            task_id="creative_001",
+            role=AgentRole.CREATIVE_DIRECTOR,
+            description="Establish brand identity and asset generation pipeline",
+            priority=9
         ))
 
     async def run_autonomous_loop(self, duration_hours: float = 24.0) -> None:
