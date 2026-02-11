@@ -7,7 +7,7 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
-from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text, func
+from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text, func, case
 
 from .database import get_db, User, Base
 from .auth import get_current_user
@@ -179,29 +179,21 @@ async def get_license_status(
         LicenseAgreement.status == "active"
     ).first()
 
-    # Get revenue reports (optimized aggregation)
-    aggregates = db.query(
+    # Get revenue reports aggregation
+    report_stats = db.query(
         func.sum(RevenueReport.gross_revenue),
-        func.sum(RevenueReport.revenue_share_owed)
+        func.sum(RevenueReport.revenue_share_owed),
+        func.sum(case((RevenueReport.status == "paid", func.coalesce(RevenueReport.payment_amount, 0.0)), else_=0.0)),
+        func.count(case(((RevenueReport.status == "pending") & (RevenueReport.payment_due_date < datetime.utcnow()), 1), else_=None))
     ).filter(
-        RevenueReport.user_id == str(current_user.id)
+        RevenueReport.user_id == current_user.id
     ).first()
 
-    total_reported = aggregates[0] or 0.0
-    total_owed = aggregates[1] or 0.0
-
-    total_paid = db.query(func.sum(RevenueReport.payment_amount)).filter(
-        RevenueReport.user_id == str(current_user.id),
-        RevenueReport.status == "paid"
-    ).scalar() or 0.0
-
+    total_reported = report_stats[0] or 0.0
+    total_owed = report_stats[1] or 0.0
+    total_paid = report_stats[2] or 0.0
+    overdue_count = report_stats[3] or 0
     outstanding = total_owed - total_paid
-
-    overdue_count = db.query(func.count(RevenueReport.id)).filter(
-        RevenueReport.user_id == str(current_user.id),
-        RevenueReport.status == "pending",
-        RevenueReport.payment_due_date < datetime.utcnow()
-    ).scalar() or 0
 
     # Calculate days remaining in trial
     days_remaining = None

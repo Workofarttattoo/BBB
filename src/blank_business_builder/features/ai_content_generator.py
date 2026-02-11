@@ -128,6 +128,7 @@ class AIContentGenerator:
 
     def __init__(self):
         self.openai = IntegrationFactory.get_openai_service()
+        self.anthropic_service = IntegrationFactory.get_anthropic_service()
         self.ech0_service = ECH0Service()
 
         # 200+ content templates (more than any competitor)
@@ -329,8 +330,6 @@ class AIContentGenerator:
                 return await self._generate_with_openai(prompt, request)
             elif request.ai_model in [AIModel.CLAUDE_OPUS, AIModel.CLAUDE_SONNET]:
                 return await self._generate_with_claude(prompt, request)
-            elif request.ai_model == AIModel.GEMINI_PRO:
-                return await self._generate_with_gemini(prompt, request)
             elif request.ai_model == AIModel.LLAMA_3:
                 return await self._generate_with_llama(prompt, request)
             else:
