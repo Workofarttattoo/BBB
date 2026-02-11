@@ -45,9 +45,24 @@ def test_generate_license_quote():
     assert response.status_code == 200
     data = response.json()
     assert data["success"] is True
-    # The message should clearly state it is a quote
     assert "License quote generated" in data["message"]
-    # Amount validation
-    assert data["amount"] > 0
-    # Payment URL should be None as per current implementation
+
+    # Verify new fields
+    assert "initial_investment" in data
+    assert "monthly_fee" in data
+
+    # Verify calculations based on professional tier
+    # Base (Seed): 9999
+    # Per User: 199 * 5 = 995
+    # Per Business: 299 * 2 = 598
+    # Support Premium: 1999
+
+    expected_seed = 9999.0
+    expected_monthly = (199 * 5) + (299 * 2) + 1999.0
+    expected_total = expected_seed + expected_monthly
+
+    assert data["initial_investment"] == expected_seed
+    assert data["monthly_fee"] == expected_monthly
+    assert data["amount"] == expected_total
+
     assert data["payment_url"] is None

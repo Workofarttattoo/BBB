@@ -163,7 +163,9 @@ class PurchaseLicenseResponse(BaseModel):
     success: bool
     message: str
     license_key: Optional[str] = None
-    amount: Optional[float] = None
+    amount: Optional[float] = None  # Total due now (initial_investment)
+    initial_investment: Optional[float] = None
+    monthly_fee: Optional[float] = None
     payment_url: Optional[str] = None  # Stripe checkout URL
 
 
@@ -416,6 +418,9 @@ async def generate_license_quote(
     """
 
     # Calculate pricing based on tier
+    # Structure:
+    # - base: Initial "Seed Investment" (one-time setup fee)
+    # - per_user/per_business: Monthly recurring fees
     pricing = {
         "starter": {"base": 2999, "per_user": 99, "per_business": 149},
         "professional": {"base": 9999, "per_user": 199, "per_business": 299},
@@ -429,30 +434,43 @@ async def generate_license_quote(
         )
 
     tier_pricing = pricing[request.license_type]
-    amount = (
-        tier_pricing["base"] +
+
+    # Calculate Seed Investment (One-time)
+    initial_investment = float(tier_pricing["base"])
+
+    # Calculate Monthly Fee (Recurring)
+    monthly_fee = (
         (request.max_users * tier_pricing["per_user"]) +
         (request.max_businesses * tier_pricing["per_business"])
     )
 
-    # Add support level cost
+    # Add support level cost (Monthly)
     support_costs = {"basic": 0, "premium": 1999, "enterprise": 4999}
-    amount += support_costs.get(request.support_level, 0)
+    monthly_fee += support_costs.get(request.support_level, 0)
+
+    # Total due now (Assuming first month + seed)
+    amount = initial_investment + monthly_fee
 
     # Log the quote generation request
     company = request.company_name or "Unknown Company"
-    logger.info(f"License quote generated for {company} (User: {current_user.email}): ${amount:,.2f}")
+    logger.info(
+        f"License quote generated for {company} (User: {current_user.email}): "
+        f"Seed Investment ${initial_investment:,.2f} + Monthly Fee ${monthly_fee:,.2f}"
+    )
 
     # TODO: Implement full purchase flow
-    # 1. Integrate with Stripe API to create a payment intent/checkout session
-    # 2. Return the Stripe checkout URL in payment_url
-    # 3. Create a pending PurchasedLicense record
-    # 4. Handle webhook to activate license upon payment success
+    # 1. Integrate with Stripe API to create a payment intent/checkout session for the Initial Investment + First Month
+    # 2. Setup Stripe Subscription for the Monthly Fee
+    # 3. Return the Stripe checkout URL in payment_url
+    # 4. Create a pending PurchasedLicense record
+    # 5. Handle webhook to activate license upon payment success
 
     return PurchaseLicenseResponse(
         success=True,
-        message=f"License quote generated. Contact josh@corporationoflight.com to complete purchase.",
+        message=f"License quote generated. Monthly fee and seed investment required. Contact josh@corporationoflight.com to complete purchase.",
         amount=amount,
+        initial_investment=initial_investment,
+        monthly_fee=monthly_fee,
         payment_url=None  # Would be Stripe checkout URL in production
     )
 
