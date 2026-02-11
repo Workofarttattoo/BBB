@@ -52,15 +52,7 @@ else:  # pragma: no cover - exercised when passlib is unavailable
 
         @staticmethod
         def verify(plain_password: str, hashed_password: str) -> bool:
-            """Verify a password against a hash (supports legacy SHA-256 fallback)."""
-            # Check for legacy SHA-256 format (64 hex characters)
-            if len(hashed_password) == 64 and all(c in '0123456789abcdef' for c in hashed_password):
-                # Legacy verification (VULNERABLE - for backward compatibility only)
-                return compare_digest(
-                    hashlib.sha256(plain_password.encode("utf-8")).hexdigest(),
-                    hashed_password
-                )
-
+            """Verify a password against a hash."""
             try:
                 # Parse secure format: algo$iterations$salt$hash
                 parts = hashed_password.split('$')
