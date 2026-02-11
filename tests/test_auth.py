@@ -380,6 +380,29 @@ class TestLicensingFlows:
 
     def test_activate_license_promotes_subscription(self):
         """Users can activate paid licenses and change subscription tier."""
+        # Setup license
+        from blank_business_builder.api_licensing import PurchasedLicense
+        from datetime import datetime
+
+        db = TestingSessionLocal()
+        license = PurchasedLicense(
+            license_key="PRO-LICENSE-KEY",
+            purchase_date=datetime.utcnow(),
+            purchase_amount=100.0,
+            payment_method="test",
+            transaction_id="tx_test",
+            license_type="pro",
+            max_users=1,
+            max_businesses=5,
+            support_level="premium",
+            support_expires_at=datetime.utcnow(),
+            is_active=True,
+            billing_email="pro@example.com"
+        )
+        db.add(license)
+        db.commit()
+        db.close()
+
         register_response = client.post(
             "/api/auth/register",
             json={
@@ -392,7 +415,7 @@ class TestLicensingFlows:
         activate_response = client.post(
             "/api/license/activate",
             headers={"Authorization": f"Bearer {token}"},
-            json={"tier": "pro"}
+            json={"license_key": "PRO-LICENSE-KEY"}
         )
         assert activate_response.status_code == 200
         data = activate_response.json()
