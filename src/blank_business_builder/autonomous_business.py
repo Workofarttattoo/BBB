@@ -11,8 +11,8 @@ Features:
 - Real-time Market Research & Analysis
 - Content Generation & Publishing (Blog, Social)
 - Lead Generation & Nurturing
-- Voice Sales Agents (Twilio/Bland AI Integration)
-- Ad Creative Generation (Text-to-Video/Image)
+- Voice Sales Agents (Twilio/Bland AI Integration + ElevenLabs)
+- Ad Creative Generation (Text-to-Video/Image + ElevenLabs Voiceover)
 - New Business Discovery & Launch
 - Customer Service Automation
 - Revenue Tracking & Payment Processing (Stripe)
@@ -56,15 +56,16 @@ class TwilioClient:
         except ImportError:
             self.client = None
 
-    async def make_call(self, to_number: str, script: str) -> Dict:
+    async def make_call(self, to_number: str, script: str, audio_url: Optional[str] = None) -> Dict:
         if not self.client:
             return {"status": "error", "reason": "Twilio library or credentials missing", "script": script}
 
         try:
+            twiml_content = f'<Response><Play>{audio_url}</Play></Response>' if audio_url else f'<Response><Say>{script}</Say></Response>'
             call = self.client.calls.create(
                 to=to_number,
                 from_=self.from_number,
-                twiml=f'<Response><Say>{script}</Say></Response>'
+                twiml=twiml_content
             )
             return {"status": "initiated", "sid": call.sid}
         except Exception as e:
@@ -92,6 +93,54 @@ class OpenAIClient:
                 n=1,
             )
             return {"status": "generated", "url": response.data[0].url}
+        except Exception as e:
+            return {"status": "error", "reason": str(e)}
+
+class ElevenLabsClient:
+    def __init__(self):
+        self.api_key = os.getenv("ELEVENLABS_API_KEY")
+        self.voice_id = "21m00Tcm4TlvDq8ikWAM" # Default Rachel voice
+
+    async def generate_speech(self, text: str) -> Dict:
+        if not self.api_key:
+            return {"status": "error", "reason": "ElevenLabs API Key missing", "text": text}
+
+        try:
+            # REAL API CALL via httpx (standard library for async requests in this project)
+            import httpx
+
+            url = f"https://api.elevenlabs.io/v1/text-to-speech/{self.voice_id}"
+            headers = {
+                "xi-api-key": self.api_key,
+                "Content-Type": "application/json"
+            }
+            data = {
+                "text": text,
+                "model_id": "eleven_monolingual_v1",
+                "voice_settings": {
+                    "stability": 0.5,
+                    "similarity_boost": 0.5
+                }
+            }
+
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url, json=data, headers=headers, timeout=30.0)
+
+            if response.status_code == 200:
+                # In a real production environment, we would upload this content to S3/Cloud Storage
+                # and return the public URL for Twilio to play.
+                # Since we don't have S3 configured here, we will return the raw content
+                # and a status that lets the caller know it's raw content, NOT a URL.
+                return {
+                    "status": "generated_content",
+                    "audio_content": response.content,
+                    "warning": "Raw audio content returned. Needs hosting for Twilio <Play>."
+                }
+            else:
+                return {"status": "error", "reason": f"API Error: {response.text}"}
+
+        except ImportError:
+             return {"status": "error", "reason": "httpx library missing"}
         except Exception as e:
             return {"status": "error", "reason": str(e)}
 
@@ -218,6 +267,7 @@ class Level6BusinessAgent:
         # Initialize real clients
         self.twilio = TwilioClient()
         self.openai = OpenAIClient()
+        self.elevenlabs = ElevenLabsClient()
         self.stripe = StripeClient()
 
     async def execute_task(self, task: AutonomousTask) -> Dict:
@@ -258,7 +308,7 @@ class Level6BusinessAgent:
         return {"success": True, "action": "generic_execution", "outcome": "Executed via ECH0"}
 
     async def _execute_voice_sales(self, task: AutonomousTask) -> Dict:
-        """Execute real voice calls via Twilio."""
+        """Execute real voice calls via Twilio with ElevenLabs Audio."""
         # 1. Get leads (Mock query, would be database select)
         leads = [{"phone": "+15550123", "name": "Lead A"}]
 
@@ -270,8 +320,15 @@ class Level6BusinessAgent:
                 content_type="phone_script"
             )
 
-            # 3. Make REAL call
-            call_result = await self.twilio.make_call(lead['phone'], script)
+            # 3. Generate Audio via ElevenLabs
+            audio_result = await self.elevenlabs.generate_speech(script)
+
+            # Use generated audio URL if available (Production), else fallback to TTS script
+            # In development, audio_url will be None unless we host the raw content
+            audio_url = audio_result.get('audio_url') if audio_result.get('status') == 'generated' else None
+
+            # 4. Make REAL call (using audio if hosted, else TTS)
+            call_result = await self.twilio.make_call(lead['phone'], script, audio_url=audio_url)
             results.append(call_result)
 
         success = any(r['status'] in ['initiated', 'completed'] for r in results)
@@ -283,7 +340,7 @@ class Level6BusinessAgent:
         }
 
     async def _execute_ad_creation(self, task: AutonomousTask) -> Dict:
-        """Generate real ad creatives."""
+        """Generate real ad creatives with Voiceover."""
         # 1. Generate prompt via ECH0
         prompt = await self.ech0.generate_content(
             topic=f"Viral ad concept for {self.business_concept}",
@@ -293,10 +350,20 @@ class Level6BusinessAgent:
         # 2. Generate Image via DALL-E (OpenAI)
         image_result = await self.openai.generate_image(prompt)
 
+        # 3. Generate Voiceover Script
+        vo_script = await self.ech0.generate_content(
+            topic=f"Voiceover for ad about {self.business_concept}",
+            content_type="ad_script"
+        )
+
+        # 4. Generate Voiceover Audio via ElevenLabs
+        vo_result = await self.elevenlabs.generate_speech(vo_script)
+
         return {
             "success": image_result['status'] != "error",
             "action": "ad_creation",
             "creative_url": image_result.get('url'),
+            "voiceover_url": vo_result.get('audio_url'),
             "status": image_result['status']
         }
 

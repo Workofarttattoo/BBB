@@ -34,7 +34,7 @@ async def bootstrap():
     logger.info("Initializing Autonomous Business OS...")
 
     # Check for critical environment variables (Real Mode)
-    required_vars = ["OPENAI_API_KEY", "STRIPE_API_KEY", "TWILIO_ACCOUNT_SID"]
+    required_vars = ["OPENAI_API_KEY", "STRIPE_API_KEY", "TWILIO_ACCOUNT_SID", "ELEVENLABS_API_KEY"]
     missing = [v for v in required_vars if not os.getenv(v)]
 
     if missing:
