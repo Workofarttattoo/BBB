@@ -485,14 +485,21 @@ class RedTeamLicenseManager:
 
     def _price_id_to_tier(self, price_id: str) -> SubscriptionTier:
         """Map Stripe price ID to subscription tier"""
-        # TODO: Update with actual Stripe price IDs after setup
+        # Load from environment variables, defaulting to legacy placeholders
+        price_pro_m = os.getenv("STRIPE_PRICE_PROFESSIONAL_MONTHLY", "price_professional_monthly")
+        price_pro_y = os.getenv("STRIPE_PRICE_PROFESSIONAL_YEARLY", "price_professional_yearly")
+        price_ent_m = os.getenv("STRIPE_PRICE_ENTERPRISE_MONTHLY", "price_enterprise_monthly")
+        price_ent_y = os.getenv("STRIPE_PRICE_ENTERPRISE_YEARLY", "price_enterprise_yearly")
+        price_unl_m = os.getenv("STRIPE_PRICE_UNLIMITED_MONTHLY", "price_unlimited_monthly")
+        price_unl_y = os.getenv("STRIPE_PRICE_UNLIMITED_YEARLY", "price_unlimited_yearly")
+
         price_map = {
-            "price_professional_monthly": SubscriptionTier.PROFESSIONAL,
-            "price_professional_yearly": SubscriptionTier.PROFESSIONAL,
-            "price_enterprise_monthly": SubscriptionTier.ENTERPRISE,
-            "price_enterprise_yearly": SubscriptionTier.ENTERPRISE,
-            "price_unlimited_monthly": SubscriptionTier.UNLIMITED,
-            "price_unlimited_yearly": SubscriptionTier.UNLIMITED,
+            price_pro_m: SubscriptionTier.PROFESSIONAL,
+            price_pro_y: SubscriptionTier.PROFESSIONAL,
+            price_ent_m: SubscriptionTier.ENTERPRISE,
+            price_ent_y: SubscriptionTier.ENTERPRISE,
+            price_unl_m: SubscriptionTier.UNLIMITED,
+            price_unl_y: SubscriptionTier.UNLIMITED,
         }
 
         return price_map.get(price_id, SubscriptionTier.PROFESSIONAL)
@@ -521,68 +528,3 @@ class RedTeamLicenseManager:
         )
 
 
-# CLI for testing
-if __name__ == "__main__":
-    import asyncio
-
-    async def demo():
-        """Demo the licensing system"""
-        print("Red Team Tools - License Manager Demo")
-        print("=" * 60)
-
-        # Initialize
-        manager = RedTeamLicenseManager()
-
-        # Create customer
-        print("\n1. Creating customer...")
-        customer = await manager.create_customer(
-            email="pentest@example.com"
-        )
-        print(f"   Customer ID: {customer.id}")
-        print(f"   Email: {customer.email}")
-
-        # Create subscription
-        print("\n2. Creating Professional subscription...")
-        subscription = await manager.create_subscription(
-            customer_id=customer.id,
-            tier=SubscriptionTier.PROFESSIONAL,
-            trial_days=14
-        )
-        print(f"   Subscription ID: {subscription.id}")
-        print(f"   Tier: {subscription.tier.value}")
-        print(f"   Status: {subscription.status.value}")
-        print(f"   Expires: {subscription.current_period_end}")
-        print(f"   Seats: {subscription.seats_used}/{subscription.seats_total}")
-
-        # Get licenses
-        print("\n3. Getting license keys...")
-        licenses = await manager.get_subscription_licenses(subscription.id)
-        for lic in licenses:
-            print(f"   License: {lic.license_key}")
-
-        # Validate license
-        print("\n4. Validating license...")
-        validation = await manager.validate_license(
-            license_key=licenses[0].license_key,
-            machine_id="demo-machine-001"
-        )
-        print(f"   Valid: {validation['valid']}")
-        print(f"   Tier: {validation['tier']}")
-        print(f"   Tools: {len(validation['tools_enabled'])} enabled")
-
-        # Log usage
-        print("\n5. Logging tool usage...")
-        event = await manager.log_usage_event(
-            license_key=licenses[0].license_key,
-            tool_name="aurorascan",
-            event_type="scan",
-            metadata={"targets": 5, "vulnerabilities": 2}
-        )
-        print(f"   Event ID: {event.id}")
-        print(f"   Tool: {event.tool_name}")
-        print(f"   Type: {event.event_type}")
-
-        print("\n" + "=" * 60)
-        print("Demo complete! License system ready for production.")
-
-    asyncio.run(demo())

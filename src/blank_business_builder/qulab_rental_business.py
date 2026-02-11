@@ -19,8 +19,18 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Dict, List, Optional, Any
 from decimal import Decimal
+from collections import Counter
 
 logger = logging.getLogger(__name__)
+
+
+class SubscriptionTier(Enum):
+    """Subscription tier levels for QuLab."""
+    RESEARCH = "research"
+    STARTUP = "startup"
+    PROFESSIONAL = "professional"
+    ENTERPRISE = "enterprise"
+    DEDICATED = "dedicated"
 
 
 class RentalPackage(Enum):
@@ -35,6 +45,10 @@ class JobPriority(Enum):
     STANDARD = "standard"      # Standard queue
     EXPRESS = "express"        # Priority processing (+50%)
     DEDICATED = "dedicated"    # Exclusive time slot (+100%)
+    LOW = "low"
+    NORMAL = "normal"
+    HIGH = "high"
+    URGENT = "urgent"
 
 
 @dataclass
@@ -407,10 +421,9 @@ class QuLabRentalBusiness:
             "usage_breakdown": {
                 "avg_qubits_per_job": sum(j.num_qubits for j in completed_jobs) / max(1, len(completed_jobs)),
                 "total_simulation_minutes": sum(j.simulation_minutes for j in completed_jobs),
-                "most_used_priority": max(
-                    [j.priority.value for j in customer_jobs],
-                    key=[j.priority.value for j in customer_jobs].count
-                ) if customer_jobs else "none"
+                "most_used_priority": Counter(
+                    j.priority.value for j in customer_jobs
+                ).most_common(1)[0][0] if customer_jobs else "none"
             },
             "recommendations": self._generate_recommendations(customer)
         }

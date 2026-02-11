@@ -659,9 +659,17 @@ async def activate_license(
 # Run application
 if __name__ == "__main__":
     import os
+
+    # Secure defaults: debug mode disabled, environment is production
+    debug_mode = os.getenv("DEBUG", "false").lower() == "true"
+    environment = os.getenv("ENVIRONMENT", "production").lower()
+
+    # Only enable reload in development environment
+    should_reload = debug_mode or environment == "development"
+
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
         port=int(os.getenv("PORT", 8000)),
-        reload=True
+        reload=should_reload
     )

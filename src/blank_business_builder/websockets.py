@@ -4,6 +4,7 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 """
 from fastapi import WebSocket, WebSocketDisconnect, Depends
 from typing import Dict, Set
+from sqlalchemy import func, case
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case
 from datetime import datetime
@@ -66,6 +67,12 @@ manager = ConnectionManager()
 
 async def get_business_metrics(business_id: str, db: Session) -> dict:
     """Get real-time business metrics."""
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, _get_business_metrics_sync, business_id, db)
+
+
+def _get_business_metrics_sync(business_id: str, db: Session) -> dict:
+    """Synchronous implementation of get_business_metrics."""
     business = db.query(Business).filter(Business.id == business_id).first()
 
     if not business:

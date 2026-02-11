@@ -78,6 +78,9 @@ class ExpertDomain(Enum):
     MACHINE_LEARNING = "machine_learning"
     QUANTUM_COMPUTING = "quantum_computing"
 
+    # Legal
+    LEGAL = "legal"
+
     # General
     GENERAL = "general"
 
@@ -383,6 +386,46 @@ class ChemistryExpert(DomainExpert):
             confidence=confidence * self.specialization_score,
             sources=sources,
             reasoning="RAG-based synthesis from chemistry knowledge base",
+            expert_id=self.expert_id
+        )
+
+        self.query_history.append((query.query, response))
+        return response
+
+
+class LegalExpert(DomainExpert):
+    """Expert in legal predictions and analysis (TheGavl)."""
+
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.LEGAL, vector_store)
+
+    async def answer_query(self, query: ExpertQuery) -> ExpertResponse:
+        """Answer legal query."""
+        context_docs = await self.retrieve_context(query.query, query.max_results)
+
+        sources = [
+            {
+                "doc_id": doc.doc_id,
+                "content": doc.content[:200],
+                "relevance": score,
+                "metadata": doc.metadata
+            }
+            for doc, score in context_docs
+        ]
+
+        answer = f"[Legal Expert (TheGavl)] Based on {len(sources)} precedents: {query.query}"
+        if context_docs:
+            top_doc, top_score = context_docs[0]
+            answer += f"\n\nKey precedent: {top_doc.content[:300]}"
+
+        confidence = np.mean([score for _, score in context_docs]) if context_docs else 0.5
+
+        response = ExpertResponse(
+            answer=answer,
+            domain=self.domain,
+            confidence=confidence * self.specialization_score,
+            sources=sources,
+            reasoning="RAG-based synthesis from legal knowledge base",
             expert_id=self.expert_id
         )
 
@@ -704,9 +747,10 @@ class MultiDomainExpertSystem:
         self.experts[ExpertDomain.BIOLOGY] = BiologyExpert("bio_001", self.vector_store)
         self.experts[ExpertDomain.PHYSICS] = PhysicsExpert("phys_001", self.vector_store)
         self.experts[ExpertDomain.MATERIALS_SCIENCE] = MaterialsScienceExpert("matsci_001", self.vector_store)
+        self.experts[ExpertDomain.LEGAL] = LegalExpert("legal_001", self.vector_store)
 
         # Additional experts can be added here
-        logger.info("Initialized domain experts: chemistry, biology, physics, materials_science")
+        logger.info("Initialized domain experts: chemistry, biology, physics, materials_science, legal")
 
     def add_knowledge(self, documents: List[KnowledgeDocument]) -> None:
         """Add documents to knowledge base."""
