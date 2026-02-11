@@ -113,6 +113,25 @@ class RedTeamLicenseManager:
             raise ValueError("SUPABASE_KEY environment variable required")
 
         self.client: Client = create_client(self.supabase_url, self.supabase_key)
+        self.price_map = self._build_price_map()
+
+    def _build_price_map(self) -> Dict[str, SubscriptionTier]:
+        """Build price map from environment variables with fallbacks"""
+        price_map = {}
+
+        # Professional
+        price_map[os.getenv("STRIPE_PRICE_PROFESSIONAL_MONTHLY", "price_professional_monthly")] = SubscriptionTier.PROFESSIONAL
+        price_map[os.getenv("STRIPE_PRICE_PROFESSIONAL_YEARLY", "price_professional_yearly")] = SubscriptionTier.PROFESSIONAL
+
+        # Enterprise
+        price_map[os.getenv("STRIPE_PRICE_ENTERPRISE_MONTHLY", "price_enterprise_monthly")] = SubscriptionTier.ENTERPRISE
+        price_map[os.getenv("STRIPE_PRICE_ENTERPRISE_YEARLY", "price_enterprise_yearly")] = SubscriptionTier.ENTERPRISE
+
+        # Unlimited
+        price_map[os.getenv("STRIPE_PRICE_UNLIMITED_MONTHLY", "price_unlimited_monthly")] = SubscriptionTier.UNLIMITED
+        price_map[os.getenv("STRIPE_PRICE_UNLIMITED_YEARLY", "price_unlimited_yearly")] = SubscriptionTier.UNLIMITED
+
+        return price_map
 
     def generate_license_key(self, subscription_id: str, tier: SubscriptionTier) -> str:
         """
@@ -485,17 +504,7 @@ class RedTeamLicenseManager:
 
     def _price_id_to_tier(self, price_id: str) -> SubscriptionTier:
         """Map Stripe price ID to subscription tier"""
-        # TODO: Update with actual Stripe price IDs after setup
-        price_map = {
-            "price_professional_monthly": SubscriptionTier.PROFESSIONAL,
-            "price_professional_yearly": SubscriptionTier.PROFESSIONAL,
-            "price_enterprise_monthly": SubscriptionTier.ENTERPRISE,
-            "price_enterprise_yearly": SubscriptionTier.ENTERPRISE,
-            "price_unlimited_monthly": SubscriptionTier.UNLIMITED,
-            "price_unlimited_yearly": SubscriptionTier.UNLIMITED,
-        }
-
-        return price_map.get(price_id, SubscriptionTier.PROFESSIONAL)
+        return self.price_map.get(price_id, SubscriptionTier.PROFESSIONAL)
 
     async def _get_or_create_customer_by_stripe_id(self, stripe_customer_id: str) -> Customer:
         """Get customer by Stripe ID or create if not exists"""
