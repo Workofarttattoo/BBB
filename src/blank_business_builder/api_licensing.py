@@ -7,7 +7,7 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
-from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text
+from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text, func
 
 from .database import get_db, User, Base
 from .auth import get_current_user
@@ -179,20 +179,29 @@ async def get_license_status(
         LicenseAgreement.status == "active"
     ).first()
 
-    # Get revenue reports
-    reports = db.query(RevenueReport).filter(
-        RevenueReport.user_id == current_user.id
-    ).all()
+    # Get revenue reports (optimized aggregation)
+    aggregates = db.query(
+        func.sum(RevenueReport.gross_revenue),
+        func.sum(RevenueReport.revenue_share_owed)
+    ).filter(
+        RevenueReport.user_id == str(current_user.id)
+    ).first()
 
-    total_reported = sum(r.gross_revenue for r in reports)
-    total_owed = sum(r.revenue_share_owed for r in reports)
-    total_paid = sum(r.payment_amount or 0.0 for r in reports if r.status == "paid")
+    total_reported = aggregates[0] or 0.0
+    total_owed = aggregates[1] or 0.0
+
+    total_paid = db.query(func.sum(RevenueReport.payment_amount)).filter(
+        RevenueReport.user_id == str(current_user.id),
+        RevenueReport.status == "paid"
+    ).scalar() or 0.0
+
     outstanding = total_owed - total_paid
 
-    overdue_count = len([
-        r for r in reports
-        if r.status == "pending" and r.payment_due_date < datetime.utcnow()
-    ])
+    overdue_count = db.query(func.count(RevenueReport.id)).filter(
+        RevenueReport.user_id == str(current_user.id),
+        RevenueReport.status == "pending",
+        RevenueReport.payment_due_date < datetime.utcnow()
+    ).scalar() or 0
 
     # Calculate days remaining in trial
     days_remaining = None
