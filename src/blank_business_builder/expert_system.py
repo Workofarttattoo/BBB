@@ -78,6 +78,9 @@ class ExpertDomain(Enum):
     MACHINE_LEARNING = "machine_learning"
     QUANTUM_COMPUTING = "quantum_computing"
 
+    # Legal
+    LEGAL = "legal"
+
     # General
     GENERAL = "general"
 
@@ -347,14 +350,14 @@ class DomainExpert(ABC):
         return self.vector_store.search(query, top_k=max_results, domain=self.domain)
 
 
-class ChemistryExpert(DomainExpert):
-    """Expert in chemistry."""
+class StandardDomainExpert(DomainExpert):
+    """Standard implementation of a domain expert."""
 
-    def __init__(self, expert_id: str, vector_store: VectorStore):
-        super().__init__(expert_id, ExpertDomain.CHEMISTRY, vector_store)
+    def __init__(self, expert_id: str, domain: ExpertDomain, vector_store: VectorStore):
+        super().__init__(expert_id, domain, vector_store)
 
     async def answer_query(self, query: ExpertQuery) -> ExpertResponse:
-        """Answer chemistry query."""
+        """Answer query using domain expertise."""
         # Retrieve relevant documents
         context_docs = await self.retrieve_context(query.query, query.max_results)
 
@@ -370,7 +373,8 @@ class ChemistryExpert(DomainExpert):
         ]
 
         # Generate answer based on domain knowledge
-        answer = f"[Chemistry Expert] Based on {len(sources)} sources: {query.query}"
+        domain_name = self.domain.value.replace('_', ' ').title()
+        answer = f"[{domain_name} Expert] Based on {len(sources)} sources: {query.query}"
         if context_docs:
             top_doc, top_score = context_docs[0]
             answer += f"\n\nKey insight: {top_doc.content[:300]}"
@@ -382,7 +386,7 @@ class ChemistryExpert(DomainExpert):
             domain=self.domain,
             confidence=confidence * self.specialization_score,
             sources=sources,
-            reasoning="RAG-based synthesis from chemistry knowledge base",
+            reasoning=f"RAG-based synthesis from {self.domain.value.replace('_', ' ')} knowledge base",
             expert_id=self.expert_id
         )
 
@@ -390,124 +394,6 @@ class ChemistryExpert(DomainExpert):
         return response
 
 
-class BiologyExpert(DomainExpert):
-    """Expert in biology."""
-
-    def __init__(self, expert_id: str, vector_store: VectorStore):
-        super().__init__(expert_id, ExpertDomain.BIOLOGY, vector_store)
-
-    async def answer_query(self, query: ExpertQuery) -> ExpertResponse:
-        """Answer biology query."""
-        context_docs = await self.retrieve_context(query.query, query.max_results)
-
-        sources = [
-            {
-                "doc_id": doc.doc_id,
-                "content": doc.content[:200],
-                "relevance": score,
-                "metadata": doc.metadata
-            }
-            for doc, score in context_docs
-        ]
-
-        answer = f"[Biology Expert] Based on {len(sources)} sources: {query.query}"
-        if context_docs:
-            top_doc, top_score = context_docs[0]
-            answer += f"\n\nKey insight: {top_doc.content[:300]}"
-
-        confidence = np.mean([score for _, score in context_docs]) if context_docs else 0.5
-
-        response = ExpertResponse(
-            answer=answer,
-            domain=self.domain,
-            confidence=confidence * self.specialization_score,
-            sources=sources,
-            reasoning="RAG-based synthesis from biology knowledge base",
-            expert_id=self.expert_id
-        )
-
-        self.query_history.append((query.query, response))
-        return response
-
-
-class PhysicsExpert(DomainExpert):
-    """Expert in physics."""
-
-    def __init__(self, expert_id: str, vector_store: VectorStore):
-        super().__init__(expert_id, ExpertDomain.PHYSICS, vector_store)
-
-    async def answer_query(self, query: ExpertQuery) -> ExpertResponse:
-        """Answer physics query."""
-        context_docs = await self.retrieve_context(query.query, query.max_results)
-
-        sources = [
-            {
-                "doc_id": doc.doc_id,
-                "content": doc.content[:200],
-                "relevance": score,
-                "metadata": doc.metadata
-            }
-            for doc, score in context_docs
-        ]
-
-        answer = f"[Physics Expert] Based on {len(sources)} sources: {query.query}"
-        if context_docs:
-            top_doc, top_score = context_docs[0]
-            answer += f"\n\nKey insight: {top_doc.content[:300]}"
-
-        confidence = np.mean([score for _, score in context_docs]) if context_docs else 0.5
-
-        response = ExpertResponse(
-            answer=answer,
-            domain=self.domain,
-            confidence=confidence * self.specialization_score,
-            sources=sources,
-            reasoning="RAG-based synthesis from physics knowledge base",
-            expert_id=self.expert_id
-        )
-
-        self.query_history.append((query.query, response))
-        return response
-
-
-class MaterialsScienceExpert(DomainExpert):
-    """Expert in materials science."""
-
-    def __init__(self, expert_id: str, vector_store: VectorStore):
-        super().__init__(expert_id, ExpertDomain.MATERIALS_SCIENCE, vector_store)
-
-    async def answer_query(self, query: ExpertQuery) -> ExpertResponse:
-        """Answer materials science query."""
-        context_docs = await self.retrieve_context(query.query, query.max_results)
-
-        sources = [
-            {
-                "doc_id": doc.doc_id,
-                "content": doc.content[:200],
-                "relevance": score,
-                "metadata": doc.metadata
-            }
-            for doc, score in context_docs
-        ]
-
-        answer = f"[Materials Science Expert] Based on {len(sources)} sources: {query.query}"
-        if context_docs:
-            top_doc, top_score = context_docs[0]
-            answer += f"\n\nKey insight: {top_doc.content[:300]}"
-
-        confidence = np.mean([score for _, score in context_docs]) if context_docs else 0.5
-
-        response = ExpertResponse(
-            answer=answer,
-            domain=self.domain,
-            confidence=confidence * self.specialization_score,
-            sources=sources,
-            reasoning="RAG-based synthesis from materials science knowledge base",
-            expert_id=self.expert_id
-        )
-
-        self.query_history.append((query.query, response))
-        return response
 
 
 class MultiExpertEnsemble:
@@ -700,13 +586,15 @@ class MultiDomainExpertSystem:
     def _initialize_experts(self) -> None:
         """Initialize all domain experts."""
         # Science experts
+       
         self.experts[ExpertDomain.CHEMISTRY] = ChemistryExpert("chem_001", self.vector_store)
         self.experts[ExpertDomain.BIOLOGY] = BiologyExpert("bio_001", self.vector_store)
         self.experts[ExpertDomain.PHYSICS] = PhysicsExpert("phys_001", self.vector_store)
         self.experts[ExpertDomain.MATERIALS_SCIENCE] = MaterialsScienceExpert("matsci_001", self.vector_store)
+        self.experts[ExpertDomain.LEGAL] = LegalExpert("legal_001", self.vector_store)
 
         # Additional experts can be added here
-        logger.info("Initialized domain experts: chemistry, biology, physics, materials_science")
+        logger.info("Initialized domain experts: chemistry, biology, physics, materials_science, legal")
 
     def add_knowledge(self, documents: List[KnowledgeDocument]) -> None:
         """Add documents to knowledge base."""
