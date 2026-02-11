@@ -20,7 +20,6 @@ Features:
 from __future__ import annotations
 
 import asyncio
-import json
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -299,7 +298,7 @@ class Level6BusinessAgent:
 
     async def _plan_finance(self, task: AutonomousTask) -> Dict:
         """Finance agent: Revenue tracking, invoicing, reporting."""
-        checkout_url = self.payment_processor.create_checkout_session(
+        checkout_url = await self.payment_processor.create_checkout_session(
             price_id="price_12345",  # Replace with a real Price ID
             success_url="https://example.com/success",
             cancel_url="https://example.com/cancel"
@@ -743,25 +742,3 @@ async def launch_autonomous_business(
     return orchestrator.get_metrics_dashboard()
 
 
-if __name__ == "__main__":
-    # Demo: Launch autonomous business
-    async def demo():
-        result = await launch_autonomous_business(
-            business_concept="AI Chatbot Integration Service",
-            founder_name="Joshua Cole",
-            duration_hours=0.1,  # 6 minutes for demo
-            market_research_api_key="test",
-            sendgrid_api_key="test",
-            stripe_api_key="test",
-            twitter_consumer_key="test",
-            twitter_consumer_secret="test",
-            twitter_access_token="test",
-            twitter_access_token_secret="test"
-        )
-
-        print("\n" + "="*60)
-        print("FINAL AUTONOMOUS BUSINESS METRICS")
-        print("="*60)
-        print(json.dumps(result, indent=2))
-
-    asyncio.run(demo())
