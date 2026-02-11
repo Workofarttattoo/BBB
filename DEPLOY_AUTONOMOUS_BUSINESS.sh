@@ -46,7 +46,7 @@ echo ""
 echo "We need API keys for autonomous operation:"
 echo ""
 
-CONFIG_FILE="/Users/noone/repos/BBB/autonomous_config.json"
+CONFIG_FILE="./autonomous_config.json"
 
 # Check if config exists
 if [ -f "$CONFIG_FILE" ]; then
@@ -92,7 +92,6 @@ echo ""
 echo "🏗️  STEP 4: Completing FlowState to Jira-killer status..."
 echo ""
 
-cd /Users/noone/repos/BBB
 python3 flowstate_completion_to_production.py
 
 echo ""
@@ -154,8 +153,9 @@ elif [ "$deploy_mode" = "2" ]; then
         echo "🚀 Launching autonomous business system..."
         echo ""
 
-        # Create launch daemon
-        cat > /Users/noone/Library/LaunchAgents/com.bbb.autonomous.plist << 'PLIST'
+        # Create launch daemon (simulated for non-macOS environment)
+        if [ -d "/Users/noone/Library/LaunchAgents" ]; then
+            cat > /Users/noone/Library/LaunchAgents/com.bbb.autonomous.plist << 'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -180,9 +180,12 @@ elif [ "$deploy_mode" = "2" ]; then
 </dict>
 </plist>
 PLIST
-
-        # Load the daemon
-        launchctl load /Users/noone/Library/LaunchAgents/com.bbb.autonomous.plist
+            # Load the daemon
+            launchctl load /Users/noone/Library/LaunchAgents/com.bbb.autonomous.plist
+        else
+             echo "Running in background as we are not on macOS..."
+             nohup python3 autonomous_business_runner.py --years=10 --mode=production > ./FlowState/logs/autonomous_business.log 2> ./FlowState/logs/autonomous_business_error.log &
+        fi
 
         echo ""
         echo "================================================================================"
@@ -220,5 +223,5 @@ fi
 echo ""
 echo "================================================================================"
 echo "For questions: josh@flowstate.work or inventor@aios.is"
-echo "Documentation: /Users/noone/repos/BBB/AUTONOMOUS_BUSINESS_ARCHITECTURE_10YEAR.md"
+echo "Documentation: ./AUTONOMOUS_BUSINESS_ARCHITECTURE_10YEAR.md"
 echo "================================================================================"
