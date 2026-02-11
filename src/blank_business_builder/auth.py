@@ -4,6 +4,7 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 """
 from datetime import datetime, timedelta
 from typing import Optional
+import time
 import jwt
 from hashlib import sha256
 from hmac import compare_digest
@@ -321,17 +322,33 @@ def rate_limit(max_requests: int, window_seconds: int):
     """Rate limiting decorator for API endpoints."""
     from functools import wraps
     from collections import defaultdict
-    from time import time
 
     request_counts = defaultdict(list)
+    last_cleanup = [time.time()]
 
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             user_id = kwargs.get('current_user').id if kwargs.get('current_user') else 'anonymous'
-            now = time()
+            now = time.time()
 
-            # Clean old requests
+            # Periodic cleanup
+            if now - last_cleanup[0] > window_seconds:
+                # Remove empty/expired entries
+                keys_to_remove = []
+                for uid, timestamps in request_counts.items():
+                    # Filter timestamps for this user
+                    valid_timestamps = [t for t in timestamps if now - t < window_seconds]
+                    request_counts[uid] = valid_timestamps
+                    if not valid_timestamps:
+                        keys_to_remove.append(uid)
+
+                for uid in keys_to_remove:
+                    del request_counts[uid]
+
+                last_cleanup[0] = now
+
+            # Clean old requests for current user (redundant if cleanup ran, but ensures consistency)
             request_counts[user_id] = [
                 req_time for req_time in request_counts[user_id]
                 if now - req_time < window_seconds
