@@ -27,7 +27,10 @@ class EmailService:
     """
 
     def __init__(self, api_key: str):
-        self.client = SendGridAPIClient(api_key)
+        if SENDGRID_AVAILABLE:
+            self.client = SendGridAPIClient(api_key)
+        else:
+            self.client = None
         self.ech0_service = ECH0Service()
 
     async def send_email(
@@ -45,15 +48,19 @@ class EmailService:
             return await self.ech0_service.send_email(from_email, to_emails[0], subject, html_content)
         except Exception:
             # Fallback to SendGrid
-            message = Mail(
-                from_email=from_email,
-                to_emails=to_emails,
-                subject=subject,
-                html_content=html_content
-            )
-            try:
-                response = self.client.send(message)
-                return response.status_code == 202
-            except Exception as e:
-                print(f"Error sending email: {e}")
+            if self.client and Mail:
+                message = Mail(
+                    from_email=from_email,
+                    to_emails=to_emails,
+                    subject=subject,
+                    html_content=html_content
+                )
+                try:
+                    response = self.client.send(message)
+                    return response.status_code == 202
+                except Exception as e:
+                    print(f"Error sending email: {e}")
+                    return False
+            else:
+                print("Error: SendGrid not available")
                 return False

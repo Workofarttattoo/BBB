@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -284,13 +285,17 @@ class Level6BusinessAgent:
 
     async def _plan_marketing(self, task: AutonomousTask) -> Dict:
         """Marketing agent: Content creation, SEO, advertising."""
-        await self.email_service.send_email(
-            from_email="marketing@mybusiness.com",
-            to_emails=["customer@example.com"],
-            subject="Check out our new blog post!",
-            html_content="<p>We've just published a new blog post that you might find interesting.</p>"
-        )
-        await self.social_media.post_tweet("Check out our new blog post!")
+        if self.email_service:
+            await self.email_service.send_email(
+                from_email="marketing@mybusiness.com",
+                to_emails=["customer@example.com"],
+                subject="Check out our new blog post!",
+                html_content="<p>We've just published a new blog post that you might find interesting.</p>"
+            )
+
+        if self.social_media:
+            await self.social_media.post_tweet("Check out our new blog post!")
+
         return {
             "action": "content_marketing",
             "steps": [
@@ -673,13 +678,13 @@ class AutonomousBusinessOrchestrator:
         self,
         business_concept: str,
         founder_name: str,
-        market_research_api_key: str,
-        sendgrid_api_key: str,
-        stripe_api_key: str,
-        twitter_consumer_key: str,
-        twitter_consumer_secret: str,
-        twitter_access_token: str,
-        twitter_access_token_secret: str
+        market_research_api_key: str = None,
+        sendgrid_api_key: str = None,
+        stripe_api_key: str = None,
+        twitter_consumer_key: str = None,
+        twitter_consumer_secret: str = None,
+        twitter_access_token: str = None,
+        twitter_access_token_secret: str = None
     ):
         self.business_concept = business_concept
         self.founder_name = founder_name
@@ -1042,14 +1047,7 @@ class AutonomousBusinessOrchestrator:
 async def launch_autonomous_business(
     business_concept: str,
     founder_name: str,
-    duration_hours: float = 24.0,
-    market_research_api_key: str = None,
-    sendgrid_api_key: str = None,
-    stripe_api_key: str = None,
-    twitter_consumer_key: str = None,
-    twitter_consumer_secret: str = None,
-    twitter_access_token: str = None,
-    twitter_access_token_secret: str = None
+    duration_hours: float = 24.0
 ) -> Dict:
     """
     Launch a fully autonomous business.
@@ -1058,26 +1056,12 @@ async def launch_autonomous_business(
         business_concept: Type of business to run
         founder_name: Owner's name
         duration_hours: How long to run autonomously
-        market_research_api_key: API key for market research service
-        sendgrid_api_key: API key for SendGrid
-        stripe_api_key: API key for Stripe
-        twitter_consumer_key: Twitter consumer key
-        twitter_consumer_secret: Twitter consumer secret
-        twitter_access_token: Twitter access token
-        twitter_access_token_secret: Twitter access token secret
     Returns:
         Final business metrics after autonomous operation
     """
     orchestrator = AutonomousBusinessOrchestrator(
         business_concept,
-        founder_name,
-        market_research_api_key,
-        sendgrid_api_key,
-        stripe_api_key,
-        twitter_consumer_key,
-        twitter_consumer_secret,
-        twitter_access_token,
-        twitter_access_token_secret
+        founder_name
     )
 
     # Deploy Level 6 agents
@@ -1093,17 +1077,19 @@ async def launch_autonomous_business(
 if __name__ == "__main__":
     # Demo: Launch autonomous business
     async def demo():
+        # Set dummy env vars for demo
+        os.environ["MARKET_RESEARCH_API_KEY"] = "test"
+        os.environ["SENDGRID_API_KEY"] = "test"
+        os.environ["STRIPE_SECRET_KEY"] = "test"
+        os.environ["TWITTER_CONSUMER_KEY"] = "test"
+        os.environ["TWITTER_CONSUMER_SECRET"] = "test"
+        os.environ["TWITTER_ACCESS_TOKEN"] = "test"
+        os.environ["TWITTER_ACCESS_TOKEN_SECRET"] = "test"
+
         result = await launch_autonomous_business(
             business_concept="AI Chatbot Integration Service",
             founder_name="Joshua Cole",
             duration_hours=0.1,  # 6 minutes for demo
-            market_research_api_key="test",
-            sendgrid_api_key="test",
-            stripe_api_key="test",
-            twitter_consumer_key="test",
-            twitter_consumer_secret="test",
-            twitter_access_token="test",
-            twitter_access_token_secret="test"
         )
 
         print("\n" + "="*60)
