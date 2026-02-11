@@ -4,7 +4,7 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 """
 from fastapi import FastAPI, Depends, HTTPException, status, Request, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime, timedelta
@@ -659,9 +659,17 @@ async def activate_license(
 # Run application
 if __name__ == "__main__":
     import os
+
+    # Secure defaults: debug mode disabled, environment is production
+    debug_mode = os.getenv("DEBUG", "false").lower() == "true"
+    environment = os.getenv("ENVIRONMENT", "production").lower()
+
+    # Only enable reload in development environment
+    should_reload = debug_mode or environment == "development"
+
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
         port=int(os.getenv("PORT", 8000)),
-        reload=True
+        reload=should_reload
     )

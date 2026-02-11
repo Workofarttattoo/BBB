@@ -37,6 +37,15 @@ except ImportError:
 CHROME_PROFILE_PATH = os.getenv("FIVERR_CHROME_PROFILE_PATH", "INSERT_YOUR_PROFILE_PATH_HERE")
 PROFILE_DIRECTORY = os.getenv("FIVERR_PROFILE_DIRECTORY", "Default")  # Usually 'Default' or 'Profile 1'
 
+# --- DOM SELECTORS (Verification Required) ---
+# NOTE: These CSS selectors are estimates and must be verified/updated by Level 9 Vision AI
+# or through manual inspection of the current Fiverr DOM structure.
+UNREAD_MESSAGE_SELECTOR = ".unread"  # Selector for unread conversation in inbox list
+MESSAGE_TEXT_SELECTOR = ".message-content:last-child"  # Selector for the last message bubble text
+SENDER_NAME_SELECTOR = ".username, header h1, .contact-name"  # Selector for the sender's name
+REPLY_INPUT_SELECTOR = "textarea[placeholder*='Type'], .message-composer textarea"  # Input box
+SEND_BUTTON_SELECTOR = "button[type='submit'], .send-button"  # Send button
+
 class FiverrAutonomousManager:
     """
     Autonomous Agent for managing an existing, logged-in Fiverr session.
