@@ -72,6 +72,20 @@ class FiverrWatchdog:
         with open(self.log_path, 'a') as f:
             f.write(log_entry + "\n")
 
+    def process_orders(self, orders):
+        """Process a list of active orders."""
+        self.log("ORDERS", f"Processing {len(orders)} active orders...")
+
+        for order in orders:
+            order_id = order.get("id", "unknown")
+            summary = order.get("text_summary", "No details")
+            self.log("ORDER_PROC", f"Processing Order #{order_id}: {summary}")
+
+            # Placeholder for future logic
+            # e.g. if "late" in summary.lower(): self.alert_late_order(order)
+
+        self.log("ORDERS", "Order processing cycle complete.")
+
     def _signal_handler(self, signum, frame):
         """Handle shutdown signals gracefully."""
         self.log("WATCHDOG", f"Received signal {signum}, initiating graceful shutdown...")
@@ -135,12 +149,13 @@ class FiverrWatchdog:
 
             # Check orders
             time.sleep(random.uniform(3, 7))  # Human-like pause
-            num_orders = self.agent.check_active_orders()
+            active_orders = self.agent.get_active_order_details()
+            num_orders = len(active_orders)
 
             if num_orders > 0:
                 self.stats["orders_found"] += num_orders
                 self.log("ORDERS", f"Found {num_orders} active order(s)")
-                # TODO: Process orders
+                self.process_orders(active_orders)
             else:
                 self.log("ORDERS", "No active orders")
 

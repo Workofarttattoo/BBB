@@ -190,6 +190,52 @@ class FiverrAutonomousManager:
             print(f"ECH0_FIVERR: Order check complete (no indicators): {e}")
             return 0
 
+    def get_active_order_details(self):
+        """
+        Retrieves details of active orders.
+        Returns a list of dictionaries containing order info.
+        """
+        print("ECH0_FIVERR: Retrieving active order details...")
+        orders = []
+        try:
+            self.driver.get("https://www.fiverr.com/users/orders")
+
+            if self.human:
+                self.human.natural_page_arrival_behavior()
+            else:
+                time.sleep(random.uniform(2, 4))
+
+            # Find elements
+            active_orders_elements = self.driver.find_elements(By.CSS_SELECTOR, ".order-item.active, .order-card")
+
+            for element in active_orders_elements:
+                try:
+                    order_text = element.text
+                    # Try to get link if available
+                    try:
+                        order_link = element.find_element(By.TAG_NAME, "a").get_attribute("href")
+                    except:
+                        order_link = None
+
+                    orders.append({
+                        "id": order_link.split("/")[-1] if order_link else "unknown",
+                        "text_summary": order_text[:100].replace('\n', ' '),
+                        "link": order_link
+                    })
+                except Exception as e:
+                    print(f"ECH0_FIVERR: Error parsing order element: {e}")
+
+            if orders:
+                print(f"ECH0_FIVERR: Retrieved details for {len(orders)} active orders.")
+            else:
+                print("ECH0_FIVERR: No active orders found for detail retrieval.")
+
+            return orders
+
+        except Exception as e:
+            print(f"ECH0_FIVERR: Failed to retrieve order details: {e}")
+            return []
+
     def human_sleep(self):
         """Sleeps for a random interval to mimic biological irregularity."""
         sleep_time = random.uniform(45, 120)  # 45 to 120 seconds
