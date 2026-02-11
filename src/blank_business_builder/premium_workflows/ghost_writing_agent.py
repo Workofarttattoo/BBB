@@ -237,7 +237,7 @@ class GhostWritingAgent:
         - Call to action
         """
 
-        description = self.openai.generate_marketing_copy(
+        description = await self.openai.generate_marketing_copy(
             business_name="Professional Writing Services",
             platform="fiverr",
             campaign_goal=prompt,
@@ -347,7 +347,7 @@ class GhostWritingAgent:
 
         # Use OpenAI GPT-4 for high-quality content
         # In production, could also use Claude, custom fine-tuned models, etc.
-        content = self.openai.generate_business_plan(
+        content = await self.openai.generate_business_plan(
             business_name="Content Generation",
             industry="Writing",
             description=prompt,
@@ -513,7 +513,7 @@ class GhostWritingAgent:
         - Keep response concise (2-3 sentences)
         """
 
-        response = self.openai.generate_marketing_copy(
+        response = await self.openai.generate_marketing_copy(
             business_name="Writing Services",
             platform="fiverr_message",
             campaign_goal=prompt,

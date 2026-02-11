@@ -127,7 +127,7 @@ class Level6Agent:
     async def _create_onboarding_sequence(self, user: User, db: Session) -> AgentDecision:
         """Create personalized onboarding email sequence."""
         # Generate personalized onboarding content
-        email_data = self.openai.generate_email_campaign(
+        email_data = await self.openai.generate_email_campaign(
             business_name="Better Business Builder",
             campaign_goal="Onboard new user and guide through first business creation",
             target_audience=f"New user: {user.full_name or user.email}",
@@ -169,7 +169,7 @@ class Level6Agent:
 
     async def _create_upgrade_campaign(self, user: User, db: Session) -> AgentDecision:
         """Create targeted upgrade campaign."""
-        email_data = self.openai.generate_email_campaign(
+        email_data = await self.openai.generate_email_campaign(
             business_name="Better Business Builder",
             campaign_goal="Encourage free user to upgrade to Professional tier",
             target_audience=f"Active free user: {user.email}",
@@ -207,7 +207,7 @@ class Level6Agent:
 
     async def _create_reengagement_campaign(self, user: User, db: Session) -> AgentDecision:
         """Create re-engagement campaign for inactive users."""
-        email_data = self.openai.generate_email_campaign(
+        email_data = await self.openai.generate_email_campaign(
             business_name="Better Business Builder",
             campaign_goal="Re-engage inactive user",
             target_audience=f"Inactive user: {user.email}",
@@ -312,7 +312,7 @@ class Level6Agent:
 
     async def _create_retention_campaign(self, user: User, risk_score: float, db: Session) -> AgentDecision:
         """Create personalized retention campaign."""
-        email_data = self.openai.generate_email_campaign(
+        email_data = await self.openai.generate_email_campaign(
             business_name="Better Business Builder",
             campaign_goal="Retain at-risk customer",
             target_audience=f"At-risk customer: {user.email}",
@@ -430,7 +430,7 @@ class Level6Agent:
     async def _create_auto_campaign(self, business: Business, db: Session) -> AgentDecision:
         """Automatically create marketing campaign for business."""
         # Generate campaign using AI
-        campaign_copy = self.openai.generate_marketing_copy(
+        campaign_copy = await self.openai.generate_marketing_copy(
             business_name=business.business_name,
             platform="general",
             campaign_goal="Brand awareness and customer acquisition",

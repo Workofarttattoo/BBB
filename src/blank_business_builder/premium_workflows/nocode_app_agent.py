@@ -144,7 +144,7 @@ class NoCodeAppAgent:
         6. Monetization strategy
         """
 
-        analysis = self.openai.generate_business_plan(
+        analysis = await self.openai.generate_business_plan(
             business_name=config.get('app_name', 'App'),
             industry="Software/Apps",
             description=prompt,

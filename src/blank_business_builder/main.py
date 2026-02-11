@@ -371,7 +371,7 @@ async def generate_business_plan(
 
     # Generate plan using OpenAI
     openai_service = IntegrationFactory.get_openai_service()
-    plan_data = openai_service.generate_business_plan(
+    plan_data = await openai_service.generate_business_plan(
         business_name=business.business_name,
         industry=business.industry,
         description=business.description,
@@ -421,7 +421,7 @@ async def generate_marketing_copy(
 
     # Generate copy using OpenAI
     openai_service = IntegrationFactory.get_openai_service()
-    marketing_copy = openai_service.generate_marketing_copy(
+    marketing_copy = await openai_service.generate_marketing_copy(
         business_name=business.business_name,
         platform=request_data.platform,
         campaign_goal=request_data.campaign_goal,
@@ -457,7 +457,7 @@ async def generate_email_campaign(
 
     # Generate email using OpenAI
     openai_service = IntegrationFactory.get_openai_service()
-    email_data = openai_service.generate_email_campaign(
+    email_data = await openai_service.generate_email_campaign(
         business_name=business.business_name,
         campaign_goal=request_data.campaign_goal,
         target_audience=request_data.target_audience,
