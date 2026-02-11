@@ -485,14 +485,21 @@ class RedTeamLicenseManager:
 
     def _price_id_to_tier(self, price_id: str) -> SubscriptionTier:
         """Map Stripe price ID to subscription tier"""
-        # TODO: Update with actual Stripe price IDs after setup
+        # Load from environment variables, defaulting to legacy placeholders
+        price_pro_m = os.getenv("STRIPE_PRICE_PROFESSIONAL_MONTHLY", "price_professional_monthly")
+        price_pro_y = os.getenv("STRIPE_PRICE_PROFESSIONAL_YEARLY", "price_professional_yearly")
+        price_ent_m = os.getenv("STRIPE_PRICE_ENTERPRISE_MONTHLY", "price_enterprise_monthly")
+        price_ent_y = os.getenv("STRIPE_PRICE_ENTERPRISE_YEARLY", "price_enterprise_yearly")
+        price_unl_m = os.getenv("STRIPE_PRICE_UNLIMITED_MONTHLY", "price_unlimited_monthly")
+        price_unl_y = os.getenv("STRIPE_PRICE_UNLIMITED_YEARLY", "price_unlimited_yearly")
+
         price_map = {
-            "price_professional_monthly": SubscriptionTier.PROFESSIONAL,
-            "price_professional_yearly": SubscriptionTier.PROFESSIONAL,
-            "price_enterprise_monthly": SubscriptionTier.ENTERPRISE,
-            "price_enterprise_yearly": SubscriptionTier.ENTERPRISE,
-            "price_unlimited_monthly": SubscriptionTier.UNLIMITED,
-            "price_unlimited_yearly": SubscriptionTier.UNLIMITED,
+            price_pro_m: SubscriptionTier.PROFESSIONAL,
+            price_pro_y: SubscriptionTier.PROFESSIONAL,
+            price_ent_m: SubscriptionTier.ENTERPRISE,
+            price_ent_y: SubscriptionTier.ENTERPRISE,
+            price_unl_m: SubscriptionTier.UNLIMITED,
+            price_unl_y: SubscriptionTier.UNLIMITED,
         }
 
         return price_map.get(price_id, SubscriptionTier.PROFESSIONAL)
