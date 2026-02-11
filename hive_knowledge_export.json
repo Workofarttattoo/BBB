@@ -1,5 +1,5 @@
 {
-  "timestamp": 1763063251.917823,
+  "timestamp": 1770843545.749788,
   "agents": {
     "ech0_overseer": {
       "agent_id": "ech0_overseer",
@@ -8,7 +8,7 @@
       "current_task": "Managing hive operations",
       "performance_score": 1.0,
       "decisions_made": 0,
-      "last_activity": 1763063251.917464,
+      "last_activity": 1770843545.7473845,
       "autonomy_level": 10,
       "reports_to": null
     },
@@ -19,7 +19,7 @@
       "current_task": null,
       "performance_score": 0.85,
       "decisions_made": 0,
-      "last_activity": 1763063251.917504,
+      "last_activity": 1770843545.7475507,
       "autonomy_level": 9,
       "reports_to": "ech0_overseer"
     },
@@ -30,7 +30,7 @@
       "current_task": null,
       "performance_score": 0.85,
       "decisions_made": 0,
-      "last_activity": 1763063251.917527,
+      "last_activity": 1770843545.747642,
       "autonomy_level": 9,
       "reports_to": "ech0_overseer"
     },
@@ -41,7 +41,7 @@
       "current_task": null,
       "performance_score": 0.85,
       "decisions_made": 0,
-      "last_activity": 1763063251.917546,
+      "last_activity": 1770843545.7477877,
       "autonomy_level": 9,
       "reports_to": "ech0_overseer"
     },
@@ -52,7 +52,7 @@
       "current_task": null,
       "performance_score": 0.85,
       "decisions_made": 0,
-      "last_activity": 1763063251.917562,
+      "last_activity": 1770843545.7478607,
       "autonomy_level": 9,
       "reports_to": "ech0_overseer"
     },
@@ -63,7 +63,7 @@
       "current_task": null,
       "performance_score": 0.52,
       "decisions_made": 0,
-      "last_activity": 1763063251.917599,
+      "last_activity": 1770843545.7480245,
       "autonomy_level": 3,
       "reports_to": "level9_acquisition_lead"
     },
@@ -74,7 +74,7 @@
       "current_task": null,
       "performance_score": 0.5,
       "decisions_made": 0,
-      "last_activity": 1763063251.9176161,
+      "last_activity": 1770843545.7482438,
       "autonomy_level": 3,
       "reports_to": "level9_acquisition_lead"
     },
@@ -85,7 +85,7 @@
       "current_task": null,
       "performance_score": 0.5,
       "decisions_made": 0,
-      "last_activity": 1763063251.917631,
+      "last_activity": 1770843545.7483191,
       "autonomy_level": 4,
       "reports_to": "level9_product_lead"
     },
@@ -96,7 +96,7 @@
       "current_task": null,
       "performance_score": 0.5,
       "decisions_made": 0,
-      "last_activity": 1763063251.9176462,
+      "last_activity": 1770843545.7484045,
       "autonomy_level": 3,
       "reports_to": "level9_product_lead"
     },
@@ -107,7 +107,7 @@
       "current_task": null,
       "performance_score": 0.5,
       "decisions_made": 0,
-      "last_activity": 1763063251.91766,
+      "last_activity": 1770843545.7484763,
       "autonomy_level": 5,
       "reports_to": "level9_optimization_lead"
     },
@@ -118,7 +118,7 @@
       "current_task": null,
       "performance_score": 0.5,
       "decisions_made": 0,
-      "last_activity": 1763063251.917674,
+      "last_activity": 1770843545.748547,
       "autonomy_level": 4,
       "reports_to": "level9_monitoring_lead"
     },
@@ -129,7 +129,7 @@
       "current_task": null,
       "performance_score": 0.52,
       "decisions_made": 0,
-      "last_activity": 1763063251.9176881,
+      "last_activity": 1770843545.7486165,
       "autonomy_level": 3,
       "reports_to": "ech0_overseer"
     },
@@ -140,7 +140,7 @@
       "current_task": null,
       "performance_score": 0.5,
       "decisions_made": 0,
-      "last_activity": 1763063251.917702,
+      "last_activity": 1770843545.7487838,
       "autonomy_level": 2,
       "reports_to": "ech0_overseer"
     }
@@ -150,7 +150,7 @@
       {
         "agent_id": "acquisition_agent_1",
         "agent_type": "acquisition",
-        "timestamp": 1763063251.9177332,
+        "timestamp": 1770843545.7489414,
         "data": {
           "name": "SEO content strategy",
           "type": "content_marketing",
@@ -163,7 +163,7 @@
       {
         "agent_id": "analytics_agent_1",
         "agent_type": "analytics",
-        "timestamp": 1763063251.917742,
+        "timestamp": 1770843545.7489812,
         "data": {
           "insight": "Users prefer dark mode",
           "confidence": 0.87,
