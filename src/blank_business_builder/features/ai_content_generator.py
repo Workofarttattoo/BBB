@@ -28,8 +28,6 @@ except ImportError:
 from ..integrations import IntegrationFactory
 from ..ech0_service import ECH0Service
 
-logger = logging.getLogger(__name__)
-
 
 class ContentType(Enum):
     """Content types supported."""
@@ -56,7 +54,6 @@ class AIModel(Enum):
     CLAUDE_OPUS = "claude-opus"
     CLAUDE_SONNET = "claude-sonnet"
     GEMINI_PRO = "gemini-pro"
-    LLAMA_3 = "llama-3-70b"
 
 
 @dataclass
@@ -330,8 +327,8 @@ class AIContentGenerator:
                 return await self._generate_with_openai(prompt, request)
             elif request.ai_model in [AIModel.CLAUDE_OPUS, AIModel.CLAUDE_SONNET]:
                 return await self._generate_with_claude(prompt, request)
-            elif request.ai_model == AIModel.LLAMA_3:
-                return await self._generate_with_llama(prompt, request)
+            elif request.ai_model == AIModel.GEMINI_PRO:
+                return await self._generate_with_gemini(prompt, request)
             else:
                 # Default to GPT-4 Turbo
                 return await self._generate_with_openai(prompt, request)
@@ -388,16 +385,6 @@ class AIContentGenerator:
         """
         # In production: Google Gemini API integration
         return self._generate_placeholder_content("Gemini", request)
-
-    async def _generate_with_llama(self, prompt: str, request: ContentRequest) -> str:
-        """
-        Generate using Llama 3 70B.
-
-        Note: Currently a placeholder awaiting API integration.
-        Open-source model, good for cost optimization.
-        """
-        # In production: Llama API integration (Together AI, Replicate, etc.)
-        return self._generate_placeholder_content("Llama", request)
 
     def _build_prompt(self, request: ContentRequest, template: Dict) -> str:
         """
