@@ -20,9 +20,6 @@ echo ""
 echo "================================================================================"
 echo ""
 
-# Change to BBB directory
-cd "/Users/noone/repos/BBB"
-
 # Run tests with pytest
 echo "🧪 Running test suite..."
 echo ""

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flowstate
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: flowstate
+  template:
+    metadata:
+      labels:
+        app: flowstate
+    spec:
+      containers:
+      - name: flowstate
+        image: flowstate:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: flowstate-secrets
+              key: database-url
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: flowstate-secrets
+              key: stripe-key
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flowstate-service
+spec:
+  selector:
+    app: flowstate
+  ports:
+  - port: 80
+    targetPort: 8000
+  type: LoadBalancer

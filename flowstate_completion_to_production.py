@@ -123,7 +123,8 @@ class AuthService:
 auth_service = AuthService()
 '''
 
-    auth_path = Path("/Users/noone/FlowState/backend/auth.py")
+    auth_path = Path("./FlowState/backend/auth.py")
+    auth_path.parent.mkdir(parents=True, exist_ok=True)
     with open(auth_path, 'w') as f:
         f.write(auth_code)
 
@@ -331,7 +332,8 @@ class QuantumOptimizedDB:
 quantum_db = QuantumOptimizedDB()
 '''
 
-    db_path = Path("/Users/noone/FlowState/backend/database.py")
+    db_path = Path("./FlowState/backend/database.py")
+    db_path.parent.mkdir(parents=True, exist_ok=True)
     with open(db_path, 'w') as f:
         f.write(db_code)
 
@@ -460,7 +462,8 @@ class PaymentService:
 payment_service = PaymentService()
 '''
 
-    payment_path = Path("/Users/noone/FlowState/backend/payments.py")
+    payment_path = Path("./FlowState/backend/payments.py")
+    payment_path.parent.mkdir(parents=True, exist_ok=True)
     with open(payment_path, 'w') as f:
         f.write(payment_code)
 
@@ -653,7 +656,8 @@ class QuantumQueryOptimizer:
 quantum_optimizer = QuantumQueryOptimizer()
 '''
 
-    quantum_path = Path("/Users/noone/FlowState/backend/quantum_optimizer.py")
+    quantum_path = Path("./FlowState/backend/quantum_optimizer.py")
+    quantum_path.parent.mkdir(parents=True, exist_ok=True)
     with open(quantum_path, 'w') as f:
         f.write(quantum_code)
 
@@ -930,7 +934,8 @@ class QualityAnalyzerAgent:
 workflow_engine = OpenAGIWorkflowEngine()
 '''
 
-    workflow_path = Path("/Users/noone/FlowState/backend/openagi_workflow.py")
+    workflow_path = Path("./FlowState/backend/openagi_workflow.py")
+    workflow_path.parent.mkdir(parents=True, exist_ok=True)
     with open(workflow_path, 'w') as f:
         f.write(workflow_code)
 
@@ -963,7 +968,8 @@ ENV STRIPE_SECRET_KEY=sk_live_...
 CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
 '''
 
-    docker_path = Path("/Users/noone/FlowState/Dockerfile")
+    docker_path = Path("./FlowState/Dockerfile")
+    docker_path.parent.mkdir(parents=True, exist_ok=True)
     with open(docker_path, 'w') as f:
         f.write(docker_config)
 
@@ -1010,7 +1016,8 @@ volumes:
   postgres_data:
 '''
 
-    compose_path = Path("/Users/noone/FlowState/docker-compose.yml")
+    compose_path = Path("./FlowState/docker-compose.yml")
+    compose_path.parent.mkdir(parents=True, exist_ok=True)
     with open(compose_path, 'w') as f:
         f.write(compose_config)
 
@@ -1059,7 +1066,8 @@ spec:
   type: LoadBalancer
 '''
 
-    k8s_path = Path("/Users/noone/FlowState/kubernetes.yaml")
+    k8s_path = Path("./FlowState/kubernetes.yaml")
+    k8s_path.parent.mkdir(parents=True, exist_ok=True)
     with open(k8s_path, 'w') as f:
         f.write(k8s_config)
 
@@ -1111,7 +1119,8 @@ flake8==6.1.0
 mypy==1.7.1
 '''
 
-    req_path = Path("/Users/noone/FlowState/requirements.txt")
+    req_path = Path("./FlowState/requirements.txt")
+    req_path.parent.mkdir(parents=True, exist_ok=True)
     with open(req_path, 'w') as f:
         f.write(requirements)
 
@@ -1150,7 +1159,7 @@ Next Steps:
    STRIPE_SECRET_KEY=sk_test_...
 
 3. Initialize database:
-   cd /Users/noone/FlowState/backend
+   cd ./FlowState/backend
    python -c "from database import quantum_db; import asyncio; asyncio.run(quantum_db.connect()); asyncio.run(quantum_db.init_schema())"
 
 4. Run locally:
