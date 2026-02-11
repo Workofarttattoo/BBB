@@ -32,6 +32,7 @@ from .features.market_research import MarketResearch
 from .features.email_service import EmailService
 from .features.payment_processor import PaymentProcessor
 from .features.social_media import SocialMedia
+from .prompt_registry import PromptRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,9 @@ class AgentRole(Enum):
     FULFILLMENT = "fulfillment"  # Deliver service/product
     SUPPORT = "support"  # Customer service, retention
     FINANCE = "finance"  # Revenue tracking, invoicing, reporting
+    HR = "hr"  # Human resources: Money flow, budget allocation, agent resource management
+    META_MANAGER = "meta_manager"  # Manager: Supervises worker agents
+    EXECUTIVE = "executive"  # Meta-Meta Manager: Supervises Meta Managers
     ORCHESTRATOR = "orchestrator"  # Coordinates all agents
 
 
@@ -115,7 +119,8 @@ class Level6BusinessAgent:
         market_research: MarketResearch = None,
         email_service: EmailService = None,
         payment_processor: PaymentProcessor = None,
-        social_media: SocialMedia = None
+        social_media: SocialMedia = None,
+        prompt_registry: PromptRegistry = None
     ):
         self.agent_id = agent_id
         self.role = role
@@ -128,6 +133,7 @@ class Level6BusinessAgent:
         self.email_service = email_service
         self.payment_processor = payment_processor
         self.social_media = social_media
+        self.prompt_registry = prompt_registry or PromptRegistry()
 
     async def execute_task(self, task: AutonomousTask) -> Dict:
         """
@@ -195,6 +201,12 @@ class Level6BusinessAgent:
             return await self._plan_support(task)
         elif self.role == AgentRole.FINANCE:
             return await self._plan_finance(task)
+        elif self.role == AgentRole.HR:
+            return await self._plan_hr(task)
+        elif self.role == AgentRole.META_MANAGER:
+            return await self._plan_meta_manager(task)
+        elif self.role == AgentRole.EXECUTIVE:
+            return await self._plan_executive(task)
         else:
             return {"action": "generic_execution", "confidence": 0.7}
 
@@ -299,7 +311,7 @@ class Level6BusinessAgent:
 
     async def _plan_finance(self, task: AutonomousTask) -> Dict:
         """Finance agent: Revenue tracking, invoicing, reporting."""
-        checkout_url = self.payment_processor.create_checkout_session(
+        checkout_url = await self.payment_processor.create_checkout_session(
             price_id="price_12345",  # Replace with a real Price ID
             success_url="https://example.com/success",
             cancel_url="https://example.com/cancel"
@@ -316,6 +328,59 @@ class Level6BusinessAgent:
             "estimated_time": 25,
             "confidence": 0.95,
             "checkout_url": checkout_url
+        }
+
+    async def _plan_hr(self, task: AutonomousTask) -> Dict:
+        """HR agent: Money flow, budget allocation, resource management."""
+        # Use dynamic prompt strategy
+        strategy = self.prompt_registry.get_prompt("hr_finance_strategy")
+
+        return {
+            "action": "hr_resource_management",
+            "steps": [
+                "Analyze agent resource consumption",
+                "Allocate budget tokens to high-performing agents",
+                "Review internal transaction logs",
+                "Approve pending high-cost actions",
+                "Generate financial health report"
+            ],
+            "strategy_used": strategy,
+            "estimated_time": 20,
+            "confidence": 0.95
+        }
+
+    async def _plan_meta_manager(self, task: AutonomousTask) -> Dict:
+        """Meta Manager: Supervises worker agents."""
+        strategy = self.prompt_registry.get_prompt("meta_management_strategy")
+
+        return {
+            "action": "meta_management",
+            "steps": [
+                "Collect status reports from assigned agents",
+                "Identify bottlenecks in task queues",
+                "Re-prioritize blocked tasks",
+                "Aggregate metrics for executive review"
+            ],
+            "strategy_used": strategy,
+            "estimated_time": 15,
+            "confidence": 0.90
+        }
+
+    async def _plan_executive(self, task: AutonomousTask) -> Dict:
+        """Executive (Meta-Meta): Strategic direction."""
+        strategy = self.prompt_registry.get_prompt("executive_strategy")
+
+        return {
+            "action": "executive_oversight",
+            "steps": [
+                "Review overall business health metrics",
+                "Set strategic direction for next 24h",
+                "Evaluate Meta Manager performance",
+                "Approve major pivot decisions"
+            ],
+            "strategy_used": strategy,
+            "estimated_time": 10,
+            "confidence": 0.98
         }
 
     async def _act(self, action_plan: Dict) -> Dict:
@@ -390,6 +455,102 @@ class Level6BusinessAgent:
         }
 
 
+class ChiefEnhancementOfficer:
+    """
+    Background Daemon (CEO) that continuously monitors and improves the business.
+
+    Responsibilities:
+    - Check inter-agent bottlenecks
+    - Optimize agent prompts/instructions
+    - Make one new improvement every hour
+    """
+    def __init__(self, orchestrator: 'AutonomousBusinessOrchestrator'):
+        self.orchestrator = orchestrator
+        self.last_improvement_time = datetime.now()
+        self.improvement_interval = timedelta(hours=1) # 1 hour
+        # For demo purposes, we might want this shorter, but I'll stick to the spec "every hour"
+        # The runner loop runs every 5 seconds, so we check there.
+
+    async def run_daemon_cycle(self):
+        """Run one cycle of the enhancement daemon."""
+
+        # 1. Check for bottlenecks (always running)
+        await self._check_bottlenecks()
+
+        # 2. Check if it's time for an improvement
+        if datetime.now() - self.last_improvement_time >= self.improvement_interval:
+            await self._make_improvement()
+            self.last_improvement_time = datetime.now()
+
+    async def _check_bottlenecks(self):
+        """Analyze task queues for blocked tasks."""
+        blocked_tasks = [t for t in self.orchestrator.task_queue if t.status == TaskStatus.BLOCKED]
+        pending_tasks = [t for t in self.orchestrator.task_queue if t.status == TaskStatus.PENDING]
+
+        if len(blocked_tasks) > 2:
+            logger.warning(f"[CEO Daemon] Detected {len(blocked_tasks)} blocked tasks. Analyzing root cause...")
+            # In a real system, this would trigger a re-planning or resource reallocation
+
+        if len(pending_tasks) > 10:
+            logger.warning(f"[CEO Daemon] High backlog detected ({len(pending_tasks)} tasks). Suggesting scale-up.")
+
+    async def _make_improvement(self):
+        """Make one new improvement to the system."""
+        logger.info("[CEO Daemon] 🧠 Time for scheduled improvement! Analyzing system performance...")
+
+        # Simple heuristic: Improve the prompt for the role with the lowest success rate
+        worst_role = self._find_underperforming_role()
+
+        if worst_role:
+            await self._optimize_prompt_for_role(worst_role)
+        else:
+            logger.info("[CEO Daemon] All agents performing well. Optimizing 'sales' for higher revenue.")
+            await self._optimize_prompt_for_role(AgentRole.SALES)
+
+    def _find_underperforming_role(self) -> Optional[AgentRole]:
+        """Identify which agent role has the lowest success rate."""
+        role_stats = {}
+        for agent in self.orchestrator.agents.values():
+            if agent.performance.tasks_completed > 0:
+                if agent.role not in role_stats:
+                    role_stats[agent.role] = []
+                role_stats[agent.role].append(agent.performance.success_rate)
+
+        if not role_stats:
+            return None
+
+        # Calculate average success rate per role
+        avg_stats = {r: sum(s)/len(s) for r, s in role_stats.items()}
+        # Return role with min score
+        return min(avg_stats, key=avg_stats.get)
+
+    async def _optimize_prompt_for_role(self, role: AgentRole):
+        """Simulate optimizing a prompt for a specific role."""
+        prompt_key_map = {
+            AgentRole.RESEARCHER: "research_strategy",
+            AgentRole.MARKETER: "marketing_content_strategy",
+            AgentRole.SALES: "sales_outreach_strategy",
+            AgentRole.HR: "hr_finance_strategy",
+            AgentRole.META_MANAGER: "meta_management_strategy",
+            AgentRole.EXECUTIVE: "executive_strategy"
+        }
+
+        key = prompt_key_map.get(role)
+        if not key:
+            return
+
+        registry = self.orchestrator.prompt_registry
+        current_content = registry.get_prompt(key)
+
+        # In a real system, this would call an LLM to rewrite the prompt.
+        # Here we simulate an improvement.
+        improvement_note = f" [Optimized by CEO at {datetime.now().strftime('%H:%M')} for better performance]"
+        new_content = current_content + improvement_note
+
+        registry.update_prompt(key, new_content, score_improvement=0.05)
+        logger.info(f"[CEO Daemon] ✅ IMPROVEMENT MADE: Optimized prompt '{key}' for {role.value} agent.")
+
+
 class AutonomousBusinessOrchestrator:
     """
     Orchestrates Level 6 agents to run businesses completely hands-off.
@@ -424,6 +585,8 @@ class AutonomousBusinessOrchestrator:
             access_token=twitter_access_token,
             access_token_secret=twitter_access_token_secret
         )
+        self.prompt_registry = PromptRegistry()
+        self.ceo = ChiefEnhancementOfficer(self)
 
     async def deploy_agents(self) -> None:
         """Deploy Level 6 agents for all business roles."""
@@ -440,7 +603,8 @@ class AutonomousBusinessOrchestrator:
                 market_research=self.market_research if role == AgentRole.RESEARCHER else None,
                 email_service=self.email_service if role in [AgentRole.MARKETER, AgentRole.SALES] else None,
                 payment_processor=self.payment_processor if role == AgentRole.FINANCE else None,
-                social_media=self.social_media if role == AgentRole.MARKETER else None
+                social_media=self.social_media if role == AgentRole.MARKETER else None,
+                prompt_registry=self.prompt_registry
             )
             self.agents[agent_id] = agent
             logger.info(f"✓ Deployed {role.value} agent: {agent_id}")
@@ -501,6 +665,30 @@ class AutonomousBusinessOrchestrator:
             priority=10
         ))
 
+        # HR / Finance Resource setup
+        self.task_queue.append(AutonomousTask(
+            task_id="hr_001",
+            role=AgentRole.HR,
+            description="Allocate initial budget and resource tokens to agents",
+            priority=10
+        ))
+
+        # Meta Manager setup
+        self.task_queue.append(AutonomousTask(
+            task_id="meta_001",
+            role=AgentRole.META_MANAGER,
+            description="Initialize agent supervision protocols",
+            priority=9
+        ))
+
+        # Executive setup
+        self.task_queue.append(AutonomousTask(
+            task_id="exec_001",
+            role=AgentRole.EXECUTIVE,
+            description="Define strategic roadmap for Q1",
+            priority=10
+        ))
+
     async def run_autonomous_loop(self, duration_hours: float = 24.0) -> None:
         """
         Main autonomous operation loop.
@@ -527,6 +715,9 @@ class AutonomousBusinessOrchestrator:
 
             # 5. Report progress
             await self._report_progress()
+
+            # 6. Run CEO Daemon (Check bottlenecks & Improvements)
+            await self.ceo.run_daemon_cycle()
 
             # Sleep briefly before next cycle
             await asyncio.sleep(5)

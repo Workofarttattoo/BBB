@@ -11,7 +11,9 @@ try:
     from scrapingbee import ScrapingBeeClient
     SCRAPINGBEE_AVAILABLE = True
 except ImportError:
-    ScrapingBeeClient = None
+    class ScrapingBeeClient:
+        def __init__(self, *args, **kwargs): pass
+        def get(self, *args, **kwargs): return type('Response', (), {'ok': False, 'status_code': 503})()
     SCRAPINGBEE_AVAILABLE = False
 
 from ..ech0_service import ECH0Service
