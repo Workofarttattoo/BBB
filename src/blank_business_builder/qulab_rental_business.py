@@ -19,6 +19,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Dict, List, Optional, Any
 from decimal import Decimal
+from collections import Counter
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,19 @@ class JobPriority(Enum):
     STANDARD = "standard"      # Standard queue
     EXPRESS = "express"        # Priority processing (+50%)
     DEDICATED = "dedicated"    # Exclusive time slot (+100%)
+    LOW = "low"
+    NORMAL = "normal"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class SubscriptionTier(Enum):
+    """Subscription tier levels."""
+    RESEARCH = "research"
+    STARTUP = "startup"
+    PROFESSIONAL = "professional"
+    ENTERPRISE = "enterprise"
+    DEDICATED = "dedicated"
 
 
 @dataclass
@@ -474,11 +488,13 @@ class QuLabRentalBusiness:
 
     def get_business_metrics(self) -> Dict[str, Any]:
         """Get overall business metrics."""
+        tier_counts = Counter([c.tier for c in self.customers.values()])
+
         return {
             "total_customers": len(self.customers),
             "active_customers": len([c for c in self.customers.values() if c.subscription_status == "active"]),
             "tier_distribution": {
-                tier.value: len([c for c in self.customers.values() if c.tier == tier])
+                tier.value: tier_counts.get(tier, 0)
                 for tier in SubscriptionTier
             },
             "total_jobs": len(self.jobs),
