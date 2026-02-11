@@ -13,7 +13,7 @@ import uuid
 import hashlib
 import json
 from datetime import datetime, timedelta
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, Any
 from dataclasses import dataclass, asdict
 from enum import Enum
 
@@ -255,7 +255,7 @@ class RedTeamLicenseManager:
                 "tier": str,
                 "status": str,
                 "expires": datetime,
-                "tools_enabled": List[str],
+                "tools_enabled": list[str],
                 "message": str
             }
         """
@@ -393,7 +393,7 @@ class RedTeamLicenseManager:
             created_at=datetime.fromisoformat(sub["created_at"].replace("Z", "+00:00")) if sub.get("created_at") else None
         )
 
-    async def get_subscription_licenses(self, subscription_id: str) -> List[License]:
+    async def get_subscription_licenses(self, subscription_id: str) -> list[License]:
         """Get all licenses for a subscription"""
         result = self.client.table("licenses")\
             .select("*")\
