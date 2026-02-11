@@ -3,7 +3,7 @@ Better Business Builder - Ghost Writing Level-6-Agent
 Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
 
 Autonomous ghost writing agent that:
-- Advertises on Fiverr automatically
+- Advertises on Freelance Platforms automatically
 - Fulfills writing orders
 - Manages client communications
 - Deposits earnings to client accounts
@@ -22,7 +22,7 @@ from ..level6_agent import AgentDecision
 @dataclass
 class WritingGig:
     """Represents a ghost writing gig."""
-    platform: str  # fiverr, upwork, freelancer
+    platform: str  # upwork, freelancer
     title: str
     description: str
     price: float
@@ -51,7 +51,7 @@ class GhostWritingAgent:
     Level-6-Agent for autonomous ghost writing services.
 
     Capabilities:
-    - Auto-creates and publishes Fiverr/Upwork gigs
+    - Auto-creates and publishes Freelance gigs
     - Analyzes market demand for pricing optimization
     - Fulfills orders using AI (OpenAI, Claude, etc.)
     - Manages client communications
@@ -164,7 +164,7 @@ class GhostWritingAgent:
         Uses AI to analyze trends, competition, and pricing.
         """
         # In production, this would:
-        # 1. Scrape Fiverr/Upwork for trending gigs
+        # 1. Scrape Freelance Platforms for trending gigs
         # 2. Analyze keyword search volumes
         # 3. Assess competition levels
         # 4. Calculate demand scores
@@ -179,15 +179,15 @@ class GhostWritingAgent:
         }
 
     async def _create_gig(self, client_id: str, gig_type: str) -> AgentDecision:
-        """Create and publish a new gig on Fiverr/Upwork."""
+        """Create and publish a new gig on Freelance Platform."""
         template = self.gig_templates[gig_type]
 
         # Generate optimized gig description using AI
         gig_description = await self._generate_gig_description(gig_type, template)
 
-        # Create gig on platform (Fiverr API integration)
+        # Create gig on platform (Platform API integration)
         gig = WritingGig(
-            platform="fiverr",
+            platform="freelance_platform",
             title=template["title"],
             description=gig_description,
             price=template["price_tiers"][1],  # Start with Standard tier
@@ -197,18 +197,18 @@ class GhostWritingAgent:
             status="published"
         )
 
-        # In production: Actually publish to Fiverr via API
-        # fiverr_api.create_gig(gig)
+        # In production: Actually publish to Platform via API
+        # platform_api.create_gig(gig)
 
         return AgentDecision(
             decision_type="gig_creation",
-            action="create_fiverr_gig",
+            action="create_platform_gig",
             confidence=0.87,
             reasoning=f"Created {gig_type} gig based on high market demand (85%+)",
             data={
                 "client_id": client_id,
                 "gig_type": gig_type,
-                "platform": "fiverr",
+                "platform": "freelance_platform",
                 "estimated_monthly_revenue": template["price_tiers"][1] * 10  # Conservative: 10 orders/month
             },
             timestamp=datetime.utcnow(),
@@ -218,7 +218,7 @@ class GhostWritingAgent:
     async def _generate_gig_description(self, gig_type: str, template: Dict) -> str:
         """Generate compelling gig description using AI."""
         prompt = f"""
-        Create a compelling Fiverr gig description for {gig_type} services.
+        Create a compelling Freelance gig description for {gig_type} services.
 
         Requirements:
         - Highlight unique value proposition
@@ -239,7 +239,7 @@ class GhostWritingAgent:
 
         description = self.openai.generate_marketing_copy(
             business_name="Professional Writing Services",
-            platform="fiverr",
+            platform="freelance_platform",
             campaign_goal=prompt,
             target_audience="Business owners, marketers, entrepreneurs",
             tone="professional"
@@ -515,9 +515,9 @@ class GhostWritingAgent:
 
         response = self.openai.generate_marketing_copy(
             business_name="Writing Services",
-            platform="fiverr_message",
+            platform="platform_message",
             campaign_goal=prompt,
-            target_audience="Fiverr client",
+            target_audience="Freelance client",
             tone="professional"
         )
 
@@ -526,7 +526,7 @@ class GhostWritingAgent:
     async def process_payments(self, client_id: str, config: Dict) -> List[AgentDecision]:
         """
         Process completed payments and deposit to client accounts.
-        - Withdraw from platform (Fiverr/Upwork)
+        - Withdraw from platform (Upwork/Freelancer)
         - Transfer to client bank account
         - Update financial records
         - Generate revenue reports

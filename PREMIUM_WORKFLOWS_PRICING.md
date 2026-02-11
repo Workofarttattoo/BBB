@@ -13,7 +13,7 @@ These specialized Level-6-Agent workflows can be added to any BBB license tier t
 ### 🖊️ Ghost Writing Agent - $4,997
 
 **What It Does:**
-- Advertises services on Fiverr, Upwork automatically
+- Advertises services on Freelance Platforms automatically
 - Fulfills writing orders using AI
 - Manages client communications
 - Deposits earnings to client accounts

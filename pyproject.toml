@@ -54,8 +54,6 @@ dependencies = [
     "tweepy>=4.14.0",
 
     # Web Scraping & Automation
-    "selenium>=4.16.0",
-    "webdriver-manager>=4.0.1",
     "scrapingbee>=2.2.0",
 
     # Data Processing
