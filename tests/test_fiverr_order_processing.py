@@ -7,7 +7,6 @@ import os
 sys.modules['human_behavior_simulator'] = MagicMock()
 
 # Import the class to test
-# We need to set environment variables for the class to initialize
 os.environ['FIVERR_CHROME_PROFILE_PATH'] = '/tmp/fake_profile'
 os.environ['FIVERR_PROFILE_DIRECTORY'] = 'Default'
 
@@ -23,28 +22,21 @@ def mock_driver():
 def manager(mock_driver):
     return FiverrAutonomousManager()
 
-@pytest.fixture
-def mock_llm():
-    llm = MagicMock()
-    llm.generate_response.return_value = "Mock Response"
-    return llm
-
-def test_process_active_orders_no_orders(manager, mock_llm):
+def test_get_active_orders_details_no_orders(manager):
     # Setup
     manager.driver.current_url = "https://www.fiverr.com/users/orders"
     manager.driver.find_elements.return_value = [] # No active orders
 
     # Execute
-    stats = manager.process_active_orders(mock_llm)
+    orders = manager.get_active_orders_details()
 
     # Verify
-    assert stats['found'] == 0
-    assert stats['processed'] == 0
-    mock_llm.generate_response.assert_not_called()
+    assert orders == []
 
-def test_process_active_orders_with_new_order(manager, mock_llm):
+def test_get_active_orders_details_with_new_order(manager):
     # Setup
-    manager.driver.current_url = "https://www.fiverr.com/users/orders"
+    # Simulate being on a different page initially, forcing navigation
+    manager.driver.current_url = "https://www.fiverr.com/some/other/page"
 
     # Mock active order element
     mock_order = MagicMock()
@@ -54,130 +46,94 @@ def test_process_active_orders_with_new_order(manager, mock_llm):
 
     # Reset side_effect for find_elements to handle the sequence
     # 1. Main loop active orders
-    # 2. Inside process_active_orders: message texts
-    # 3. Inside process_active_orders: message rows (check for me)
+    # 2. Inside loop: message texts
+    # 3. Inside loop: message rows
     manager.driver.find_elements.side_effect = [
         [mock_order], # active_orders
-        [], # msg_texts (empty)
-        [], # msg_rows (empty)
+        [MagicMock(text="New order started")], # msg_texts (System message)
+        [], # msg_rows (empty, so not from me)
     ]
 
     # Configure find_element return values
-    mock_buyer = MagicMock()
-    mock_buyer.text = "TestBuyer"
-
-    mock_status = MagicMock()
-    mock_status.text = "Incomplete" # Triggers response
-
-    mock_input = MagicMock()
-    mock_send = MagicMock()
-
-    def find_element_side_effect(by, value):
-        if "buyer" in value:
-            return mock_buyer
-        if "status" in value:
-            return mock_status
-        if "textarea" in value:
-            return mock_input
-        if "button" in value:
-            return mock_send
-        if "href" in value:
-            return mock_link
-        raise Exception(f"Unexpected selector: {value}")
-
-    manager.driver.find_element.side_effect = find_element_side_effect
-
-    # Execute
-    stats = manager.process_active_orders(mock_llm)
-
-    # Verify
-    assert stats['found'] == 1
-    assert stats['processed'] == 1
-    mock_llm.generate_response.assert_called_once()
-
-    # Check human behavior call
-    manager.human.human_type.assert_called_with(mock_input, "Mock Response")
-    manager.human.human_click.assert_called_with(mock_send)
-
-def test_process_active_orders_existing_messages(manager, mock_llm):
-    # Setup: Active order but status is "In Progress" (should not respond in simplified logic)
-
-    manager.driver.current_url = "https://www.fiverr.com/users/orders"
-
-    mock_order = MagicMock()
-    mock_link = MagicMock()
-    mock_link.get_attribute.return_value = "http://fiverr.com/order/123"
-    mock_order.find_element.return_value = mock_link
-
-    # 1. active_orders
-    # 2. msg_texts
-    # 3. msg_rows
-    manager.driver.find_elements.side_effect = [
-        [mock_order], # active_orders
-        [MagicMock(text="Hello")], # msg_texts
-        [MagicMock(get_attribute=MagicMock(return_value="message-row client"))], # msg_rows (client)
-    ]
-
     mock_buyer = MagicMock(text="TestBuyer")
-    mock_status = MagicMock(text="In Progress")
+    mock_status = MagicMock(text="Incomplete") # Triggers needs_attention
+    mock_gig_title = MagicMock(text="AI Chatbot Service")
 
     def find_element_side_effect(by, value):
-        if "buyer" in value:
-            return mock_buyer
-        if "status" in value:
-            return mock_status
-        if "href" in value:
-            return mock_link
-        # Should not call input/send if logic is correct
+        if "buyer" in value: return mock_buyer
+        if "status" in value: return mock_status
+        if "gig-title" in value or "order-title" in value: return mock_gig_title
+        if "href" in value: return mock_link
         raise Exception(f"Unexpected selector: {value}")
 
     manager.driver.find_element.side_effect = find_element_side_effect
 
     # Execute
-    stats = manager.process_active_orders(mock_llm)
+    orders = manager.get_active_orders_details()
 
-    # Verify
-    assert stats['found'] == 1
-    assert stats['processed'] == 0
-    mock_llm.generate_response.assert_not_called()
+    # Verify navigation occurred
+    manager.driver.get.assert_any_call("https://www.fiverr.com/users/orders")
 
-def test_process_active_orders_already_responded(manager, mock_llm):
+    # Verify order details
+    assert len(orders) == 1
+    order = orders[0]
+    assert order['buyer'] == "TestBuyer"
+    assert order['status'] == "Incomplete"
+    assert order['gig_title'] == "AI Chatbot Service"
+    assert order['url'] == "http://fiverr.com/order/123"
+
+def test_get_active_orders_details_already_responded(manager):
     # Setup: Active order, Incomplete status, BUT last message is from "me"
 
     manager.driver.current_url = "https://www.fiverr.com/users/orders"
-
     mock_order = MagicMock()
-    mock_link = MagicMock()
-    mock_link.get_attribute.return_value = "http://fiverr.com/order/123"
+    mock_link = MagicMock(get_attribute=MagicMock(return_value="http://fiverr.com/order/123"))
     mock_order.find_element.return_value = mock_link
 
     # Mock message row that is "me"
     mock_row = MagicMock()
     mock_row.get_attribute.return_value = "message-row me"
 
-    # 1. active_orders
-    # 2. msg_texts
-    # 3. msg_rows
     manager.driver.find_elements.side_effect = [
         [mock_order], # active_orders
-        [MagicMock(text="New order started.")], # msg_texts
+        [MagicMock(text="New order started.")], # msg_texts (text doesn't matter much if row says ME)
         [mock_row], # msg_rows
     ]
 
     mock_buyer = MagicMock(text="TestBuyer")
     mock_status = MagicMock(text="Incomplete")
+    mock_gig_title = MagicMock(text="AI Chatbot Service")
 
     def find_element_side_effect(by, value):
         if "buyer" in value: return mock_buyer
         if "status" in value: return mock_status
+        if "gig-title" in value: return mock_gig_title
         if "href" in value: return mock_link
         raise Exception(f"Unexpected selector: {value}")
     manager.driver.find_element.side_effect = find_element_side_effect
 
     # Execute
-    stats = manager.process_active_orders(mock_llm)
+    orders = manager.get_active_orders_details()
+
+    # Verify: Should be empty because it doesn't need attention
+    assert len(orders) == 0
+
+def test_send_reply(manager):
+    mock_input = MagicMock()
+    mock_send = MagicMock()
+
+    def find_element_side_effect(by, value):
+        if "textarea" in value: return mock_input
+        if "button" in value: return mock_send
+        return MagicMock()
+
+    manager.driver.find_element.side_effect = find_element_side_effect
+
+    # Execute
+    success = manager.send_reply("http://fiverr.com/order/123", "Hello World")
 
     # Verify
-    assert stats['found'] == 1
-    assert stats['processed'] == 0
-    mock_llm.generate_response.assert_not_called()
+    assert success is True
+    # Human behavior calls
+    manager.human.human_type.assert_called_with(mock_input, "Hello World")
+    manager.human.human_click.assert_called_with(mock_send)
