@@ -174,7 +174,7 @@ class EmailCampaignGenerate(BaseModel):
 
 
 class LicenseActivateRequest(BaseModel):
-    tier: str  # starter, pro, enterprise
+    license_key: str
     agreed_terms_version: str = "v1"
 
 
@@ -573,7 +573,7 @@ app.middleware("http")(metrics_middleware)
 # Include Quantum Features API Router
 # Quantum endpoints require Pro tier or higher
 from .api_quantum_features import router as quantum_router
-from .api_licensing import router as licensing_router
+from .api_licensing import router as licensing_router, PurchasedLicense
 
 app.include_router(quantum_router)
 app.include_router(licensing_router)
@@ -631,16 +631,36 @@ async def activate_license(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Activate paid license."""
-    tier = request.tier.lower()
-    if tier not in {"starter", "pro", "enterprise"}:
+    """Activate paid license with a key."""
+    # Find the license
+    license_record = db.query(PurchasedLicense).filter(
+        PurchasedLicense.license_key == request.license_key
+    ).first()
+
+    if not license_record:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid license tier."
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid license key."
         )
 
+    if not license_record.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="License key is inactive."
+        )
+
+    # Check if used by another user
+    if license_record.user_id and license_record.user_id != str(current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="License key already in use."
+        )
+
+    # Activate
+    license_record.user_id = str(current_user.id)
+
     current_user.license_status = "licensed"
-    current_user.subscription_tier = tier
+    current_user.subscription_tier = license_record.license_type
     current_user.license_agreed_at = datetime.utcnow()
     current_user.license_terms_version = request.agreed_terms_version
     current_user.trial_expires_at = None
