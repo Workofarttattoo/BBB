@@ -12,7 +12,8 @@ from enum import Enum
 import asyncio
 from openai import OpenAI
 from ..integrations import IntegrationFactory
-from .ech0_service import ECH0Service
+from ..ech0_service import ECH0Service
+from ..utils import generate_id
 
 
 class ContentType(Enum):
@@ -280,7 +281,7 @@ class AIContentGenerator:
         generation_time = (datetime.utcnow() - start_time).total_seconds() * 1000
 
         return GeneratedContent(
-            content_id=self._generate_id(),
+            content_id=generate_id(),
             content_type=request.content_type,
             title=await self._extract_title(primary_content, request),
             body=primary_content,
@@ -706,12 +707,6 @@ class AIContentGenerator:
         # Generate title from topic
         return f"{request.topic} - {request.content_type.value.replace('_', ' ').title()}"
 
-    def _generate_id(self) -> str:
-        """Generate unique ID."""
-        import uuid
-        return str(uuid.uuid4())
-
-
 # ===== AUTONOMOUS CONTENT STRATEGY AGENT =====
 
 class AutomatedContentStrategyAgent:
@@ -757,7 +752,7 @@ class AutomatedContentStrategyAgent:
         seo_opportunities = await self._identify_seo_opportunities(business_type)
 
         return {
-            "strategy_id": self._generate_id(),
+            "strategy_id": generate_id(),
             "market_insights": market_insights,
             "content_calendar": content_calendar,
             "seo_opportunities": seo_opportunities,
@@ -808,7 +803,3 @@ class AutomatedContentStrategyAgent:
             {"keyword": "AI business tools", "volume": 15000, "difficulty": 52}
         ]
 
-    def _generate_id(self) -> str:
-        """Generate unique ID."""
-        import uuid
-        return str(uuid.uuid4())

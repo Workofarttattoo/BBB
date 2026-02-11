@@ -12,6 +12,7 @@ import asyncio
 
 from ..level6_agent import AgentDecision
 from ..integrations import IntegrationFactory
+from ..utils import generate_id
 
 
 @dataclass
@@ -85,7 +86,7 @@ class MarketingAutomationSuite:
         - No contact limits or extra fees
         """
         contact = Contact(
-            contact_id=self._generate_id(),
+            contact_id=generate_id(),
             email=contact_data["email"],
             name=contact_data.get("name"),
             phone=contact_data.get("phone"),
@@ -163,7 +164,7 @@ class MarketingAutomationSuite:
         optimal_send_time = await self._quantum_optimize_send_time(campaign_config)
 
         campaign = EmailCampaign(
-            campaign_id=self._generate_id(),
+            campaign_id=generate_id(),
             name=campaign_config["name"],
             subject_line=email_content["subject"],
             preview_text=email_content["preview"],
@@ -248,7 +249,7 @@ class MarketingAutomationSuite:
         workflow = await self._ai_design_workflow(workflow_description)
 
         return {
-            "workflow_id": self._generate_id(),
+            "workflow_id": generate_id(),
             "name": workflow_config["name"],
             "trigger": workflow["trigger"],
             "steps": workflow["steps"],
@@ -303,7 +304,7 @@ class MarketingAutomationSuite:
         optimized_layout = await self._quantum_optimize_layout(page_html)
 
         return {
-            "page_id": self._generate_id(),
+            "page_id": generate_id(),
             "url_slug": page_config.get("slug"),
             "html": optimized_layout,
             "ai_generated": True,
@@ -392,12 +393,6 @@ class MarketingAutomationSuite:
         }
 
     # ===== UTILITY METHODS =====
-
-    def _generate_id(self) -> str:
-        """Generate unique ID."""
-        import uuid
-        return str(uuid.uuid4())
-
 
 # ===== LEVEL-6-AGENT AUTONOMOUS MARKETING =====
 
