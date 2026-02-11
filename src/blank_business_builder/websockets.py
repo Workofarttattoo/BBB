@@ -5,6 +5,7 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 from fastapi import WebSocket, WebSocketDisconnect, Depends
 from typing import Dict, Set
 from sqlalchemy.orm import Session
+from sqlalchemy import func, case
 from datetime import datetime
 import asyncio
 import json
@@ -71,19 +72,17 @@ async def get_business_metrics(business_id: str, db: Session) -> dict:
         return {"error": "Business not found"}
 
     # Get task statistics
-    total_tasks = db.query(AgentTask).filter(AgentTask.business_id == business_id).count()
-    completed_tasks = db.query(AgentTask).filter(
-        AgentTask.business_id == business_id,
-        AgentTask.status == "completed"
-    ).count()
-    pending_tasks = db.query(AgentTask).filter(
-        AgentTask.business_id == business_id,
-        AgentTask.status == "pending"
-    ).count()
-    failed_tasks = db.query(AgentTask).filter(
-        AgentTask.business_id == business_id,
-        AgentTask.status == "failed"
-    ).count()
+    task_stats = db.query(
+        func.count(AgentTask.id),
+        func.sum(case((AgentTask.status == "completed", 1), else_=0)),
+        func.sum(case((AgentTask.status == "pending", 1), else_=0)),
+        func.sum(case((AgentTask.status == "failed", 1), else_=0))
+    ).filter(AgentTask.business_id == business_id).first()
+
+    total_tasks = task_stats[0] or 0
+    completed_tasks = task_stats[1] or 0
+    pending_tasks = task_stats[2] or 0
+    failed_tasks = task_stats[3] or 0
 
     # Get recent tasks
     recent_tasks = db.query(AgentTask).filter(
