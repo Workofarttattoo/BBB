@@ -5,7 +5,7 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 Reverse-engineered and improved from Jasper AI + Copy.ai + Writesonic
 Adds quantum optimization and Level-6-Agent capabilities they don't have.
 """
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional
 from datetime import datetime
 from dataclasses import dataclass
 from enum import Enum
@@ -65,7 +65,7 @@ class ContentRequest:
     length: str  # short, medium, long
     keywords: List[str]
     target_audience: str
-    brand_voice: Optional[Dict[str, Any]] = None
+    brand_voice: Optional[Dict] = None
     ai_model: AIModel = AIModel.GPT4_TURBO
     seo_optimize: bool = True
     include_images: bool = False
