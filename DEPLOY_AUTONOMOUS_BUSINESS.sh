@@ -109,53 +109,27 @@ echo ""
 echo "🎯 STEP 6: Deploying autonomous business runner..."
 echo ""
 
-echo "Choose deployment mode:"
-echo "  1) SIMULATION (10-year fast-forward test)"
-echo "  2) PRODUCTION (real autonomous operation)"
 echo ""
-read -p "Mode (1 or 2): " deploy_mode
+echo "================================================================================"
+echo "⚠️  PRODUCTION DEPLOYMENT WARNING"
+echo "================================================================================"
+echo ""
+echo "This will start REAL autonomous business operations:"
+echo "  • Real payments will be processed"
+echo "  • Real customers will be acquired"
+echo "  • Real emails/calls will be made"
+echo "  • System will run 24/7 for 10 years"
+echo ""
+read -p "Are you SURE you want to proceed? (type 'YES'): " confirm
 
-if [ "$deploy_mode" = "1" ]; then
+if [ "$confirm" = "YES" ]; then
     echo ""
-    echo "Running 10-year simulation..."
+    echo "🚀 Launching autonomous business system..."
     echo ""
-    python3 autonomous_business_runner.py --years=10 --mode=simulation
 
-    echo ""
-    echo "================================================================================"
-    echo "✅ SIMULATION COMPLETE"
-    echo "================================================================================"
-    echo ""
-    echo "Check the results above to see 10-year projection."
-    echo ""
-    echo "To deploy for REAL autonomous operation, run:"
-    echo "  ./DEPLOY_AUTONOMOUS_BUSINESS.sh"
-    echo "  (and choose option 2)"
-    echo ""
-    echo "================================================================================"
-
-elif [ "$deploy_mode" = "2" ]; then
-    echo ""
-    echo "================================================================================"
-    echo "⚠️  PRODUCTION DEPLOYMENT WARNING"
-    echo "================================================================================"
-    echo ""
-    echo "This will start REAL autonomous business operations:"
-    echo "  • Real payments will be processed"
-    echo "  • Real customers will be acquired"
-    echo "  • Real emails/calls will be made"
-    echo "  • System will run 24/7 for 10 years"
-    echo ""
-    read -p "Are you SURE you want to proceed? (type 'YES'): " confirm
-
-    if [ "$confirm" = "YES" ]; then
-        echo ""
-        echo "🚀 Launching autonomous business system..."
-        echo ""
-
-        # Create launch daemon (simulated for non-macOS environment)
-        if [ -d "/Users/noone/Library/LaunchAgents" ]; then
-            cat > /Users/noone/Library/LaunchAgents/com.bbb.autonomous.plist << 'PLIST'
+    # Create launch daemon (simulated for non-macOS environment)
+    if [ -d "/Users/noone/Library/LaunchAgents" ]; then
+        cat > /Users/noone/Library/LaunchAgents/com.bbb.autonomous.plist << 'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -167,7 +141,6 @@ elif [ "$deploy_mode" = "2" ]; then
         <string>/usr/local/bin/python3</string>
         <string>/Users/noone/repos/BBB/autonomous_business_runner.py</string>
         <string>--years=10</string>
-        <string>--mode=production</string>
     </array>
     <key>RunAtLoad</key>
     <true/>

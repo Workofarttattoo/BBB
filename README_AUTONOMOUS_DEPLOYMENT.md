@@ -14,7 +14,7 @@ cd /Users/noone/repos/BBB
 ./DEPLOY_AUTONOMOUS_BUSINESS.sh
 ```
 
-**That's it.** Choose simulation or production, and the system handles everything else.
+**That's it.** The system handles everything else.
 
 ---
 
@@ -189,33 +189,8 @@ cd /Users/noone/repos/BBB
 ```
 
 **You'll be prompted for:**
-1. API keys (or skip for simulation)
-2. Deployment mode (simulation or production)
-
-### Simulation Mode
-
-Tests the system with a 10-year fast-forward:
-
-```bash
-./DEPLOY_AUTONOMOUS_BUSINESS.sh
-# Choose option 1: SIMULATION
-```
-
-**Results in ~30 seconds:**
-- See 10-year revenue projection
-- View customer growth
-- Watch feature development
-- No real payments processed
-
-### Production Mode
-
-Deploys for **real autonomous operation**:
-
-```bash
-./DEPLOY_AUTONOMOUS_BUSINESS.sh
-# Choose option 2: PRODUCTION
-# Type 'YES' to confirm
-```
+1. API keys
+2. Confirmation to launch
 
 **What happens:**
 - System starts immediately
@@ -375,8 +350,7 @@ ECH0 Prime identifies 10x opportunities:
 ## FAQ
 
 ### How long does deployment take?
-- **Simulation**: 30 seconds
-- **Production**: 5 minutes (mostly entering API keys)
+- **Deployment**: 5 minutes (mostly entering API keys)
 
 ### Can I stop it?
 Yes, but why would you? It's generating revenue autonomously.

@@ -4,6 +4,6 @@
   "supabase_service_key": "DEMO_KEY",
   "twilio_account_sid": "DEMO_SID",
   "twilio_auth_token": "DEMO_TOKEN",
-  "openai_api_key": "DEMO_KEY",
+  "openai_api_key": "NO",
   "mode": "demo"
 }
