@@ -108,6 +108,11 @@ class ECH0AutonomousCore:
 
         # Default configuration
         default_config = {
+            "llm": {
+                "provider": "huggingface",  # huggingface, together, custom
+                "endpoint": "https://workofarttattoo-echo-prime-agi.hf.space/api/predict",
+                "api_key": ""
+            },
             "owner": {
                 "name": "Joshua Hendricks Cole",
                 "phone": "7252242617",
