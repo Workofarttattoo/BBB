@@ -2,6 +2,7 @@
 Better Business Builder - Licensing and Revenue Share API
 Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
 """
+import logging
 from datetime import datetime, timedelta
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -13,6 +14,8 @@ from .database import get_db, User, Base
 from .auth import get_current_user
 
 router = APIRouter(prefix="/api/licensing", tags=["Licensing"])
+
+logger = logging.getLogger(__name__)
 
 
 # Database Models
@@ -160,7 +163,9 @@ class PurchaseLicenseResponse(BaseModel):
     success: bool
     message: str
     license_key: Optional[str] = None
-    amount: Optional[float] = None
+    amount: Optional[float] = None  # Total due now (initial_investment)
+    initial_investment: Optional[float] = None
+    monthly_fee: Optional[float] = None
     payment_url: Optional[str] = None  # Stripe checkout URL
 
 
@@ -400,14 +405,22 @@ async def get_revenue_reports(
 
 
 @router.post("/purchase-license", response_model=PurchaseLicenseResponse)
-async def purchase_license(
+async def generate_license_quote(
     request: PurchaseLicenseRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Purchase a full license (no revenue sharing required)."""
+    """
+    Generate a license purchase quote.
+
+    Note: This endpoint currently only generates a quote. Online payment processing
+    and automatic license activation are not yet implemented.
+    """
 
     # Calculate pricing based on tier
+    # Structure:
+    # - base: Initial "Seed Investment" (one-time setup fee)
+    # - per_user/per_business: Monthly recurring fees
     pricing = {
         "starter": {"base": 2999, "per_user": 99, "per_business": 149},
         "professional": {"base": 9999, "per_user": 199, "per_business": 299},
@@ -421,23 +434,43 @@ async def purchase_license(
         )
 
     tier_pricing = pricing[request.license_type]
-    amount = (
-        tier_pricing["base"] +
+
+    # Calculate Seed Investment (One-time)
+    initial_investment = float(tier_pricing["base"])
+
+    # Calculate Monthly Fee (Recurring)
+    monthly_fee = (
         (request.max_users * tier_pricing["per_user"]) +
         (request.max_businesses * tier_pricing["per_business"])
     )
 
-    # Add support level cost
+    # Add support level cost (Monthly)
     support_costs = {"basic": 0, "premium": 1999, "enterprise": 4999}
-    amount += support_costs.get(request.support_level, 0)
+    monthly_fee += support_costs.get(request.support_level, 0)
 
-    # In production, integrate with Stripe/PayPal
-    # For now, return payment details
+    # Total due now (Assuming first month + seed)
+    amount = initial_investment + monthly_fee
+
+    # Log the quote generation request
+    company = request.company_name or "Unknown Company"
+    logger.info(
+        f"License quote generated for {company} (User: {current_user.email}): "
+        f"Seed Investment ${initial_investment:,.2f} + Monthly Fee ${monthly_fee:,.2f}"
+    )
+
+    # TODO: Implement full purchase flow
+    # 1. Integrate with Stripe API to create a payment intent/checkout session for the Initial Investment + First Month
+    # 2. Setup Stripe Subscription for the Monthly Fee
+    # 3. Return the Stripe checkout URL in payment_url
+    # 4. Create a pending PurchasedLicense record
+    # 5. Handle webhook to activate license upon payment success
 
     return PurchaseLicenseResponse(
         success=True,
-        message=f"License quote generated. Contact josh@corporationoflight.com to complete purchase.",
+        message=f"License quote generated. Monthly fee and seed investment required. Contact josh@corporationoflight.com to complete purchase.",
         amount=amount,
+        initial_investment=initial_investment,
+        monthly_fee=monthly_fee,
         payment_url=None  # Would be Stripe checkout URL in production
     )
 
