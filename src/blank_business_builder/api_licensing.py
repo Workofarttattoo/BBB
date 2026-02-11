@@ -2,6 +2,7 @@
 Better Business Builder - Licensing and Revenue Share API
 Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
 """
+import logging
 from datetime import datetime, timedelta
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -13,6 +14,8 @@ from .database import get_db, User, Base
 from .auth import get_current_user
 
 router = APIRouter(prefix="/api/licensing", tags=["Licensing"])
+
+logger = logging.getLogger(__name__)
 
 
 # Database Models
@@ -400,12 +403,17 @@ async def get_revenue_reports(
 
 
 @router.post("/purchase-license", response_model=PurchaseLicenseResponse)
-async def purchase_license(
+async def generate_license_quote(
     request: PurchaseLicenseRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Purchase a full license (no revenue sharing required)."""
+    """
+    Generate a license purchase quote.
+
+    Note: This endpoint currently only generates a quote. Online payment processing
+    and automatic license activation are not yet implemented.
+    """
 
     # Calculate pricing based on tier
     pricing = {
@@ -431,8 +439,15 @@ async def purchase_license(
     support_costs = {"basic": 0, "premium": 1999, "enterprise": 4999}
     amount += support_costs.get(request.support_level, 0)
 
-    # In production, integrate with Stripe/PayPal
-    # For now, return payment details
+    # Log the quote generation request
+    company = request.company_name or "Unknown Company"
+    logger.info(f"License quote generated for {company} (User: {current_user.email}): ${amount:,.2f}")
+
+    # TODO: Implement full purchase flow
+    # 1. Integrate with Stripe API to create a payment intent/checkout session
+    # 2. Return the Stripe checkout URL in payment_url
+    # 3. Create a pending PurchasedLicense record
+    # 4. Handle webhook to activate license upon payment success
 
     return PurchaseLicenseResponse(
         success=True,
