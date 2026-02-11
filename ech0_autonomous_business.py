@@ -34,6 +34,13 @@ except ImportError:
     FIVERR_CLIENT_AVAILABLE = False
     print("[WARN] Fiverr autonomous manager not available")
 
+try:
+    from ech0_llm_engine import ECH0LLMEngine
+    LLM_AVAILABLE = True
+except ImportError:
+    LLM_AVAILABLE = False
+    print("[WARN] ECH0 LLM Engine not available")
+
 # Selenium imports for other web automation
 try:
     from selenium import webdriver
@@ -276,6 +283,9 @@ class FiverrAutomation:
     def __init__(self, core: ECH0AutonomousCore):
         self.core = core
         self.fiverr_manager = None
+        self.llm_engine = None
+        if LLM_AVAILABLE:
+            self.llm_engine = ECH0LLMEngine()
         print("  ✓ Fiverr automation module loaded")
 
     def _init_fiverr_manager(self):
@@ -334,15 +344,19 @@ class FiverrAutomation:
             return
 
         try:
-            num_orders = self.fiverr_manager.check_active_orders()
-
-            if num_orders > 0:
-                self.core.log_activity("fiverr", "ORDERS_FOUND", f"{num_orders} active orders")
-                # TODO: Process orders and update status
-            elif num_orders == 0:
-                self.core.log_activity("fiverr", "ORDERS_CHECK", "No active orders")
+            if self.llm_engine:
+                stats = self.fiverr_manager.process_active_orders(self.llm_engine)
+                if stats['found'] > 0:
+                    self.core.log_activity("fiverr", "ORDERS_PROCESSED", f"Found {stats['found']}, Processed {stats['processed']}")
+                else:
+                    self.core.log_activity("fiverr", "ORDERS_CHECK", "No active orders")
             else:
-                self.core.log_activity("fiverr", "ORDER_CHECK_ERROR", "Scan failed")
+                # Fallback to simple check if LLM not available
+                num_orders = self.fiverr_manager.check_active_orders()
+                if num_orders > 0:
+                    self.core.log_activity("fiverr", "ORDERS_FOUND", f"{num_orders} active orders (LLM unavailable for processing)")
+                else:
+                    self.core.log_activity("fiverr", "ORDERS_CHECK", "No active orders")
 
         except Exception as e:
             self.core.log_activity("fiverr", "ORDER_CHECK_ERROR", str(e))
