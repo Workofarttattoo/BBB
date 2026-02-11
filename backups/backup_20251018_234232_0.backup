@@ -1,1 +1,0 @@
-{"sources": ["database", "files", "configs"], "backup_type": "full", "timestamp": "2025-10-18T23:42:32.724536", "data": {"database": "simulated_db_dump", "files": "simulated_file_archive", "configs": "simulated_config_export"}}
