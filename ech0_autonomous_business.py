@@ -4,7 +4,6 @@ ECH0 Autonomous Business Automation System
 Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
 
 This system provides full autonomous business operations including:
-- Fiverr gig management and customer communication
 - Website content management (GitHub-based)
 - Email automation
 - Social media marketing
@@ -26,25 +25,6 @@ from pathlib import Path
 from typing import Dict, List, Optional
 import subprocess
 
-# Import Fiverr autonomous manager
-try:
-    from fiverr_autonomous_manager import FiverrAutonomousManager
-    FIVERR_CLIENT_AVAILABLE = True
-except ImportError:
-    FIVERR_CLIENT_AVAILABLE = False
-    print("[WARN] Fiverr autonomous manager not available")
-
-# Selenium imports for other web automation
-try:
-    from selenium import webdriver
-    from selenium.webdriver.common.by import By
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
-    from selenium.webdriver.chrome.options import Options
-    SELENIUM_AVAILABLE = True
-except ImportError:
-    SELENIUM_AVAILABLE = False
-    print("[WARN] Selenium not available. Install: pip install selenium")
 
 
 class ECH0AutonomousCore:
@@ -70,7 +50,6 @@ class ECH0AutonomousCore:
 
         # Initialize modules
         self.modules = {
-            "fiverr": FiverrAutomation(self),
             "websites": WebsiteAutomation(self),
             "email": EmailAutomation(self),
             "social": SocialMediaAutomation(self),
@@ -99,15 +78,6 @@ class ECH0AutonomousCore:
                     "ech0": "echo@aios.is",
                     "flowstatus": "echo@flowstatus.work"
                 }
-            },
-            "fiverr": {
-                "username": "",  # User fills this in
-                "password": "",
-                "chrome_profile_path": "/Users/noone/Library/Application Support/Google/Chrome",
-                "chrome_profile_directory": "Default",
-                "gigs": [],
-                "auto_respond": True,
-                "check_interval_minutes": 15
             },
             "websites": {
                 "aios": {
@@ -214,12 +184,6 @@ class ECH0AutonomousCore:
 
     def _schedule_recurring_tasks(self):
         """Schedule all recurring automated tasks."""
-        # Fiverr checks
-        if self.config['fiverr'].get('username'):
-            interval = self.config['fiverr']['check_interval_minutes'] * 60
-            self._schedule_task(interval, self.modules['fiverr'].check_messages)
-            self._schedule_task(interval, self.modules['fiverr'].check_orders)
-
         # Email checks
         interval = self.config['email']['check_interval_minutes'] * 60
         self._schedule_task(interval, self.modules['email'].check_inbox)
@@ -268,102 +232,6 @@ class ECH0AutonomousCore:
         self.shutdown_flag.set()
         self.execution_thread.join(timeout=10)
         print("✓ ECH0 shutdown complete")
-
-
-class FiverrAutomation:
-    """Automated Fiverr gig management and customer communication using FiverrManager."""
-
-    def __init__(self, core: ECH0AutonomousCore):
-        self.core = core
-        self.fiverr_manager = None
-        print("  ✓ Fiverr automation module loaded")
-
-    def _init_fiverr_manager(self):
-        """Initialize Fiverr Autonomous Manager with Chrome profile."""
-        if not FIVERR_CLIENT_AVAILABLE:
-            self.core.log_activity("fiverr", "INIT_SKIP", "FiverrAutonomousManager not available")
-            return False
-
-        if self.fiverr_manager:
-            return True
-
-        # Set environment variables for the manager
-        profile_path = self.core.config['fiverr'].get('chrome_profile_path')
-        profile_dir = self.core.config['fiverr'].get('chrome_profile_directory', 'Default')
-
-        if not profile_path or "INSERT" in profile_path:
-            self.core.log_activity("fiverr", "INIT_SKIP", "Chrome profile path not configured")
-            return False
-
-        os.environ['FIVERR_CHROME_PROFILE_PATH'] = profile_path
-        os.environ['FIVERR_PROFILE_DIRECTORY'] = profile_dir
-
-        try:
-            self.fiverr_manager = FiverrAutonomousManager()
-            self.core.log_activity("fiverr", "INIT_SUCCESS", "FiverrAutonomousManager initialized")
-            return True
-        except Exception as e:
-            self.core.log_activity("fiverr", "INIT_FAILED", str(e))
-            return False
-
-    def check_messages(self):
-        """Check for new Fiverr messages using FiverrAutonomousManager."""
-        if not self._init_fiverr_manager():
-            return
-
-        try:
-            if self.fiverr_manager.connect_to_dashboard():
-                num_messages = self.fiverr_manager.scan_inbox()
-
-                if num_messages > 0:
-                    self.core.log_activity("fiverr", "MESSAGES_FOUND", f"{num_messages} unread")
-                    # TODO: Auto-respond using LLM engine (ech0_llm_engine.py)
-                elif num_messages == 0:
-                    self.core.log_activity("fiverr", "MESSAGES_CHECK", "No new messages")
-                else:
-                    self.core.log_activity("fiverr", "MESSAGE_CHECK_ERROR", "Scan failed")
-            else:
-                self.core.log_activity("fiverr", "INBOX_FAILED", "Could not connect to dashboard")
-
-        except Exception as e:
-            self.core.log_activity("fiverr", "MESSAGE_CHECK_ERROR", str(e))
-
-    def check_orders(self):
-        """Check for new orders and process them using FiverrAutonomousManager."""
-        if not self._init_fiverr_manager():
-            return
-
-        try:
-            num_orders = self.fiverr_manager.check_active_orders()
-
-            if num_orders > 0:
-                self.core.log_activity("fiverr", "ORDERS_FOUND", f"{num_orders} active orders")
-                # TODO: Process orders and update status
-            elif num_orders == 0:
-                self.core.log_activity("fiverr", "ORDERS_CHECK", "No active orders")
-            else:
-                self.core.log_activity("fiverr", "ORDER_CHECK_ERROR", "Scan failed")
-
-        except Exception as e:
-            self.core.log_activity("fiverr", "ORDER_CHECK_ERROR", str(e))
-
-    def create_gig(self, gig_data: Dict):
-        """Create a new Fiverr gig."""
-        if not self.login():
-            return False
-
-        try:
-            self.driver.get("https://www.fiverr.com/gigs/create")
-            time.sleep(2)
-
-            # Fill in gig creation form
-            # This is complex and would need detailed field mapping
-
-            self.core.log_activity("fiverr", "GIG_CREATED", gig_data.get('title', 'Unknown'))
-            return True
-        except Exception as e:
-            self.core.log_activity("fiverr", "GIG_CREATE_ERROR", str(e))
-            return False
 
 
 class WebsiteAutomation:

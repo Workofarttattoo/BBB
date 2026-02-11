@@ -88,7 +88,7 @@ With Level-6-Agents having **Full Access** and **Complete Freedom** within guard
 - **Automation**: 88% autonomous
 - **Revenue**: $10K-$30K/month (seasonal peaks)
 - **How Level-6-Agent Runs It**:
-  - Markets services on Fiverr, Upwork, local directories
+  - Markets services on Freelance Platforms, local directories
   - Collects client documents automatically
   - Uses AI to prepare tax returns (simple to moderate complexity)
   - Flags complex cases for CPA review (12%)
