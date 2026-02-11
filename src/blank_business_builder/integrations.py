@@ -4,12 +4,19 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 """
 import os
 import json
+import asyncio
 from typing import List, Dict, Optional
 
 try:
     import openai  # type: ignore
 except ImportError:  # pragma: no cover
     openai = None
+
+# Check for AsyncOpenAI (v1+)
+try:
+    from openai import AsyncOpenAI
+except ImportError:
+    AsyncOpenAI = None
 
 try:
     from sendgrid import SendGridAPIClient  # type: ignore
@@ -77,10 +84,47 @@ class OpenAIService:
 
     def __init__(self):
         self.api_key = os.getenv("OPENAI_API_KEY", "")
-        openai.api_key = self.api_key
+        # Legacy support
+        if hasattr(openai, "api_key"):
+            openai.api_key = self.api_key
+
         self.model = os.getenv("OPENAI_MODEL", "gpt-4")
 
-    def generate_business_plan(
+        # Initialize Async client if available (v1+)
+        self.aclient = None
+        if AsyncOpenAI and self.api_key:
+            self.aclient = AsyncOpenAI(api_key=self.api_key)
+
+    async def _generate_completion(self, messages: List[Dict], temperature: float, max_tokens: int) -> str:
+        """Helper to generate completion using available client (Async or Legacy)."""
+        if self.aclient:
+            try:
+                response = await self.aclient.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens
+                )
+                return response.choices[0].message.content
+            except Exception as e:
+                # If v1 fails, try legacy fallback if available?
+                # No, if v1 exists, we shouldn't fallback to legacy as it likely won't work.
+                raise e
+        else:
+            # Legacy blocking call wrapped in thread
+            # Use partial to pass kwargs if needed, but here simple lambda works
+            def blocking_call():
+                return openai.ChatCompletion.create(
+                    model=self.model,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens
+                )
+
+            response = await asyncio.to_thread(blocking_call)
+            return response.choices[0].message.content
+
+    async def generate_business_plan(
         self,
         business_name: str,
         industry: str,
@@ -107,8 +151,7 @@ class OpenAIService:
         """
 
         try:
-            response = openai.ChatCompletion.create(
-                model=self.model,
+            content = await self._generate_completion(
                 messages=[
                     {"role": "system", "content": "You are an expert business consultant who creates detailed business plans."},
                     {"role": "user", "content": prompt}
@@ -116,8 +159,6 @@ class OpenAIService:
                 temperature=0.7,
                 max_tokens=2000
             )
-
-            content = response.choices[0].message.content
 
             # Try to parse as JSON, fallback to structured text
             try:
@@ -133,7 +174,7 @@ class OpenAIService:
                 detail=f"OpenAI API error: {str(e)}"
             )
 
-    def generate_marketing_copy(
+    async def generate_marketing_copy(
         self,
         business_name: str,
         platform: str,
@@ -161,8 +202,7 @@ class OpenAIService:
         """
 
         try:
-            response = openai.ChatCompletion.create(
-                model=self.model,
+            content = await self._generate_completion(
                 messages=[
                     {"role": "system", "content": "You are an expert marketing copywriter."},
                     {"role": "user", "content": prompt}
@@ -171,7 +211,7 @@ class OpenAIService:
                 max_tokens=300
             )
 
-            return response.choices[0].message.content.strip()
+            return content.strip()
 
         except Exception as e:
             raise HTTPException(
@@ -179,7 +219,7 @@ class OpenAIService:
                 detail=f"OpenAI API error: {str(e)}"
             )
 
-    def generate_email_campaign(
+    async def generate_email_campaign(
         self,
         business_name: str,
         campaign_goal: str,
@@ -204,8 +244,7 @@ class OpenAIService:
         """
 
         try:
-            response = openai.ChatCompletion.create(
-                model=self.model,
+            content = await self._generate_completion(
                 messages=[
                     {"role": "system", "content": "You are an expert email marketer."},
                     {"role": "user", "content": prompt}
@@ -213,8 +252,6 @@ class OpenAIService:
                 temperature=0.7,
                 max_tokens=600
             )
-
-            content = response.choices[0].message.content
 
             try:
                 email_data = json.loads(content)
@@ -233,7 +270,7 @@ class OpenAIService:
                 detail=f"OpenAI API error: {str(e)}"
             )
 
-    def analyze_competitor(self, competitor_name: str, industry: str) -> Dict:
+    async def analyze_competitor(self, competitor_name: str, industry: str) -> Dict:
         """Analyze competitor using GPT-4."""
         prompt = f"""
         Provide a competitive analysis for:
@@ -250,8 +287,7 @@ class OpenAIService:
         """
 
         try:
-            response = openai.ChatCompletion.create(
-                model=self.model,
+            content = await self._generate_completion(
                 messages=[
                     {"role": "system", "content": "You are a business analyst."},
                     {"role": "user", "content": prompt}
@@ -259,8 +295,6 @@ class OpenAIService:
                 temperature=0.6,
                 max_tokens=800
             )
-
-            content = response.choices[0].message.content
 
             try:
                 analysis = json.loads(content)

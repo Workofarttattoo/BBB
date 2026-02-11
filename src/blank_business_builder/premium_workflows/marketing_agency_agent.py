@@ -252,7 +252,7 @@ class MarketingAgencyAgent:
         Return as numbered list.
         """
 
-        hooks_text = self.openai.generate_marketing_copy(
+        hooks_text = await self.openai.generate_marketing_copy(
             business_name=product_info.get("name", "Product"),
             platform="social_media",
             campaign_goal=prompt,
@@ -379,7 +379,7 @@ class MarketingAgencyAgent:
         Make it scroll-stopping and conversion-focused.
         """
 
-        script = self.openai.generate_marketing_copy(
+        script = await self.openai.generate_marketing_copy(
             business_name="Video Marketing",
             platform="tiktok",
             campaign_goal=prompt,
@@ -407,7 +407,7 @@ class MarketingAgencyAgent:
         Max 125 characters for primary text.
         """
 
-        copy = self.openai.generate_marketing_copy(
+        copy = await self.openai.generate_marketing_copy(
             business_name="Ad Campaign",
             platform="facebook",
             campaign_goal=prompt,

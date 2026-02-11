@@ -189,7 +189,7 @@ class MarketingAutomationSuite:
         key_points = config.get("key_points", [])
 
         # Use OpenAI to generate
-        email_data = self.openai.generate_email_campaign(
+        email_data = await self.openai.generate_email_campaign(
             business_name=config.get("business_name", "Your Business"),
             campaign_goal=goal,
             target_audience=audience,
