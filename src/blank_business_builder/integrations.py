@@ -12,6 +12,11 @@ except ImportError:  # pragma: no cover
     openai = None
 
 try:
+    import anthropic  # type: ignore
+except ImportError:  # pragma: no cover
+    anthropic = None
+
+try:
     from sendgrid import SendGridAPIClient  # type: ignore
     from sendgrid.helpers.mail import Mail, Email, To, Content  # type: ignore
 except ImportError:  # pragma: no cover
@@ -38,6 +43,25 @@ if openai is None:  # pragma: no cover
         ChatCompletion = _OpenAIChatCompletion
 
     openai = _OpenAIStub()
+
+if anthropic is None:  # pragma: no cover
+    class _AnthropicMessage:
+        def __init__(self, content: str):
+            self.content = [type('Content', (), {'text': content})]
+
+    class _AnthropicMessages:
+        @staticmethod
+        def create(**kwargs):
+            prompt = kwargs.get('messages', [{}])[-1].get('content', 'Default response')
+            fallback = f"[Anthropic Stub] Processed: {prompt[:50]}..."
+            return _AnthropicMessage(fallback)
+
+    class _AnthropicStub:
+        def __init__(self, api_key: str = ""):
+            self.api_key = api_key
+            self.messages = _AnthropicMessages()
+
+    anthropic = type('anthropic', (), {'Anthropic': _AnthropicStub})
 
 if SendGridAPIClient is None:  # pragma: no cover
     class SendGridAPIClient:
@@ -297,6 +321,55 @@ class OpenAIService:
             )
 
 
+class AnthropicService:
+    """Anthropic Claude integration for AI-powered content generation."""
+
+    def __init__(self):
+        self.api_key = os.getenv("ANTHROPIC_API_KEY", "")
+        if anthropic and hasattr(anthropic, "Anthropic"):
+            self.client = anthropic.Anthropic(api_key=self.api_key)
+        else:
+            self.client = None
+        self.model = os.getenv("ANTHROPIC_MODEL", "claude-3-opus-20240229")
+
+    def generate_content(self, prompt: str, model: Optional[str] = None) -> str:
+        """Generate content using Claude."""
+        if not self.client:
+             # Fallback if somehow client isn't initialized even with stub
+             if anthropic:
+                 self.client = anthropic.Anthropic(api_key=self.api_key)
+
+        target_model = model or self.model
+        # Map internal enum values to actual model names if needed
+        if target_model == "claude-opus":
+            target_model = "claude-3-opus-20240229"
+        elif target_model == "claude-sonnet":
+            target_model = "claude-3-sonnet-20240229"
+
+        try:
+            response = self.client.messages.create(
+                model=target_model,
+                max_tokens=4000,
+                messages=[
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            return response.content[0].text
+
+        except Exception as e:
+            # If API key is missing or invalid, we might want to return a helpful message
+            # or raise HTTPException depending on how strict we want to be.
+            # But good practice is to raise or handle.
+            if "api_key" in str(e).lower() or "authentication" in str(e).lower():
+                 print(f"Anthropic API Warning: {e}")
+                 return f"[Claude Simulation] {prompt[:100]}..."
+
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Anthropic API error: {str(e)}"
+            )
+
+
 class SendGridService:
     """SendGrid email service integration."""
 
@@ -487,6 +560,11 @@ class IntegrationFactory:
     def get_sendgrid_service() -> SendGridService:
         """Get SendGrid service instance."""
         return SendGridService()
+
+    @staticmethod
+    def get_anthropic_service() -> AnthropicService:
+        """Get Anthropic service instance."""
+        return AnthropicService()
 
     @staticmethod
     def get_buffer_service() -> BufferService:

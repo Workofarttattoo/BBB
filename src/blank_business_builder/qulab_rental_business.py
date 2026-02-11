@@ -40,6 +40,15 @@ class RentalPackage(Enum):
     FULL_WEEK = "full_week"    # 7 days - $5,000
 
 
+class SubscriptionTier(Enum):
+    """Subscription tiers."""
+    RESEARCH = "research"
+    STARTUP = "startup"
+    PROFESSIONAL = "professional"
+    ENTERPRISE = "enterprise"
+    DEDICATED = "dedicated"
+
+
 class JobPriority(Enum):
     """Job queue priority levels."""
     STANDARD = "standard"      # Standard queue

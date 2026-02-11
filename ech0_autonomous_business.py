@@ -34,6 +34,14 @@ except ImportError:
     FIVERR_CLIENT_AVAILABLE = False
     print("[WARN] Fiverr autonomous manager not available")
 
+# Import LLM Engine
+try:
+    from ech0_llm_engine import ECH0LLMEngine
+    LLM_AVAILABLE = True
+except ImportError:
+    LLM_AVAILABLE = False
+    print("[WARN] ECH0 LLM Engine not available")
+
 # Selenium imports for other web automation
 try:
     from selenium import webdriver
@@ -68,6 +76,15 @@ class ECH0AutonomousCore:
         self.activity_log = []
         self.daily_summary = []
 
+        # Initialize LLM Engine
+        self.llm_engine = None
+        if LLM_AVAILABLE:
+            try:
+                self.llm_engine = ECH0LLMEngine()
+                print("✓ LLM Engine initialized")
+            except Exception as e:
+                print(f"[ERROR] LLM Engine init failed: {e}")
+
         # Initialize modules
         self.modules = {
             "fiverr": FiverrAutomation(self),
@@ -91,6 +108,11 @@ class ECH0AutonomousCore:
 
         # Default configuration
         default_config = {
+            "llm": {
+                "provider": "huggingface",  # huggingface, together, custom
+                "endpoint": "https://workofarttattoo-echo-prime-agi.hf.space/api/predict",
+                "api_key": ""
+            },
             "owner": {
                 "name": "Joshua Hendricks Cole",
                 "phone": "7252242617",
@@ -317,7 +339,15 @@ class FiverrAutomation:
 
                 if num_messages > 0:
                     self.core.log_activity("fiverr", "MESSAGES_FOUND", f"{num_messages} unread")
-                    # TODO: Auto-respond using LLM engine (ech0_llm_engine.py)
+
+                    # Auto-respond using LLM engine
+                    if self.core.config['fiverr'].get('auto_respond', False):
+                        if self.core.llm_engine:
+                            self.core.log_activity("fiverr", "AUTO_RESPOND", "Engaging LLM...")
+                            self.fiverr_manager.respond_to_unread_messages(self.core.llm_engine.generate_response)
+                        else:
+                            self.core.log_activity("fiverr", "AUTO_RESPOND_SKIP", "LLM Engine not available")
+
                 elif num_messages == 0:
                     self.core.log_activity("fiverr", "MESSAGES_CHECK", "No new messages")
                 else:
