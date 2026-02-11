@@ -46,6 +46,14 @@ SENDER_NAME_SELECTOR = ".username, header h1, .contact-name"  # Selector for the
 REPLY_INPUT_SELECTOR = "textarea[placeholder*='Type'], .message-composer textarea"  # Input box
 SEND_BUTTON_SELECTOR = "button[type='submit'], .send-button"  # Send button
 
+# --- ORDER SELECTORS ---
+ORDER_ITEM_SELECTOR = ".order-item.active, .order-card"
+ORDER_STATUS_SELECTOR = ".status-label, .status"
+ORDER_BUYER_SELECTOR = ".buyer-name, .user-name"
+ORDER_LINK_SELECTOR = "a[href*='/orders/']"
+# Selector for message rows to determine sender
+MESSAGE_ROW_SELECTOR = ".message-row, .message-wrapper"
+
 class FiverrAutonomousManager:
     """
     Autonomous Agent for managing an existing, logged-in Fiverr session.
@@ -275,7 +283,7 @@ class FiverrAutonomousManager:
                 time.sleep(random.uniform(2, 4))
 
             # Look for active order indicators
-            active_orders = self.driver.find_elements(By.CSS_SELECTOR, ".order-item.active, .order-card")
+            active_orders = self.driver.find_elements(By.CSS_SELECTOR, ORDER_ITEM_SELECTOR)
 
             # Inefficient navigation - look at all orders, not just active
             if self.human and active_orders:
@@ -300,6 +308,125 @@ class FiverrAutonomousManager:
         except Exception as e:
             print(f"ECH0_FIVERR: Order check complete (no indicators): {e}")
             return 0
+
+    def process_active_orders(self, llm_engine):
+        """
+        Process active orders using LLM.
+        Navigates to orders page, finds active orders, and updates status/responds.
+        """
+        print("ECH0_FIVERR: processing active orders...")
+        processed_stats = {"found": 0, "processed": 0}
+
+        try:
+            # Navigate to orders if not already there
+            if "orders" not in self.driver.current_url:
+                self.driver.get("https://www.fiverr.com/users/orders")
+                time.sleep(random.uniform(2, 4))
+
+            # Find active orders
+            # Using find_elements to get a fresh list
+            active_orders = self.driver.find_elements(By.CSS_SELECTOR, ORDER_ITEM_SELECTOR)
+            processed_stats["found"] = len(active_orders)
+
+            if not active_orders:
+                print("ECH0_FIVERR: No active orders to process.")
+                return processed_stats
+
+            # Process each order
+            # Note: DOM elements go stale after navigation, so we need to collect URLs first
+            order_urls = []
+            for order in active_orders:
+                try:
+                    link_elem = order.find_element(By.CSS_SELECTOR, ORDER_LINK_SELECTOR)
+                    order_urls.append(link_elem.get_attribute("href"))
+                except Exception:
+                    continue
+
+            print(f"ECH0_FIVERR: Found {len(order_urls)} order URLs to process.")
+
+            for url in order_urls:
+                try:
+                    self.driver.get(url)
+                    time.sleep(random.uniform(3, 5))
+
+                    # Extract details
+                    try:
+                        buyer_name = self.driver.find_element(By.CSS_SELECTOR, ORDER_BUYER_SELECTOR).text
+                    except:
+                        buyer_name = "Client"
+
+                    try:
+                        status = self.driver.find_element(By.CSS_SELECTOR, ORDER_STATUS_SELECTOR).text
+                    except:
+                        status = "Unknown"
+
+                    print(f"ECH0_FIVERR: Processing order for {buyer_name} (Status: {status})")
+
+                    # Check for latest message
+                    try:
+                        msg_texts = self.driver.find_elements(By.CSS_SELECTOR, MESSAGE_TEXT_SELECTOR)
+                        last_message = msg_texts[-1].text if msg_texts else ""
+
+                        # Check if last message was from us to avoid infinite loops
+                        last_message_from_me = False
+                        try:
+                            # Try to find message rows and check the last one
+                            msg_rows = self.driver.find_elements(By.CSS_SELECTOR, MESSAGE_ROW_SELECTOR)
+                            if msg_rows:
+                                last_row = msg_rows[-1]
+                                # Check if it has a class indicating it's mine (e.g. "me", "sent", "right")
+                                class_attr = last_row.get_attribute("class")
+                                if class_attr and ("me" in class_attr or "sent" in class_attr or "right" in class_attr):
+                                    last_message_from_me = True
+                        except Exception:
+                            pass
+
+                        # Fallback: check content if we can't determine by class
+                        # If the last message contains our typical welcome phrase, assume it's us.
+                        if "New order started" in last_message:
+                             last_message_from_me = True
+
+                        if last_message_from_me:
+                            print(f"ECH0_FIVERR: Last message was from us. Skipping response for {buyer_name}.")
+                            continue
+
+                        # Determine if we need to respond
+                        # Simplified: respond if status is "Incomplete" (New order)
+                        if "Incomplete" in status or "New" in status:
+                             print("ECH0_FIVERR: New order detected. Sending welcome message.")
+                             response = llm_engine.generate_response(
+                                 "New order started.",
+                                 buyer_name,
+                                 context={"type": "order_start", "status": status}
+                             )
+
+                             input_box = self.driver.find_element(By.CSS_SELECTOR, REPLY_INPUT_SELECTOR)
+                             if self.human:
+                                 self.human.human_type(input_box, response)
+                             else:
+                                 input_box.send_keys(response)
+
+                             time.sleep(random.uniform(1, 2))
+
+                             send_btn = self.driver.find_element(By.CSS_SELECTOR, SEND_BUTTON_SELECTOR)
+                             if self.human:
+                                 self.human.human_click(send_btn)
+                             else:
+                                 send_btn.click()
+
+                             processed_stats["processed"] += 1
+                             print("ECH0_FIVERR: Welcome message sent.")
+
+                    except Exception as e:
+                        print(f"ECH0_FIVERR: Error checking messages for order: {e}")
+
+                except Exception as e:
+                    print(f"ECH0_FIVERR: Failed to process order URL {url}: {e}")
+
+        except Exception as e:
+            print(f"ECH0_FIVERR: Error in process_active_orders: {e}")
+
+        return processed_stats
 
     def human_sleep(self):
         """Sleeps for a random interval to mimic biological irregularity."""
