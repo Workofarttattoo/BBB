@@ -7,7 +7,10 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 from __future__ import annotations
 import asyncio
 import random
+import logging
 from typing import Dict
+
+logger = logging.getLogger(__name__)
 
 # It is assumed that ech0_local_brain is available in the python path
 try:
@@ -31,6 +34,10 @@ class ECH0Service:
         """
         Get a response from the ECH0 local brain.
         """
+        if not ECH0_AVAILABLE:
+            logger.warning(f"ECH0 Brain Unavailable. Cannot process prompt: {prompt[:50]}...")
+            return f"[ECH0 UNAVAILABLE] Context: {prompt[:50]}..."
+
         session_id = f"{self.session_id_prefix}_{random.randint(1000, 9999)}"
         ech0 = ECH0LocalBrain(model=self.model, session_id=session_id)
         response_data = await ech0.send_message(prompt, use_temporal=True, max_tokens=max_tokens, timeout=None)
