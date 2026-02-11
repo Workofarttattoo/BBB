@@ -140,7 +140,7 @@ class Level6Agent:
         )
 
         # Send onboarding email
-        self.sendgrid.send_email(
+        await self.sendgrid.send_email(
             to_email=user.email,
             subject=email_data["subject"],
             html_content=email_data["body"]
@@ -181,7 +181,7 @@ class Level6Agent:
             ]
         )
 
-        self.sendgrid.send_email(
+        await self.sendgrid.send_email(
             to_email=user.email,
             subject=email_data["subject"],
             html_content=email_data["body"]
@@ -219,7 +219,7 @@ class Level6Agent:
             ]
         )
 
-        self.sendgrid.send_email(
+        await self.sendgrid.send_email(
             to_email=user.email,
             subject=email_data["subject"],
             html_content=email_data["body"]
@@ -324,7 +324,7 @@ class Level6Agent:
             ]
         )
 
-        self.sendgrid.send_email(
+        await self.sendgrid.send_email(
             to_email=user.email,
             subject=email_data["subject"],
             html_content=email_data["body"]
