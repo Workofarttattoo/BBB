@@ -3,10 +3,11 @@
 DIGITAL TWIN SYSTEM - Business Modeling & Autonomy
 Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
 
-This system manages the lifecycle of a business unit through three phases:
-1. PREDICTIVE: Analyzing data and simulating outcomes.
-2. SELF-HEALING: Detecting and fixing operational errors.
-3. AUTONOMOUS: Running in full production mode with minimal oversight.
+This system manages the lifecycle of a business unit through four evolutionary phases:
+1. SIMULATION: Building accurate day-to-day activity in a simulated way.
+2. PREDICTIVE: Fast-forward iterations, learning from mistakes, Echo correcting code.
+3. PRESCRIPTIVE: Deployment, real analysis, onboarding, gears moving.
+4. AUTONOMOUS: Stabilized operation + controlled expansion (Kairos Check).
 """
 
 import time
@@ -25,24 +26,30 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [DIGITAL_TWIN] %(message)s')
 logger = logging.getLogger(__name__)
 
-class TwinState(Enum):
-    PREDICTIVE = "predictive"
-    SELF_HEALING = "self_healing"
-    AUTONOMOUS = "autonomous"
+class TwinPhase(Enum):
+    SIMULATION = "simulation"       # Phase 1: Accurate day-to-day simulation
+    PREDICTIVE = "predictive"       # Phase 2: Fast-forward learning & correction
+    PRESCRIPTIVE = "prescriptive"   # Phase 3: Deployment & Real Operations
+    AUTONOMOUS = "autonomous"       # Phase 4: Stable growth & expansion
 
 class DigitalTwin:
     """
     Digital Twin of a business unit.
-    Manages state transitions and error recovery.
+    Manages state transitions through the four evolutionary phases.
     """
 
     def __init__(self, business_name: str, hive: Optional['HiveMindCoordinator'] = None):
         self.name = business_name
-        self.state = TwinState.PREDICTIVE
+        self.phase = TwinPhase.SIMULATION
         self.hive = hive
         self.llm = ECH0LLMEngine()
+
+        # Metrics
         self.health_score = 100.0
+        self.simulation_days = 0
         self.error_log = []
+        self.successful_days = 0
+        self.expansion_count = 0
 
         # Register with Hive if available
         if self.hive:
@@ -50,107 +57,165 @@ class DigitalTwin:
             self.hive.register_agent(self.agent_id, AgentType.LEVEL9_MONITORING, autonomy_level=9)
 
     def run_cycle(self):
-        """Execute one operational cycle based on current state."""
-        logger.info(f"Running cycle for {self.name} in state: {self.state.value}")
+        """Execute one operational cycle based on current phase."""
+        logger.info(f"Running cycle for {self.name} in Phase: {self.phase.value.upper()}")
 
-        if self.state == TwinState.PREDICTIVE:
-            self._run_predictive_mode()
-        elif self.state == TwinState.SELF_HEALING:
-            self._run_self_healing_mode()
-        elif self.state == TwinState.AUTONOMOUS:
-            self._run_autonomous_mode()
+        if self.phase == TwinPhase.SIMULATION:
+            self._run_simulation_phase()
+        elif self.phase == TwinPhase.PREDICTIVE:
+            self._run_predictive_phase()
+        elif self.phase == TwinPhase.PRESCRIPTIVE:
+            self._run_prescriptive_phase()
+        elif self.phase == TwinPhase.AUTONOMOUS:
+            self._run_autonomous_phase()
 
-    def _run_predictive_mode(self):
+    def _run_simulation_phase(self):
         """
-        Phase 1: Predictive
-        Simulate operations to find potential failure points.
+        Phase 1: Simulation
+        Build accurate day-to-day activity in a simulated way.
         """
-        # Simulate an error with 30% probability
-        if random.random() < 0.3:
-            error = "Predicted: Server overload during peak hours"
-            self.error_log.append(error)
-            logger.warning(f"Prediction: {error}")
+        self.simulation_days += 1
+        logger.info(f"Day {self.simulation_days}: Simulating routine operations...")
 
-            # Consult Echo Prime for solution
-            solution = self.llm.reasoning(f"How to prevent {error}?")
-            logger.info(f"Proposed mitigation: {solution}")
-
-            # If errors found, stay in predictive or move to self-healing to test fix
-            self.transition_to(TwinState.SELF_HEALING)
-        else:
-            logger.info("Simulation stable. No predicted errors.")
-            # If stable enough, move to Autonomous
-            if self.health_score > 95:
-                self.transition_to(TwinState.AUTONOMOUS)
-
-    def _run_self_healing_mode(self):
-        """
-        Phase 2: Self-Healing
-        Active error detected. Applying fixes.
-        """
-        if not self.error_log:
-            logger.info("No errors to heal. Returning to previous state.")
-            self.transition_to(TwinState.AUTONOMOUS)
-            return
-
-        error = self.error_log.pop(0)
-        logger.info(f"Attempting to heal error: {error}")
-
-        # Simulate fix application by Echo
-        logger.info("Applying configuration patch...")
-        time.sleep(1)
-
-        # Verify fix
-        if random.random() < 0.8: # 80% success rate
-            logger.info("Fix successful. Health restored.")
-            self.health_score = min(100.0, self.health_score + 10)
-            self.transition_to(TwinState.AUTONOMOUS)
-        else:
-            logger.error("Fix failed. escalating to Hive Mind.")
-            if self.hive:
-                msg = HiveMessage(
-                    sender=self.agent_id,
-                    agent_type=AgentType.LEVEL9_MONITORING,
-                    message_type="performance_alert",
-                    payload={"error": error, "status": "fix_failed"},
-                    priority=DecisionPriority.HIGH,
-                    timestamp=time.time()
-                )
-                self.hive.send_message(msg)
-
-    def _run_autonomous_mode(self):
-        """
-        Phase 3: Autonomous
-        Running operations. Monitoring for drifts.
-        """
-        # Small chance of runtime error
+        # Simulate simulated activity (e.g., mock emails, mock orders)
+        if random.random() < 0.2:
+            logger.info("  - Simulated: Received 3 new leads.")
         if random.random() < 0.1:
-            logger.error("Runtime anomaly detected!")
-            self.health_score -= 15
-            self.error_log.append("Runtime: Latency spike")
-            self.transition_to(TwinState.SELF_HEALING)
-        else:
-            logger.info("Operations normal. Generating revenue.")
-            self.health_score = min(100.0, self.health_score + 1)
+            logger.info("  - Simulated: Completed 1 mock order.")
 
-    def transition_to(self, new_state: TwinState):
-        """Transition to a new state."""
-        logger.info(f"Transitioning: {self.state.value} -> {new_state.value}")
-        self.state = new_state
+        # Check stability to move to Phase 2
+        if self.simulation_days >= 5:
+            logger.info("Simulation baseline established. Moving to PREDICTIVE phase.")
+            self.transition_to(TwinPhase.PREDICTIVE)
+
+    def _run_predictive_phase(self):
+        """
+        Phase 2: Predictive
+        Fast-forward iterations, learn from mistakes, Echo corrects code.
+        """
+        logger.info("Running fast-forward predictive iteration...")
+
+        # Simulate errors that need correction
+        if random.random() < 0.4:
+            error = "Predictive Error: API Rate Limit Exceeded"
+            self.error_log.append(error)
+            logger.warning(f"  - Detected: {error}")
+
+            # Consult Echo Prime for code correction
+            fix = self.llm.generate_response(f"Fix code error: {error}", "System")
+            logger.info(f"  - Echo Applied Fix: {fix[:50]}...")
+
+            # Verify fix
+            if random.random() < 0.9:
+                logger.info("  - Fix Verified. System stabilized.")
+                self.health_score += 5
+            else:
+                logger.error("  - Fix Failed. Retrying in next cycle.")
+                return
+
+        # Check readiness for Deployment (Phase 3)
+        if self.health_score >= 95 and len(self.error_log) == 0:
+            logger.info("System optimized and error-free. Launching PRESCRIPTIVE phase.")
+            self.transition_to(TwinPhase.PRESCRIPTIVE)
+
+    def _run_prescriptive_phase(self):
+        """
+        Phase 3: Prescriptive
+        Deployment, real analysis, onboarding, gears moving.
+        """
+        logger.info("Executing real-world business operations...")
+
+        # In this phase, real API calls happen (e.g., checking real email)
+        # We track success metrics
+        self.successful_days += 1
+
+        if self.successful_days >= 7:
+            logger.info("Operations stabilized over 7 days. Entering AUTONOMOUS phase.")
+            self.transition_to(TwinPhase.AUTONOMOUS)
+
+    def _run_autonomous_phase(self):
+        """
+        Phase 4: Autonomous
+        Stabilized operation + controlled expansion.
+        """
+        logger.info("Autonomous Mode: Monitoring and Optimizing.")
+
+        # Check for expansion opportunity
+        if self.kairos_check():
+            self._expand_business()
+        else:
+            logger.info("Kairos Check: Conditions not met for expansion yet.")
+
+    def kairos_check(self) -> bool:
+        """
+        Kairos: Do the right thing, for the right reason, at the right time.
+        Determines if it's the right time to expand.
+        """
+        # Criteria: High health, sufficient funds (mock), stable operations
+        is_right_time = (
+            self.health_score > 98 and
+            self.successful_days > 14 and
+            random.random() < 0.1  # Random factor representing market opportunity
+        )
+
+        if is_right_time:
+            logger.info("Kairos: The moment is right.")
+
+        return is_right_time
+
+    def _expand_business(self):
+        """Expand by adding a new business unit or capacity."""
+        logger.info("Expanding Business Capacity...")
+        self.expansion_count += 1
+        self.successful_days = 0  # Reset stability counter for new baseline
+        logger.info(f"Expansion #{self.expansion_count} complete.")
+
+        if self.hive:
+             self.hive.send_message(HiveMessage(
+                sender=self.agent_id,
+                agent_type=AgentType.LEVEL9_MONITORING,
+                message_type="business_expansion",
+                payload={"expansion_count": self.expansion_count},
+                priority=DecisionPriority.HIGH,
+                timestamp=time.time()
+            ))
+
+    def transition_to(self, new_phase: TwinPhase):
+        """Transition to a new phase."""
+        logger.info(f"*** PHASE TRANSITION: {self.phase.value.upper()} -> {new_phase.value.upper()} ***")
+        self.phase = new_phase
 
         if self.hive:
             self.hive.share_learning(
                 self.agent_id,
-                "optimization",
-                {"transition": f"Moved to {new_state.value}", "health": self.health_score}
+                "phase_transition",
+                {"from": self.phase.value, "to": new_phase.value, "health": self.health_score}
             )
 
 
 # Verification
 if __name__ == "__main__":
-    twin = DigitalTwin("Fiverr Business Unit")
+    twin = DigitalTwin("Kairos Business Unit")
 
-    # Run a few cycles
+    # Run through phases quickly for demo
+    logger.info("--- STARTING LIFECYCLE DEMO ---")
+
+    # Phase 1: Simulation
+    for _ in range(6):
+        twin.run_cycle()
+        time.sleep(0.5)
+
+    # Phase 2: Predictive
     for _ in range(5):
         twin.run_cycle()
-        time.sleep(1)
+        time.sleep(0.5)
+
+    # Phase 3: Prescriptive
+    for _ in range(8):
+        twin.run_cycle()
+        time.sleep(0.5)
+
+    # Phase 4: Autonomous
+    for _ in range(5):
+        twin.run_cycle()
+        time.sleep(0.5)

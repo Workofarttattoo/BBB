@@ -29,7 +29,7 @@ from datetime import datetime
 try:
     from ech0_llm_engine import ECH0LLMEngine
     from hivemind import HiveMindCoordinator, AgentType, HiveMessage, DecisionPriority
-    from digital_twin import DigitalTwin, TwinState
+    from digital_twin import DigitalTwin, TwinPhase
 except ImportError:
     logging.error("Required modules missing. Ensure ech0_llm_engine, hivemind, and digital_twin are present.")
     sys.exit(1)
@@ -62,6 +62,11 @@ class GigMonitorAgent:
 
     def connect_imap(self):
         """Connect to IMAP server."""
+        # Force simulation if in SIMULATION or PREDICTIVE phases
+        if self.twin.phase in [TwinPhase.SIMULATION, TwinPhase.PREDICTIVE]:
+            logger.info(f"Agent in {self.twin.phase.value} phase. Using mock connection.")
+            return None
+
         if not self.email_user or not self.email_pass:
             logger.warning("Email credentials not set (EMAIL_USER/EMAIL_PASS). Running in SIMULATION mode.")
             return None
@@ -73,14 +78,14 @@ class GigMonitorAgent:
         except Exception as e:
             logger.error(f"IMAP Connection failed: {e}")
             self.twin.error_log.append(f"IMAP Error: {e}")
-            self.twin.transition_to(TwinState.SELF_HEALING)
+            # Note: DigitalTwin handles transitions, but we log the error here
             return None
 
     def check_emails(self):
         """Scan inbox for relevant keywords."""
         mail = self.connect_imap()
 
-        # Simulation Mode
+        # Use simulation if no connection or in simulation phase
         if not mail:
             self._simulate_email_check()
             return
@@ -132,7 +137,6 @@ class GigMonitorAgent:
         except Exception as e:
             logger.error(f"Error checking emails: {e}")
             self.twin.error_log.append(f"Scan Error: {e}")
-            self.twin.transition_to(TwinState.SELF_HEALING)
 
     def _simulate_email_check(self):
         """Simulate finding an email for testing/demo purposes."""
@@ -173,11 +177,12 @@ class GigMonitorAgent:
                 self.twin.run_cycle()
 
                 # 2. Perform Operational Task (Check Emails)
-                if self.twin.state == TwinState.AUTONOMOUS:
-                    self.check_emails()
+                # In Simulation/Predictive phases, check_emails runs the simulation
+                # In Prescriptive/Autonomous phases, it runs real checks
+                self.check_emails()
 
                 # 3. Wait
-                interval = random.randint(30, 60)
+                interval = random.randint(10, 30) # Faster cycle for demo
                 logger.info(f"Sleeping for {interval}s...")
                 time.sleep(interval)
 
