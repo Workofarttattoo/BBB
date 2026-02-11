@@ -11,6 +11,7 @@ from dataclasses import dataclass
 import asyncio
 
 from ..integrations import IntegrationFactory
+from ..utils import generate_id
 
 
 @dataclass
@@ -118,7 +119,7 @@ class AIWorkflowBuilder:
 
         # Create workflow object
         workflow = Workflow(
-            workflow_id=self._generate_id(),
+            workflow_id=generate_id(),
             name=workflow_plan["name"],
             description=description,
             trigger=steps[0],  # First step is always the trigger
@@ -186,7 +187,7 @@ class AIWorkflowBuilder:
 
         # Trigger step
         trigger = WorkflowStep(
-            step_id=self._generate_id(),
+            step_id=generate_id(),
             step_type="trigger",
             app=plan["trigger"]["app"],
             action=plan["trigger"]["event"],
@@ -199,7 +200,7 @@ class AIWorkflowBuilder:
         # Action steps
         for idx, action in enumerate(plan["actions"]):
             step = WorkflowStep(
-                step_id=self._generate_id(),
+                step_id=generate_id(),
                 step_type="action",
                 app=action["app"],
                 action=action["action"],
@@ -267,7 +268,7 @@ class AIWorkflowBuilder:
         But we make it easier - AI writes the code for you.
         """
         step = WorkflowStep(
-            step_id=self._generate_id(),
+            step_id=generate_id(),
             step_type="code",
             app="javascript",
             action="execute",
@@ -290,7 +291,7 @@ class AIWorkflowBuilder:
         - "Sentiment analysis"
         """
         step = WorkflowStep(
-            step_id=self._generate_id(),
+            step_id=generate_id(),
             step_type="ai",
             app="openai",
             action="execute_task",
@@ -435,12 +436,6 @@ class AIWorkflowBuilder:
         return templates
 
     # ===== UTILITY METHODS =====
-
-    def _generate_id(self) -> str:
-        """Generate unique ID."""
-        import uuid
-        return str(uuid.uuid4())
-
 
 # ===== AUTONOMOUS WORKFLOW AGENT =====
 

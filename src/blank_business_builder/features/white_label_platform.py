@@ -12,6 +12,7 @@ from enum import Enum
 import asyncio
 
 from ..level6_agent import AgentDecision
+from ..utils import generate_id
 
 
 class BrandingLevel(Enum):
@@ -146,7 +147,7 @@ class WhiteLabelPlatform:
         recommended_markup = await self._quantum_optimize_pricing(agency_data)
 
         config = WhiteLabelConfig(
-            config_id=self._generate_id(),
+            config_id=generate_id(),
             agency_id=agency_data["agency_id"],
             agency_name=agency_data["agency_name"],
             branding_level=BrandingLevel(agency_data.get("branding_level", "professional")),
@@ -364,7 +365,7 @@ class WhiteLabelPlatform:
 
         # Create sub-account
         account = SubAccount(
-            account_id=self._generate_id(),
+            account_id=generate_id(),
             agency_id=agency_id,
             client_name=client_data["name"],
             client_email=client_data["email"],
@@ -641,7 +642,7 @@ class WhiteLabelPlatform:
         recommendations = await self._generate_recommendations(performance_data, insights)
 
         report = {
-            "report_id": self._generate_id(),
+            "report_id": generate_id(),
             "account_id": account_id,
             "report_type": report_type,
             "period": self._get_report_period(report_type),
@@ -748,12 +749,6 @@ class WhiteLabelPlatform:
         }
 
     # ===== UTILITY METHODS =====
-
-    def _generate_id(self) -> str:
-        """Generate unique ID."""
-        import uuid
-        return str(uuid.uuid4())
-
 
 # ===== AUTONOMOUS WHITE-LABEL MANAGEMENT AGENT =====
 
