@@ -10,7 +10,14 @@ try:
     import tweepy
     TWEEPY_AVAILABLE = True
 except ImportError:
-    tweepy = None
+    class MockTweepy:
+        class OAuthHandler:
+            def __init__(self, *args, **kwargs): pass
+            def set_access_token(self, *args, **kwargs): pass
+        class API:
+            def __init__(self, *args, **kwargs): pass
+            def update_status(self, *args, **kwargs): pass
+    tweepy = MockTweepy
     TWEEPY_AVAILABLE = False
 
 from ..ech0_service import ECH0Service
