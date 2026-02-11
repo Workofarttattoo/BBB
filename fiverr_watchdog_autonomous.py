@@ -33,6 +33,12 @@ except ImportError:
     print("[FATAL] fiverr_autonomous_manager.py not found in current directory")
     sys.exit(1)
 
+try:
+    from ech0_llm_engine import ECH0LLMEngine
+except ImportError:
+    print("[FATAL] ech0_llm_engine.py not found in current directory")
+    sys.exit(1)
+
 
 class FiverrWatchdog:
     """
@@ -99,6 +105,7 @@ class FiverrWatchdog:
         try:
             self.log("AGENT", "Initializing Fiverr Autonomous Manager...")
             self.agent = FiverrAutonomousManager()
+            self.llm_engine = ECH0LLMEngine()
             self.log("AGENT", "Agent initialized successfully")
             return True
         except Exception as e:
@@ -129,7 +136,8 @@ class FiverrWatchdog:
             if num_messages > 0:
                 self.stats["messages_found"] += num_messages
                 self.log("INBOX", f"Found {num_messages} unread message(s)")
-                # TODO: Integrate with LLM for auto-response
+                processed = self.agent.process_unread_messages(self.llm_engine)
+                self.log("INBOX", f"Auto-responded to {processed} message(s)")
             else:
                 self.log("INBOX", "No new messages")
 
