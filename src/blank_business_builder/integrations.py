@@ -19,6 +19,7 @@ except ImportError:  # pragma: no cover
     Mail = Email = To = Content = None
 
 import requests
+import httpx
 from fastapi import HTTPException, status
 
 if openai is None:  # pragma: no cover
@@ -375,11 +376,19 @@ class SendGridService:
 class BufferService:
     """Buffer social media scheduling integration."""
 
+    _client: Optional[httpx.AsyncClient] = None
+
     def __init__(self):
         self.access_token = os.getenv("BUFFER_ACCESS_TOKEN", "")
         self.api_base = "https://api.bufferapp.com/1"
 
-    def get_profiles(self) -> List[Dict]:
+    async def _get_client(self) -> httpx.AsyncClient:
+        """Get or create a persistent AsyncClient."""
+        if BufferService._client is None or BufferService._client.is_closed:
+            BufferService._client = httpx.AsyncClient()
+        return BufferService._client
+
+    async def get_profiles(self) -> List[Dict]:
         """Get user's Buffer profiles."""
         if not self.access_token:
             raise HTTPException(
@@ -388,7 +397,8 @@ class BufferService:
             )
 
         try:
-            response = requests.get(
+            client = await self._get_client()
+            response = await client.get(
                 f"{self.api_base}/profiles.json",
                 params={"access_token": self.access_token}
             )
@@ -401,7 +411,7 @@ class BufferService:
                 detail=f"Buffer API error: {str(e)}"
             )
 
-    def create_post(
+    async def create_post(
         self,
         profile_id: str,
         text: str,
@@ -429,7 +439,8 @@ class BufferService:
             if media:
                 data["media"] = media
 
-            response = requests.post(
+            client = await self._get_client()
+            response = await client.post(
                 f"{self.api_base}/updates/create.json",
                 data=data
             )
@@ -442,7 +453,7 @@ class BufferService:
                 detail=f"Buffer API error: {str(e)}"
             )
 
-    def schedule_post(
+    async def schedule_post(
         self,
         profile_id: str,
         text: str,
@@ -451,7 +462,7 @@ class BufferService:
     ) -> Dict:
         """Schedule a post for future publishing."""
         media = {"link": media_url} if media_url else None
-        return self.create_post(profile_id, text, scheduled_timestamp, media)
+        return await self.create_post(profile_id, text, scheduled_timestamp, media)
 
 
 class IntegrationFactory:
