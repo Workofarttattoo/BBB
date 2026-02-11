@@ -12,7 +12,7 @@ from enum import Enum
 import asyncio
 from openai import OpenAI
 from ..integrations import IntegrationFactory
-from .ech0_service import ECH0Service
+from ..ech0_service import ECH0Service
 
 
 class ContentType(Enum):
@@ -112,6 +112,7 @@ class AIContentGenerator:
 
     def __init__(self):
         self.openai = IntegrationFactory.get_openai_service()
+        self.anthropic_service = IntegrationFactory.get_anthropic_service()
         self.ech0_service = ECH0Service()
 
         # 200+ content templates (more than any competitor)
@@ -339,8 +340,7 @@ class AIContentGenerator:
         Generate using Anthropic Claude.
         Claude excels at long-form, nuanced content.
         """
-        # In production: Anthropic API integration
-        return f"[Claude-Generated Content]\n\nHigh-quality content about {request.topic}"
+        return self.anthropic_service.generate_content(prompt, model=request.ai_model.value)
 
     async def _generate_with_gemini(self, prompt: str, request: ContentRequest) -> str:
         """
