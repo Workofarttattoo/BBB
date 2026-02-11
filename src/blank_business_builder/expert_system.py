@@ -78,6 +78,9 @@ class ExpertDomain(Enum):
     MACHINE_LEARNING = "machine_learning"
     QUANTUM_COMPUTING = "quantum_computing"
 
+    # Legal
+    LEGAL = "legal"
+
     # General
     GENERAL = "general"
 
@@ -583,13 +586,15 @@ class MultiDomainExpertSystem:
     def _initialize_experts(self) -> None:
         """Initialize all domain experts."""
         # Science experts
-        self.experts[ExpertDomain.CHEMISTRY] = StandardDomainExpert("chem_001", ExpertDomain.CHEMISTRY, self.vector_store)
-        self.experts[ExpertDomain.BIOLOGY] = StandardDomainExpert("bio_001", ExpertDomain.BIOLOGY, self.vector_store)
-        self.experts[ExpertDomain.PHYSICS] = StandardDomainExpert("phys_001", ExpertDomain.PHYSICS, self.vector_store)
-        self.experts[ExpertDomain.MATERIALS_SCIENCE] = StandardDomainExpert("matsci_001", ExpertDomain.MATERIALS_SCIENCE, self.vector_store)
+       
+        self.experts[ExpertDomain.CHEMISTRY] = ChemistryExpert("chem_001", self.vector_store)
+        self.experts[ExpertDomain.BIOLOGY] = BiologyExpert("bio_001", self.vector_store)
+        self.experts[ExpertDomain.PHYSICS] = PhysicsExpert("phys_001", self.vector_store)
+        self.experts[ExpertDomain.MATERIALS_SCIENCE] = MaterialsScienceExpert("matsci_001", self.vector_store)
+        self.experts[ExpertDomain.LEGAL] = LegalExpert("legal_001", self.vector_store)
 
         # Additional experts can be added here
-        logger.info("Initialized domain experts: chemistry, biology, physics, materials_science")
+        logger.info("Initialized domain experts: chemistry, biology, physics, materials_science, legal")
 
     def add_knowledge(self, documents: List[KnowledgeDocument]) -> None:
         """Add documents to knowledge base."""
