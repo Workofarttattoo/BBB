@@ -4,6 +4,7 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 """
 import pytest
 import sys
+import importlib
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -16,25 +17,30 @@ sys.modules["anthropic"] = MagicMock() # Mock anthropic to ensure we test the se
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-# Now import the module under test
-from blank_business_builder.integrations import AnthropicService, IntegrationFactory
+from blank_business_builder import integrations
 
 class TestAnthropicService:
     """Test AnthropicService functionality."""
 
+    def setup_method(self):
+        # Reload module to ensure we use current mocks/classes
+        importlib.reload(integrations)
+        self.AnthropicService = integrations.AnthropicService
+        self.IntegrationFactory = integrations.IntegrationFactory
+
     def test_initialization(self):
         """Test that AnthropicService initializes correctly."""
-        service = AnthropicService()
+        service = self.AnthropicService()
         assert hasattr(service, "generate_content")
 
     def test_factory_method(self):
         """Test that IntegrationFactory returns an AnthropicService instance."""
-        service = IntegrationFactory.get_anthropic_service()
-        assert isinstance(service, AnthropicService)
+        service = self.IntegrationFactory.get_anthropic_service()
+        assert isinstance(service, self.AnthropicService)
 
     def test_generate_content_mock(self):
         """Test generate_content with mocked client."""
-        service = AnthropicService()
+        service = self.AnthropicService()
         # Mock the client
         service.client = MagicMock()
         service.client.messages.create.return_value.content = [MagicMock(text="Mocked response")]
@@ -45,7 +51,7 @@ class TestAnthropicService:
     def test_generate_content_fallback(self):
         """Test generate_content fallback behavior."""
         # If client raises error
-        service = AnthropicService()
+        service = self.AnthropicService()
         service.client = MagicMock()
         service.client.messages.create.side_effect = Exception("Authentication error: api_key invalid")
 
