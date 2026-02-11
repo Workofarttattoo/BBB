@@ -27,12 +27,10 @@ from .integrations import IntegrationFactory
 from .self_healing import build_self_healing_orchestrator, self_healing_enabled
 from pydantic import BaseModel
 try:
-    from pydantic import EmailStr as _EmailStr  # type: ignore
-    from pydantic.networks import import_email_validator  # type: ignore
-    import_email_validator()
-    EmailStr = _EmailStr
-except Exception:  # pragma: no cover
-    EmailStr = str  # type: ignore
+    import email_validator  # noqa: F401
+    from pydantic import EmailStr
+except ImportError:
+    EmailStr = str
 
 # Initialize FastAPI app
 app = FastAPI(
