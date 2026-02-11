@@ -4,6 +4,7 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 """
 import os
 import json
+import asyncio
 from typing import List, Dict, Optional
 
 try:
@@ -284,7 +285,7 @@ class SendGridService:
         self.client = SendGridAPIClient(self.api_key) if self.api_key else None
         self.from_email = os.getenv("SENDGRID_FROM_EMAIL", "noreply@betterbusinessbuilder.com")
 
-    def send_email(
+    async def send_email(
         self,
         to_email: str,
         subject: str,
@@ -306,7 +307,8 @@ class SendGridService:
                 html_content=Content("text/html", html_content)
             )
 
-            response = self.client.send(message)
+            loop = asyncio.get_running_loop()
+            response = await loop.run_in_executor(None, self.client.send, message)
             return response.status_code == 202
 
         except Exception as e:
@@ -315,7 +317,7 @@ class SendGridService:
                 detail=f"SendGrid error: {str(e)}"
             )
 
-    def send_bulk_email(
+    async def send_bulk_email(
         self,
         to_emails: List[str],
         subject: str,
@@ -334,14 +336,14 @@ class SendGridService:
 
         for email in to_emails:
             try:
-                self.send_email(email, subject, html_content, from_name)
+                await self.send_email(email, subject, html_content, from_name)
                 success_count += 1
             except:
                 failure_count += 1
 
         return {"success": success_count, "failed": failure_count}
 
-    def send_transactional_email(
+    async def send_transactional_email(
         self,
         to_email: str,
         template_id: str,
@@ -362,7 +364,8 @@ class SendGridService:
             message.template_id = template_id
             message.dynamic_template_data = dynamic_data
 
-            response = self.client.send(message)
+            loop = asyncio.get_running_loop()
+            response = await loop.run_in_executor(None, self.client.send, message)
             return response.status_code == 202
 
         except Exception as e:
