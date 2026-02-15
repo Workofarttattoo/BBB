@@ -36,13 +36,11 @@ class QuantumOptimizer:
         We assume revenue ramps linearly over the ramp-up period until full output.
         """
 
-        effective_months = 0.0
-        for month in range(1, months + 1):
-            if month <= idea.ramp_up_months:
-                ramp_ratio = month / max(1, idea.ramp_up_months)
-            else:
-                ramp_ratio = 1.0
-            effective_months += ramp_ratio
+        ramp = max(1, idea.ramp_up_months)
+        if months <= ramp:
+            effective_months = (months * (months + 1)) / (2 * ramp)
+        else:
+            effective_months = months - (ramp - 1) / 2
         profit_per_full_month = idea.monthly_profit
         return max(0.0, profit_per_full_month * effective_months - idea.startup_cost)
 

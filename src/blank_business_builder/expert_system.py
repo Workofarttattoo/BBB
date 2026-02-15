@@ -601,6 +601,36 @@ class MultiDomainExpertSystem:
         self.vector_store.add_documents(documents)
         logger.info(f"Added {len(documents)} documents to knowledge base")
 
+    async def identify_best_domain(self, query: str) -> Optional[ExpertDomain]:
+        """Identify the best domain for the query using vector search."""
+        # Search globally across all domains
+        # Run in executor to avoid blocking event loop
+        loop = asyncio.get_running_loop()
+        results = await loop.run_in_executor(
+            None,
+            lambda: self.vector_store.search(query, top_k=5)
+        )
+
+        if not results:
+            return None
+
+        # Check if the best match meets a minimum confidence threshold
+        if results[0][1] < 0.6:
+            return None
+
+        # Aggregate scores by domain
+        domain_scores: Dict[ExpertDomain, float] = defaultdict(float)
+
+        for doc, score in results:
+            domain_scores[doc.domain] += score
+
+        if not domain_scores:
+            return None
+
+        # Select domain with highest total score
+        best_domain = max(domain_scores.items(), key=lambda x: x[1])[0]
+        return best_domain
+
     async def query(self, query: ExpertQuery) -> ExpertResponse | EnsembleResponse:
         """Query the expert system."""
         if query.use_ensemble:
@@ -618,7 +648,14 @@ class MultiDomainExpertSystem:
 
     async def _auto_select_expert(self, query: ExpertQuery) -> ExpertResponse:
         """Automatically select best expert for query."""
-        # Query all experts and select highest confidence
+        # Try to identify domain first
+        best_domain = await self.identify_best_domain(query.query)
+
+        if best_domain and best_domain in self.experts:
+            expert = self.experts[best_domain]
+            return await expert.answer_query(query)
+
+        # Fallback: Query all experts and select highest confidence
         expert_tasks = [expert.answer_query(query) for expert in self.experts.values()]
         responses = await asyncio.gather(*expert_tasks)
 
