@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 try:
     import chromadb
     from chromadb.config import Settings
+
     CHROMADB_AVAILABLE = True
 except ImportError:
     CHROMADB_AVAILABLE = False
@@ -39,6 +40,7 @@ except ImportError:
 
 try:
     import faiss
+
     FAISS_AVAILABLE = True
 except ImportError:
     FAISS_AVAILABLE = False
@@ -48,6 +50,7 @@ try:
     import torch
     import torch.nn as nn
     from torch.utils.data import Dataset, DataLoader
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -56,6 +59,7 @@ except ImportError:
 
 class ExpertDomain(Enum):
     """Supported expert domains."""
+
     # Science domains
     CHEMISTRY = "chemistry"
     BIOLOGY = "biology"
@@ -88,6 +92,7 @@ class ExpertDomain(Enum):
 @dataclass
 class ExpertQuery:
     """Query to expert system."""
+
     query: str
     domain: Optional[ExpertDomain] = None
     context: Dict[str, Any] = field(default_factory=dict)
@@ -99,6 +104,7 @@ class ExpertQuery:
 @dataclass
 class ExpertResponse:
     """Response from expert system."""
+
     answer: str
     domain: ExpertDomain
     confidence: float
@@ -111,6 +117,7 @@ class ExpertResponse:
 @dataclass
 class EnsembleResponse:
     """Response from ensemble of experts."""
+
     consensus_answer: str
     individual_responses: List[ExpertResponse]
     agreement_score: float
@@ -123,6 +130,7 @@ class EnsembleResponse:
 @dataclass
 class KnowledgeDocument:
     """Document in knowledge base."""
+
     doc_id: str
     content: str
     domain: ExpertDomain
@@ -140,7 +148,9 @@ class VectorStore(ABC):
         pass
 
     @abstractmethod
-    def search(self, query: str, top_k: int = 5, domain: Optional[ExpertDomain] = None) -> List[Tuple[KnowledgeDocument, float]]:
+    def search(
+        self, query: str, top_k: int = 5, domain: Optional[ExpertDomain] = None
+    ) -> List[Tuple[KnowledgeDocument, float]]:
         """Search for similar documents."""
         pass
 
@@ -162,10 +172,9 @@ class ChromaDBStore(VectorStore):
             self.client = chromadb.PersistentClient(path=persist_directory)
         except AttributeError:
             # Fallback for older versions
-            self.client = chromadb.Client(Settings(
-                chroma_db_impl="duckdb+parquet",
-                persist_directory=persist_directory
-            ))
+            self.client = chromadb.Client(
+                Settings(chroma_db_impl="duckdb+parquet", persist_directory=persist_directory)
+            )
 
         # Create collections per domain
         self.collections: Dict[ExpertDomain, Any] = {}
@@ -185,15 +194,13 @@ class ChromaDBStore(VectorStore):
                 continue
 
             try:
-                collection.add(
-                    documents=[doc.content],
-                    metadatas=[doc.metadata],
-                    ids=[doc.doc_id]
-                )
+                collection.add(documents=[doc.content], metadatas=[doc.metadata], ids=[doc.doc_id])
             except Exception as e:
                 logger.error(f"Failed to add document {doc.doc_id}: {e}")
 
-    def search(self, query: str, top_k: int = 5, domain: Optional[ExpertDomain] = None) -> List[Tuple[KnowledgeDocument, float]]:
+    def search(
+        self, query: str, top_k: int = 5, domain: Optional[ExpertDomain] = None
+    ) -> List[Tuple[KnowledgeDocument, float]]:
         """Search ChromaDB."""
         results = []
 
@@ -206,16 +213,17 @@ class ChromaDBStore(VectorStore):
                 continue
 
             try:
-                search_results = collection.query(
-                    query_texts=[query],
-                    n_results=top_k
-                )
+                search_results = collection.query(query_texts=[query], n_results=top_k)
 
-                if search_results and search_results['documents']:
-                    for i, doc_content in enumerate(search_results['documents'][0]):
-                        doc_id = search_results['ids'][0][i]
-                        metadata = search_results['metadatas'][0][i]
-                        distance = search_results['distances'][0][i] if 'distances' in search_results else 0.0
+                if search_results and search_results["documents"]:
+                    for i, doc_content in enumerate(search_results["documents"][0]):
+                        doc_id = search_results["ids"][0][i]
+                        metadata = search_results["metadatas"][0][i]
+                        distance = (
+                            search_results["distances"][0][i]
+                            if "distances" in search_results
+                            else 0.0
+                        )
 
                         # Convert distance to similarity score (0-1)
                         similarity = 1.0 / (1.0 + distance)
@@ -224,7 +232,7 @@ class ChromaDBStore(VectorStore):
                             doc_id=doc_id,
                             content=doc_content,
                             domain=search_domain,
-                            metadata=metadata
+                            metadata=metadata,
                         )
                         results.append((doc, similarity))
             except Exception as e:
@@ -239,12 +247,12 @@ class ChromaDBStore(VectorStore):
         for domain, collection in self.collections.items():
             try:
                 result = collection.get(ids=[doc_id])
-                if result and result['documents']:
+                if result and result["documents"]:
                     return KnowledgeDocument(
                         doc_id=doc_id,
-                        content=result['documents'][0],
+                        content=result["documents"][0],
                         domain=domain,
-                        metadata=result['metadatas'][0]
+                        metadata=result["metadatas"][0],
                     )
             except Exception:
                 continue
@@ -273,7 +281,7 @@ class FAISSStore(VectorStore):
         # In production, use sentence-transformers or OpenAI embeddings
         hash_value = int(hashlib.sha256(text.encode()).hexdigest(), 16)
         np.random.seed(hash_value % (2**32))
-        return np.random.randn(self.embedding_dim).astype('float32')
+        return np.random.randn(self.embedding_dim).astype("float32")
 
     def add_documents(self, documents: List[KnowledgeDocument]) -> None:
         """Add documents to FAISS."""
@@ -285,7 +293,9 @@ class FAISSStore(VectorStore):
             self.indices[doc.domain].add(doc.embedding.reshape(1, -1))
             self.documents[doc.domain].append(doc)
 
-    def search(self, query: str, top_k: int = 5, domain: Optional[ExpertDomain] = None) -> List[Tuple[KnowledgeDocument, float]]:
+    def search(
+        self, query: str, top_k: int = 5, domain: Optional[ExpertDomain] = None
+    ) -> List[Tuple[KnowledgeDocument, float]]:
         """Search FAISS."""
         query_embedding = self._compute_embedding(query)
         results = []
@@ -302,7 +312,9 @@ class FAISSStore(VectorStore):
 
             try:
                 # Search FAISS index
-                distances, indices = index.search(query_embedding.reshape(1, -1), min(top_k, len(docs)))
+                distances, indices = index.search(
+                    query_embedding.reshape(1, -1), min(top_k, len(docs))
+                )
 
                 for i, idx in enumerate(indices[0]):
                     if idx < len(docs):
@@ -345,9 +357,18 @@ class DomainExpert(ABC):
         # Exponential moving average
         self.specialization_score = 0.9 * self.specialization_score + 0.1 * feedback
 
-    async def retrieve_context(self, query: str, max_results: int = 5) -> List[Tuple[KnowledgeDocument, float]]:
-        """Retrieve relevant context from vector store."""
-        return self.vector_store.search(query, top_k=max_results, domain=self.domain)
+    async def retrieve_context(
+        self, query: str, max_results: int = 5
+    ) -> List[Tuple[KnowledgeDocument, float]]:
+        """
+        Retrieve relevant context from vector store.
+
+        Runs vector search in a thread executor to avoid blocking the event loop.
+        """
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(
+            None, lambda: self.vector_store.search(query, top_k=max_results, domain=self.domain)
+        )
 
 
 class StandardDomainExpert(DomainExpert):
@@ -367,13 +388,13 @@ class StandardDomainExpert(DomainExpert):
                 "doc_id": doc.doc_id,
                 "content": doc.content[:200],
                 "relevance": score,
-                "metadata": doc.metadata
+                "metadata": doc.metadata,
             }
             for doc, score in context_docs
         ]
 
         # Generate answer based on domain knowledge
-        domain_name = self.domain.value.replace('_', ' ').title()
+        domain_name = self.domain.value.replace("_", " ").title()
         answer = f"[{domain_name} Expert] Based on {len(sources)} sources: {query.query}"
         if context_docs:
             top_doc, top_score = context_docs[0]
@@ -387,13 +408,46 @@ class StandardDomainExpert(DomainExpert):
             confidence=confidence * self.specialization_score,
             sources=sources,
             reasoning=f"RAG-based synthesis from {self.domain.value.replace('_', ' ')} knowledge base",
-            expert_id=self.expert_id
+            expert_id=self.expert_id,
         )
 
         self.query_history.append((query.query, response))
         return response
 
 
+class ChemistryExpert(StandardDomainExpert):
+    """Chemistry domain expert."""
+
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.CHEMISTRY, vector_store)
+
+
+class BiologyExpert(StandardDomainExpert):
+    """Biology domain expert."""
+
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.BIOLOGY, vector_store)
+
+
+class PhysicsExpert(StandardDomainExpert):
+    """Physics domain expert."""
+
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.PHYSICS, vector_store)
+
+
+class MaterialsScienceExpert(StandardDomainExpert):
+    """Materials Science domain expert."""
+
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.MATERIALS_SCIENCE, vector_store)
+
+
+class LegalExpert(StandardDomainExpert):
+    """Legal domain expert."""
+
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.LEGAL, vector_store)
 
 
 class MultiExpertEnsemble:
@@ -440,7 +494,7 @@ class MultiExpertEnsemble:
             agreement_score=agreement_score,
             confidence=ensemble_confidence,
             domains_consulted=domains_consulted,
-            reasoning=reasoning
+            reasoning=reasoning,
         )
 
     def _weighted_voting(self, responses: List[ExpertResponse]) -> str:
@@ -501,7 +555,7 @@ class ExpertSpecializationEngine:
     async def specialize_expert(
         self,
         domain: ExpertDomain,
-        training_queries: List[Tuple[str, str, float]]  # (query, expected_answer, quality_score)
+        training_queries: List[Tuple[str, str, float]],  # (query, expected_answer, quality_score)
     ) -> float:
         """Specialize expert through iterative training."""
         expert = self.experts.get(domain)
@@ -551,7 +605,7 @@ class ExpertSpecializationEngine:
             "queries_answered": len(expert.query_history),
             "performance_history": history,
             "average_performance": np.mean(history) if history else 0.0,
-            "trend": "improving" if len(history) > 1 and history[-1] > history[0] else "stable"
+            "trend": "improving" if len(history) > 1 and history[-1] > history[0] else "stable",
         }
 
 
@@ -586,15 +640,19 @@ class MultiDomainExpertSystem:
     def _initialize_experts(self) -> None:
         """Initialize all domain experts."""
         # Science experts
-       
+
         self.experts[ExpertDomain.CHEMISTRY] = ChemistryExpert("chem_001", self.vector_store)
         self.experts[ExpertDomain.BIOLOGY] = BiologyExpert("bio_001", self.vector_store)
         self.experts[ExpertDomain.PHYSICS] = PhysicsExpert("phys_001", self.vector_store)
-        self.experts[ExpertDomain.MATERIALS_SCIENCE] = MaterialsScienceExpert("matsci_001", self.vector_store)
+        self.experts[ExpertDomain.MATERIALS_SCIENCE] = MaterialsScienceExpert(
+            "matsci_001", self.vector_store
+        )
         self.experts[ExpertDomain.LEGAL] = LegalExpert("legal_001", self.vector_store)
 
         # Additional experts can be added here
-        logger.info("Initialized domain experts: chemistry, biology, physics, materials_science, legal")
+        logger.info(
+            "Initialized domain experts: chemistry, biology, physics, materials_science, legal"
+        )
 
     def add_knowledge(self, documents: List[KnowledgeDocument]) -> None:
         """Add documents to knowledge base."""
@@ -627,9 +685,7 @@ class MultiDomainExpertSystem:
         return best_response
 
     async def specialize_expert(
-        self,
-        domain: ExpertDomain,
-        training_data: List[Tuple[str, str, float]]
+        self, domain: ExpertDomain, training_data: List[Tuple[str, str, float]]
     ) -> float:
         """Specialize an expert with training data."""
         return await self.specialization_engine.specialize_expert(domain, training_data)
@@ -643,16 +699,16 @@ class MultiDomainExpertSystem:
             "expert_performance": {
                 domain.value: self.specialization_engine.get_expert_performance(domain)
                 for domain in self.experts.keys()
-            }
+            },
         }
 
 
 # Example usage and demonstration
 async def demo_expert_system():
     """Demonstrate expert system capabilities."""
-    print("="*80)
+    print("=" * 80)
     print("Multi-Domain Expert System Demo")
-    print("="*80)
+    print("=" * 80)
 
     # Initialize system
     system = MultiDomainExpertSystem(use_chromadb=CHROMADB_AVAILABLE)
@@ -663,26 +719,26 @@ async def demo_expert_system():
             doc_id="chem_001",
             content="Chemical bonds form when atoms share or transfer electrons. Covalent bonds involve sharing, ionic bonds involve transfer.",
             domain=ExpertDomain.CHEMISTRY,
-            metadata={"source": "chemistry_textbook", "chapter": 1}
+            metadata={"source": "chemistry_textbook", "chapter": 1},
         ),
         KnowledgeDocument(
             doc_id="bio_001",
             content="DNA replication is semiconservative - each strand serves as a template for a new complementary strand.",
             domain=ExpertDomain.BIOLOGY,
-            metadata={"source": "biology_textbook", "chapter": 3}
+            metadata={"source": "biology_textbook", "chapter": 3},
         ),
         KnowledgeDocument(
             doc_id="phys_001",
             content="Newton's laws of motion: 1) Object at rest stays at rest unless acted upon by force. 2) F=ma. 3) Every action has equal and opposite reaction.",
             domain=ExpertDomain.PHYSICS,
-            metadata={"source": "physics_textbook", "chapter": 2}
+            metadata={"source": "physics_textbook", "chapter": 2},
         ),
         KnowledgeDocument(
             doc_id="matsci_001",
             content="Crystalline materials have ordered atomic structure. Amorphous materials lack long-range order. Crystal structure determines material properties.",
             domain=ExpertDomain.MATERIALS_SCIENCE,
-            metadata={"source": "materials_science_textbook", "chapter": 1}
-        )
+            metadata={"source": "materials_science_textbook", "chapter": 1},
+        ),
     ]
 
     system.add_knowledge(sample_docs)
@@ -691,8 +747,7 @@ async def demo_expert_system():
     print("\n1. Querying Chemistry Expert:")
     print("-" * 80)
     query = ExpertQuery(
-        query="What are the types of chemical bonds?",
-        domain=ExpertDomain.CHEMISTRY
+        query="What are the types of chemical bonds?", domain=ExpertDomain.CHEMISTRY
     )
     response = await system.query(query)
     print(f"Answer: {response.answer}")
@@ -703,8 +758,7 @@ async def demo_expert_system():
     print("\n2. Querying with Ensemble:")
     print("-" * 80)
     query = ExpertQuery(
-        query="How do atomic structures affect material properties?",
-        use_ensemble=True
+        query="How do atomic structures affect material properties?", use_ensemble=True
     )
     response = await system.query(query)
     print(f"Consensus: {response.consensus_answer[:200]}...")
@@ -715,9 +769,7 @@ async def demo_expert_system():
     # Auto-select expert
     print("\n3. Auto-selecting Best Expert:")
     print("-" * 80)
-    query = ExpertQuery(
-        query="Explain DNA replication"
-    )
+    query = ExpertQuery(query="Explain DNA replication")
     response = await system.query(query)
     print(f"Selected expert: {response.expert_id} ({response.domain.value})")
     print(f"Answer: {response.answer[:200]}...")
@@ -729,7 +781,7 @@ async def demo_expert_system():
     training_data = [
         ("What is a covalent bond?", "Electrons shared between atoms", 0.9),
         ("What is an ionic bond?", "Electrons transferred between atoms", 0.85),
-        ("What determines bond strength?", "Depends on electronegativity difference", 0.8)
+        ("What determines bond strength?", "Depends on electronegativity difference", 0.8),
     ]
     new_score = await system.specialize_expert(ExpertDomain.CHEMISTRY, training_data)
     print(f"New specialization score: {new_score:.3f}")
@@ -740,9 +792,9 @@ async def demo_expert_system():
     status = system.get_system_status()
     print(json.dumps(status, indent=2, default=str))
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("Demo complete!")
-    print("="*80)
+    print("=" * 80)
 
 
 if __name__ == "__main__":
