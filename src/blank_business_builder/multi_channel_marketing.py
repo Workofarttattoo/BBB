@@ -228,7 +228,7 @@ class MultiChannelCampaignOrchestrator:
                     <html>
                     <body>
                         <h1>Ready to Scale Your Business?</h1>
-                        <p>{value_prop} helps entrepreneurs like you:</p>
+                        <p>{business_name} - {value_prop} helps entrepreneurs like you:</p>
                         <ul>
                             <li>Generate revenue while you sleep</li>
                             <li>Automate marketing and sales</li>

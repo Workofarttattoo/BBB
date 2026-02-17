@@ -93,13 +93,17 @@ class SmartLeadScorer:
         email_clicks = sum(1 for i in interactions if i.get('type') == 'email_click')
         page_views = sum(1 for i in interactions if i.get('type') == 'page_view')
         demo_requests = sum(1 for i in interactions if i.get('type') == 'demo_request')
+        trial_signups = sum(1 for i in interactions if i.get('type') == 'trial_signup')
+        pricing_views = sum(1 for i in interactions if i.get('type') == 'pricing_view')
 
         # Weighted scoring
         score = (
             email_opens * 2 +
             email_clicks * 5 +
             page_views * 3 +
-            demo_requests * 20
+            demo_requests * 20 +
+            trial_signups * 40 +
+            pricing_views * 5
         )
 
         # Normalize to 0-100

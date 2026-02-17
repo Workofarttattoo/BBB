@@ -89,6 +89,7 @@ class AutonomousBusinessRunner:
 
         # Track yearly revenue
         self.yearly_revenue[year] = self.yearly_revenue.get(year, 0) + daily_revenue
+        self.current_arr = mrr * 12  # Track ARR for reporting
 
         # Feature development
         if random.random() < 0.7: # ~250 features/year
@@ -117,9 +118,11 @@ class AutonomousBusinessRunner:
             if day % 365 == 0:
                 year = day // 365
                 annual_rev = self.yearly_revenue.get(year, 0)
+                arr = getattr(self, 'current_arr', 0)
                 print(f"✅ Year {year} Complete:")
                 print(f"   • Customers: {stats['total_customers']:,}")
                 print(f"   • Annual Revenue: ${annual_rev:,.2f}")
+                print(f"   • End-of-Year ARR: ${arr:,.2f}")
                 print(f"   • Total Revenue: ${stats['total_revenue']:,.2f}")
                 print(f"   • Features Built: {stats['features']}")
                 print("--------------------------------------------------")

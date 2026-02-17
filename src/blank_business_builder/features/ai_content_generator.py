@@ -25,6 +25,8 @@ try:
 except ImportError:
     anthropic = None
 
+logger = logging.getLogger(__name__)
+
 from ..integrations import IntegrationFactory
 from ..ech0_service import ECH0Service
 

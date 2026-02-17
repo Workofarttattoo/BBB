@@ -93,10 +93,45 @@ class MaterialsBusiness:
                 metadata={"topic": "smart_contracts", "status": "emerging_precedent"}
             )
         ]
-        self.expert_system.add_knowledge(docs)
+        # This will be awaited during init or first call in production
+        # For sync init, we just set up the task or rely on lazy loading
+        pass
+
+    async def _ensure_knowledge_loaded(self):
+        """Ensure knowledge is loaded (async helper)."""
+        docs = [
+            # Materials Science Data
+            KnowledgeDocument(
+                doc_id="mat_001",
+                content="Graphene is a single layer of carbon atoms arranged in a 2D honeycomb lattice. It has high thermal conductivity and mechanical strength.",
+                domain=ExpertDomain.MATERIALS_SCIENCE,
+                metadata={"source": "research_paper_001", "type": "material_property"}
+            ),
+            KnowledgeDocument(
+                doc_id="mat_002",
+                content="Perovskite solar cells have shown rapid increase in power conversion efficiency, reaching over 25%. Stability remains a challenge.",
+                domain=ExpertDomain.MATERIALS_SCIENCE,
+                metadata={"source": "energy_journal_2024", "type": "energy_material"}
+            ),
+            # Legal Data (TheGavl)
+            KnowledgeDocument(
+                doc_id="legal_001",
+                content="In 'Smith v. Jones', the court ruled that digital assets are considered personal property for the purpose of inheritance.",
+                domain=ExpertDomain.LEGAL,
+                metadata={"case": "Smith v. Jones", "year": 2023, "jurisdiction": "Federal"}
+            ),
+            KnowledgeDocument(
+                doc_id="legal_002",
+                content="Smart contracts are legally binding if they meet the standard requirements of offer, acceptance, and consideration.",
+                domain=ExpertDomain.LEGAL,
+                metadata={"topic": "smart_contracts", "status": "emerging_precedent"}
+            )
+        ]
+        await self.expert_system.add_knowledge(docs)
         logger.info(f"Loaded {len(docs)} initial knowledge documents.")
 
     async def predict_materials(self, query_text: str, client_type: str = "student") -> Dict[str, Any]:
+        await self._ensure_knowledge_loaded()
         """
         Generate materials science predictions.
 
@@ -132,6 +167,7 @@ class MaterialsBusiness:
         """
         Generate legal predictions via TheGavl integration.
         """
+        await self._ensure_knowledge_loaded()
         logger.info(f"Processing legal prediction (TheGavl): {query_text}")
 
         query = ExpertQuery(

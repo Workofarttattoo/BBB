@@ -60,6 +60,9 @@ def test_generate_with_gemini_placeholder():
 
 def test_generate_with_openai_fallback():
     """Test that _generate_with_openai falls back to placeholder on error."""
+    # Configure mock to raise exception to trigger fallback
+    sys.modules["openai"].OpenAI.return_value.chat.completions.create.side_effect = Exception("Simulated API Error")
+
     generator = AIContentGenerator()
 
     request = ContentRequest(

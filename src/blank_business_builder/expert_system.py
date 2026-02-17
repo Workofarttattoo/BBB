@@ -53,6 +53,8 @@ except ImportError:
     TORCH_AVAILABLE = False
     logger.warning("PyTorch not available - fine-tuning disabled")
 
+from .ech0_service import ECH0Service, ECH0_AVAILABLE
+
 
 class ExpertDomain(Enum):
     """Supported expert domains."""
@@ -135,19 +137,59 @@ class VectorStore(ABC):
     """Abstract base for vector storage backends."""
 
     @abstractmethod
-    def add_documents(self, documents: List[KnowledgeDocument]) -> None:
+    async def add_documents(self, documents: List[KnowledgeDocument]) -> None:
         """Add documents to vector store."""
         pass
 
     @abstractmethod
-    def search(self, query: str, top_k: int = 5, domain: Optional[ExpertDomain] = None) -> List[Tuple[KnowledgeDocument, float]]:
+    async def search(self, query: str, top_k: int = 5, domain: Optional[ExpertDomain] = None) -> List[Tuple[KnowledgeDocument, float]]:
         """Search for similar documents."""
         pass
 
     @abstractmethod
-    def get_by_id(self, doc_id: str) -> Optional[KnowledgeDocument]:
+    async def get_by_id(self, doc_id: str) -> Optional[KnowledgeDocument]:
         """Retrieve document by ID."""
         pass
+
+
+class MockVectorStore(VectorStore):
+    """Simple in-memory vector store for testing and fallback."""
+
+    def __init__(self):
+        self.documents: Dict[str, KnowledgeDocument] = {}
+
+    async def add_documents(self, documents: List[KnowledgeDocument]) -> None:
+        """Add documents to mock store."""
+        for doc in documents:
+            self.documents[doc.doc_id] = doc
+
+    async def search(self, query: str, top_k: int = 5, domain: Optional[ExpertDomain] = None) -> List[Tuple[KnowledgeDocument, float]]:
+        """Mock search - returns random or all documents."""
+        results = []
+        words = query.lower().split()
+
+        for doc in self.documents.values():
+            if domain and doc.domain != domain:
+                continue
+
+            # Simple keyword matching for relevance
+            score = 0.0
+            content_lower = doc.content.lower()
+            for word in words:
+                if word in content_lower:
+                    score += 0.1
+
+            # Base score + match score
+            final_score = 0.1 + min(0.8, score)
+            results.append((doc, final_score))
+
+        # Sort by score
+        results.sort(key=lambda x: x[1], reverse=True)
+        return results[:top_k]
+
+    async def get_by_id(self, doc_id: str) -> Optional[KnowledgeDocument]:
+        """Retrieve document by ID."""
+        return self.documents.get(doc_id)
 
 
 class ChromaDBStore(VectorStore):
@@ -177,7 +219,7 @@ class ChromaDBStore(VectorStore):
             except Exception as e:
                 logger.warning(f"Could not create collection for {domain.value}: {e}")
 
-    def add_documents(self, documents: List[KnowledgeDocument]) -> None:
+    async def add_documents(self, documents: List[KnowledgeDocument]) -> None:
         """Add documents to ChromaDB."""
         for doc in documents:
             collection = self.collections.get(doc.domain)
@@ -185,20 +227,24 @@ class ChromaDBStore(VectorStore):
                 continue
 
             try:
-                collection.add(
+                # Run sync call in executor
+                loop = asyncio.get_event_loop()
+                await loop.run_in_executor(None, lambda: collection.add(
                     documents=[doc.content],
                     metadatas=[doc.metadata],
                     ids=[doc.doc_id]
-                )
+                ))
             except Exception as e:
                 logger.error(f"Failed to add document {doc.doc_id}: {e}")
 
-    def search(self, query: str, top_k: int = 5, domain: Optional[ExpertDomain] = None) -> List[Tuple[KnowledgeDocument, float]]:
+    async def search(self, query: str, top_k: int = 5, domain: Optional[ExpertDomain] = None) -> List[Tuple[KnowledgeDocument, float]]:
         """Search ChromaDB."""
         results = []
 
         # Determine which collections to search
         domains_to_search = [domain] if domain else list(ExpertDomain)
+
+        loop = asyncio.get_event_loop()
 
         for search_domain in domains_to_search:
             collection = self.collections.get(search_domain)
@@ -206,10 +252,11 @@ class ChromaDBStore(VectorStore):
                 continue
 
             try:
-                search_results = collection.query(
+                # Run sync call in executor
+                search_results = await loop.run_in_executor(None, lambda: collection.query(
                     query_texts=[query],
                     n_results=top_k
-                )
+                ))
 
                 if search_results and search_results['documents']:
                     for i, doc_content in enumerate(search_results['documents'][0]):
@@ -234,7 +281,7 @@ class ChromaDBStore(VectorStore):
         results.sort(key=lambda x: x[1], reverse=True)
         return results[:top_k]
 
-    def get_by_id(self, doc_id: str) -> Optional[KnowledgeDocument]:
+    async def get_by_id(self, doc_id: str) -> Optional[KnowledgeDocument]:
         """Retrieve document by ID."""
         for domain, collection in self.collections.items():
             try:
@@ -275,8 +322,9 @@ class FAISSStore(VectorStore):
         np.random.seed(hash_value % (2**32))
         return np.random.randn(self.embedding_dim).astype('float32')
 
-    def add_documents(self, documents: List[KnowledgeDocument]) -> None:
+    async def add_documents(self, documents: List[KnowledgeDocument]) -> None:
         """Add documents to FAISS."""
+        # CPU bound, could benefit from executor if large
         for doc in documents:
             if doc.embedding is None:
                 doc.embedding = self._compute_embedding(doc.content)
@@ -285,7 +333,7 @@ class FAISSStore(VectorStore):
             self.indices[doc.domain].add(doc.embedding.reshape(1, -1))
             self.documents[doc.domain].append(doc)
 
-    def search(self, query: str, top_k: int = 5, domain: Optional[ExpertDomain] = None) -> List[Tuple[KnowledgeDocument, float]]:
+    async def search(self, query: str, top_k: int = 5, domain: Optional[ExpertDomain] = None) -> List[Tuple[KnowledgeDocument, float]]:
         """Search FAISS."""
         query_embedding = self._compute_embedding(query)
         results = []
@@ -316,12 +364,60 @@ class FAISSStore(VectorStore):
         results.sort(key=lambda x: x[1], reverse=True)
         return results[:top_k]
 
-    def get_by_id(self, doc_id: str) -> Optional[KnowledgeDocument]:
+    async def get_by_id(self, doc_id: str) -> Optional[KnowledgeDocument]:
         """Retrieve document by ID."""
         for docs in self.documents.values():
             for doc in docs:
                 if doc.doc_id == doc_id:
                     return doc
+        return None
+
+
+class ECH0VectorStore(VectorStore):
+    """Bridge to ECH0's semantic memory and insight engine."""
+
+    def __init__(self):
+        if not ECH0_AVAILABLE:
+            logger.warning("ECH0Service not available - ECH0VectorStore will not function correctly")
+        self.ech0_service = ECH0Service()
+
+    async def add_documents(self, documents: List[KnowledgeDocument]) -> None:
+        """
+        ECH0 learns independently.
+        Sending documents here might just log them or fine-tune if supported.
+        For now, we assume read-only access to ECH0's wisdom.
+        """
+        pass
+
+    async def search(self, query: str, top_k: int = 5, domain: Optional[ExpertDomain] = None) -> List[Tuple[KnowledgeDocument, float]]:
+        """
+        Ask ECH0 for insight on the query.
+        Returns the insight wrapped as a KnowledgeDocument.
+        """
+        try:
+            # Contextualize prompt based on domain
+            domain_context = f"in the domain of {domain.value}" if domain else ""
+            prompt = f"Provide deep insight and relevant facts about: {query} {domain_context}. Focus on factual knowledge."
+
+            insight = await self.ech0_service.generate_content(query, "detailed insight")
+
+            # Create a synthetic document from ECH0's mind
+            doc = KnowledgeDocument(
+                doc_id=f"ech0_insight_{hash(query)}",
+                content=insight,
+                domain=domain or ExpertDomain.GENERAL,
+                metadata={"source": "ECH0 Semantic Lattice", "type": "generated_insight"}
+            )
+
+            # Return as a high-confidence result
+            return [(doc, 0.95)]
+
+        except Exception as e:
+            logger.error(f"ECH0 search failed: {e}")
+            return []
+
+    async def get_by_id(self, doc_id: str) -> Optional[KnowledgeDocument]:
+        """Retrieve specific insight if cached (not implemented for dynamic generation)."""
         return None
 
 
@@ -347,7 +443,7 @@ class DomainExpert(ABC):
 
     async def retrieve_context(self, query: str, max_results: int = 5) -> List[Tuple[KnowledgeDocument, float]]:
         """Retrieve relevant context from vector store."""
-        return self.vector_store.search(query, top_k=max_results, domain=self.domain)
+        return await self.vector_store.search(query, top_k=max_results, domain=self.domain)
 
 
 class StandardDomainExpert(DomainExpert):
@@ -394,6 +490,30 @@ class StandardDomainExpert(DomainExpert):
         return response
 
 
+class ChemistryExpert(StandardDomainExpert):
+    """Expert in Chemistry domain."""
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.CHEMISTRY, vector_store)
+
+class BiologyExpert(StandardDomainExpert):
+    """Expert in Biology domain."""
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.BIOLOGY, vector_store)
+
+class PhysicsExpert(StandardDomainExpert):
+    """Expert in Physics domain."""
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.PHYSICS, vector_store)
+
+class MaterialsScienceExpert(StandardDomainExpert):
+    """Expert in Materials Science domain."""
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.MATERIALS_SCIENCE, vector_store)
+
+class LegalExpert(StandardDomainExpert):
+    """Expert in Legal domain."""
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.LEGAL, vector_store)
 
 
 class MultiExpertEnsemble:
@@ -558,16 +678,20 @@ class ExpertSpecializationEngine:
 class MultiDomainExpertSystem:
     """Main expert system coordinating all domains."""
 
-    def __init__(self, use_chromadb: bool = True):
+    def __init__(self, use_chromadb: bool = True, use_ech0: bool = False):
         # Initialize vector store
-        if use_chromadb and CHROMADB_AVAILABLE:
+        if use_ech0:
+            self.vector_store = ECH0VectorStore()
+            logger.info("Initialized ECH0 Vector Store (Semantic Lattice Bridge)")
+        elif use_chromadb and CHROMADB_AVAILABLE:
             self.vector_store = ChromaDBStore()
             logger.info("Initialized ChromaDB vector store")
         elif FAISS_AVAILABLE:
             self.vector_store = FAISSStore()
             logger.info("Initialized FAISS vector store")
         else:
-            raise RuntimeError("No vector store available - install chromadb or faiss")
+            logger.warning("No vector store available - using MockVectorStore for fallback/testing")
+            self.vector_store = MockVectorStore()
 
         # Initialize experts
         self.experts: Dict[ExpertDomain, DomainExpert] = {}
@@ -596,9 +720,9 @@ class MultiDomainExpertSystem:
         # Additional experts can be added here
         logger.info("Initialized domain experts: chemistry, biology, physics, materials_science, legal")
 
-    def add_knowledge(self, documents: List[KnowledgeDocument]) -> None:
+    async def add_knowledge(self, documents: List[KnowledgeDocument]) -> None:
         """Add documents to knowledge base."""
-        self.vector_store.add_documents(documents)
+        await self.vector_store.add_documents(documents)
         logger.info(f"Added {len(documents)} documents to knowledge base")
 
     async def query(self, query: ExpertQuery) -> ExpertResponse | EnsembleResponse:

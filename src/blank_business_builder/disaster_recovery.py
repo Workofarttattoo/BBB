@@ -90,6 +90,7 @@ class BackupEngine:
         self.base_path = Path(base_path)
         self.base_path.mkdir(parents=True, exist_ok=True)
         self.backup_history: List[BackupMetadata] = []
+        self._simulated_storage: Dict[str, bytes] = {}
 
     async def create_backup(
         self,
@@ -257,15 +258,21 @@ class BackupEngine:
 
         elif strategy == BackupStrategy.S3:
             # In production: boto3.client('s3').put_object(...)
-            return f"s3://backups/{backup_id}.backup"
+            location = f"s3://backups/{backup_id}.backup"
+            self._simulated_storage[location] = data
+            return location
 
         elif strategy == BackupStrategy.AZURE_BLOB:
             # In production: azure.storage.blob upload
-            return f"azure://backups/{backup_id}.backup"
+            location = f"azure://backups/{backup_id}.backup"
+            self._simulated_storage[location] = data
+            return location
 
         elif strategy == BackupStrategy.GCS:
             # In production: google.cloud.storage upload
-            return f"gs://backups/{backup_id}.backup"
+            location = f"gs://backups/{backup_id}.backup"
+            self._simulated_storage[location] = data
+            return location
 
         elif strategy == BackupStrategy.MULTI_REGION:
             # Store in multiple locations
@@ -283,8 +290,13 @@ class BackupEngine:
             backup_file = Path(metadata.location)
             return backup_file.read_bytes()
 
-        # In production, retrieve from S3/Azure/GCS
-        return b""
+        # Handle multi-region
+        location = metadata.location
+        if location.startswith("multi:"):
+            # Pick first location
+            location = location[6:].split(",")[0]
+
+        return self._simulated_storage.get(location, b"")
 
     async def _verify_backup(self, metadata: BackupMetadata) -> Dict:
         """Verify backup integrity."""

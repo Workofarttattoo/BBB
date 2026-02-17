@@ -368,6 +368,7 @@ class BBBUnifiedLibrary:
 
         return {
             "total_businesses": len(all_businesses),
+            "total_categories": len(categories),
             "ai_automation_count": ai_count,
             "legacy_count": legacy_count,
             "avg_startup_cost": round(avg_startup, 2),
