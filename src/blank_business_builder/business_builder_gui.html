@@ -604,40 +604,61 @@
         // Step 4: Research
         async function startResearch() {
             document.getElementById('btn-research').disabled = true;
-            document.getElementById('osintLog').innerHTML += "> Contacting local registry...<br>";
+            document.getElementById('osintLog').innerHTML += "> Initializing Business Intelligence Engine...<br>";
 
-            // Start simulation on server
-            const res = await fetch(`${API}/research`);
-            const data = await res.json();
+            // Start actual analysis on server
+            try {
+                const res = await fetch(`${API}/research`);
+                const data = await res.json();
 
-            // Simulate log streaming
-            const logs = data.logs;
-            const logDiv = document.getElementById('osintLog');
-            const progress = document.getElementById('researchProgress');
-
-            let i = 0;
-            const interval = setInterval(() => {
-                if (i >= logs.length) {
-                    clearInterval(interval);
-                    progress.style.width = '100%';
-                    setTimeout(() => {
-                        loadRecommendations();
-                        nextStep(5);
-                    }, 1000);
+                if (data.error) {
+                    alert(data.error);
+                    document.getElementById('btn-research').disabled = false;
                     return;
                 }
-                logDiv.innerHTML += `> ${logs[i]}<br>`;
-                logDiv.scrollTop = logDiv.scrollHeight;
-                progress.style.width = `${((i+1)/logs.length)*90}%`;
-                i++;
-            }, 800);
+
+                // Stream the real analysis logs
+                const logs = data.logs || [];
+                const logDiv = document.getElementById('osintLog');
+                const progress = document.getElementById('researchProgress');
+
+                let i = 0;
+                // Faster streaming for real logs as there might be many
+                const interval = setInterval(() => {
+                    if (i >= logs.length) {
+                        clearInterval(interval);
+                        progress.style.width = '100%';
+                        setTimeout(() => {
+                            // Pass recommendations directly if available, else fetch
+                            if (data.recommendations) {
+                                renderRecommendations(data.recommendations);
+                            } else {
+                                loadRecommendations();
+                            }
+                            nextStep(5);
+                        }, 1000);
+                        return;
+                    }
+                    logDiv.innerHTML += `> ${logs[i]}<br>`;
+                    logDiv.scrollTop = logDiv.scrollHeight;
+                    progress.style.width = `${((i+1)/logs.length)*90}%`;
+                    i++;
+                }, 100); // 100ms per log line for speed
+            } catch (e) {
+                console.error(e);
+                alert("Error connecting to analysis engine.");
+                document.getElementById('btn-research').disabled = false;
+            }
         }
 
         // Step 5: Recommendations
         async function loadRecommendations() {
             const res = await fetch(`${API}/recommendations`);
             const ideas = await res.json();
+            renderRecommendations(ideas);
+        }
 
+        function renderRecommendations(ideas) {
             const container = document.getElementById('recommendations-list');
             container.innerHTML = ideas.map(idea => `
                 <div class="business-option" onclick="selectBusiness(this, '${idea.name}')">

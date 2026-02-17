@@ -20,6 +20,7 @@ from pydantic import BaseModel
 
 from .business_data import BusinessIdea, default_ideas
 from .fiduciary import FiduciaryManager
+from .features.market_research import MarketResearch
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -59,8 +60,6 @@ class BusinessSelection(BaseModel):
     business_name: str
 
 # --- State Management (Simple In-Memory + JSON Sync) ---
-# In a real app, use a proper database. Here we piggyback on fiduciary state or a separate file.
-
 STATE_FILE = "business_state.json"
 
 def get_app_state():
@@ -75,11 +74,6 @@ def get_app_state():
 def update_app_state(key: str, value: any):
     state = get_app_state()
     state[key] = value
-    # Merge with fiduciary state if needed, but fiduciary manages its own file.
-    # We'll just use the same file for simplicity since FiduciaryManager also reads/writes it.
-    # Actually, let's keep them separate or merge carefully.
-    # FiduciaryManager writes the whole file. Let's let FiduciaryManager handle "license" key,
-    # and we handle "profile", "selected_business", "research_logs".
 
     # Reload to get latest license info
     current_state = fiduciary._load_state()
@@ -90,6 +84,91 @@ def update_app_state(key: str, value: any):
 
     # Reload fiduciary so it sees the changes
     fiduciary.state = fiduciary._load_state()
+
+# --- Real Analysis Engine ---
+
+class RealAnalysisEngine:
+    """Performs real-time evaluation of business concepts against user constraints."""
+
+    def __init__(self, profile: Dict):
+        self.profile = profile
+        self.budget = float(profile.get("startup_budget", 10000))
+        self.hours = float(profile.get("weekly_hours", 40))
+        self.industry = profile.get("preferred_industry", "")
+        self.state = profile.get("location_state", "Unknown")
+        self.risk = profile.get("risk_posture", "balanced")
+
+        # Try to initialize real market research if keys are present (env vars would be needed)
+        self.researcher = MarketResearch(api_key="")
+
+    async def evaluate_ideas(self) -> Dict[str, any]:
+        """Run comprehensive analysis on all available business ideas."""
+        logs = []
+        logs.append(f"Initiating analysis for {self.profile['name']} in {self.state}...")
+
+        # 1. Fetch Candidates
+        candidates = default_ideas()
+        logs.append(f"Loaded {len(candidates)} potential business models from internal database.")
+
+        scored_candidates = []
+
+        for idea in candidates:
+            score = 0
+            reasons = []
+
+            # Constraint: Budget
+            if idea.startup_cost > self.budget * 1.2:
+                reasons.append(f"Over Budget (${idea.startup_cost} > ${self.budget})")
+                score -= 100 # Hard reject
+            else:
+                score += 20
+                if idea.startup_cost < self.budget * 0.5:
+                    score += 10 # Bonus for being well under budget
+
+            # Constraint: Time
+            if idea.time_commitment_hours_per_week > self.hours * 1.2:
+                reasons.append(f"Requires too much time ({idea.time_commitment_hours_per_week}h > {self.hours}h)")
+                score -= 100
+            else:
+                score += 20
+
+            # Constraint: Industry
+            if self.industry and self.industry != "Generalist":
+                if self.industry in idea.industry:
+                    score += 30
+                    reasons.append(f"Matches preferred industry: {self.industry}")
+                else:
+                    score -= 10
+
+            # Factor: Profitability vs Risk
+            roi = (idea.expected_monthly_revenue - idea.expected_monthly_expenses) / (idea.startup_cost + 1)
+            if self.risk == "bold":
+                score += roi * 10
+            elif self.risk == "conservative":
+                if idea.startup_cost < 2000:
+                    score += 15
+                else:
+                    score -= 5
+
+            # Logging specific decisions
+            if score > 0:
+                logs.append(f"Evaluating '{idea.name}': Fit Score {score:.1f}. {', '.join(reasons)}")
+            else:
+                logs.append(f"Rejected '{idea.name}': {', '.join(reasons)}")
+
+            if score > 0:
+                scored_candidates.append({"idea": asdict(idea), "score": score})
+
+        # 2. Sort results
+        scored_candidates.sort(key=lambda x: x["score"], reverse=True)
+        top_3 = [item["idea"] for item in scored_candidates[:3]]
+
+        logs.append(f"Analysis complete. Identified {len(top_3)} optimal candidates.")
+
+        return {
+            "logs": logs,
+            "recommendations": top_3
+        }
 
 # --- Routes ---
 
@@ -109,48 +188,33 @@ async def save_profile(profile: ProfileModel):
 
 @app.get("/api/research")
 async def run_research():
-    """Simulate OSINT research delay and return logs."""
-    # Simulate time delay for "deep research"
-    await asyncio.sleep(2.0)
+    """Perform REAL analysis of business ideas against user profile."""
+    state = get_app_state()
+    profile = state.get("profile", {})
+    if not profile:
+        return {"logs": ["Error: Profile not found. Please complete step 1."], "recommendations": []}
 
-    logs = [
-        "Scanning county records for permit data...",
-        "Analyzing local competitive density...",
-        "Querying Google Trends for regional interest...",
-        "Cross-referencing demographic income levels...",
-        "Identifying underserved niches in chosen industry...",
-        "Optimization complete."
-    ]
+    engine = RealAnalysisEngine(profile)
+    result = await engine.evaluate_ideas()
 
-    update_app_state("research_complete", True)
-    return {"logs": logs}
+    # Store the results for the next step
+    update_app_state("analysis_results", result["recommendations"])
+    update_app_state("research_logs", result["logs"])
+
+    return {"logs": result["logs"]}
 
 @app.get("/api/recommendations")
 async def get_recommendations():
-    """Return filtered business ideas based on profile."""
+    """Return the results of the research phase."""
     state = get_app_state()
-    profile = state.get("profile", {})
+    # Return stored results from the research phase
+    recs = state.get("analysis_results", [])
 
-    budget = profile.get("startup_budget", 10000)
-    hours = profile.get("weekly_hours", 40)
-    industry = profile.get("preferred_industry", "")
+    if not recs:
+        # Fallback if research wasn't run (shouldn't happen in flow)
+        return []
 
-    all_ideas = default_ideas()
-    filtered = []
-
-    for idea in all_ideas:
-        if idea.startup_cost <= budget * 1.2:
-             if idea.time_commitment_hours_per_week <= hours * 1.2:
-                 if not industry or industry == "Generalist" or industry in idea.industry:
-                     filtered.append(asdict(idea))
-
-    # Fallback if too strict
-    if not filtered:
-        filtered = [asdict(i) for i in all_ideas[:3]]
-
-    # Return top 3 sorted by revenue/cost ratio (simple heuristic)
-    filtered.sort(key=lambda x: x["expected_monthly_revenue"] / (x["startup_cost"] + 1), reverse=True)
-    return filtered[:3]
+    return recs
 
 @app.post("/api/select-business")
 async def select_business(selection: BusinessSelection):
