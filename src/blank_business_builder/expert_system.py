@@ -347,7 +347,11 @@ class DomainExpert(ABC):
 
     async def retrieve_context(self, query: str, max_results: int = 5) -> List[Tuple[KnowledgeDocument, float]]:
         """Retrieve relevant context from vector store."""
-        return self.vector_store.search(query, top_k=max_results, domain=self.domain)
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(
+            None,
+            lambda: self.vector_store.search(query, top_k=max_results, domain=self.domain)
+        )
 
 
 class StandardDomainExpert(DomainExpert):
@@ -394,6 +398,39 @@ class StandardDomainExpert(DomainExpert):
         return response
 
 
+class ChemistryExpert(StandardDomainExpert):
+    """Chemistry domain expert."""
+
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.CHEMISTRY, vector_store)
+
+
+class BiologyExpert(StandardDomainExpert):
+    """Biology domain expert."""
+
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.BIOLOGY, vector_store)
+
+
+class PhysicsExpert(StandardDomainExpert):
+    """Physics domain expert."""
+
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.PHYSICS, vector_store)
+
+
+class MaterialsScienceExpert(StandardDomainExpert):
+    """Materials Science domain expert."""
+
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.MATERIALS_SCIENCE, vector_store)
+
+
+class LegalExpert(StandardDomainExpert):
+    """Legal domain expert."""
+
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.LEGAL, vector_store)
 
 
 class MultiExpertEnsemble:
