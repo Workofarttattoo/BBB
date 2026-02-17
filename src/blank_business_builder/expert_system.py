@@ -347,7 +347,15 @@ class DomainExpert(ABC):
 
     async def retrieve_context(self, query: str, max_results: int = 5) -> List[Tuple[KnowledgeDocument, float]]:
         """Retrieve relevant context from vector store."""
-        return self.vector_store.search(query, top_k=max_results, domain=self.domain)
+        # Use run_in_executor to avoid blocking the event loop with synchronous vector search
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(
+            None,
+            self.vector_store.search,
+            query,
+            max_results,
+            self.domain
+        )
 
 
 class StandardDomainExpert(DomainExpert):

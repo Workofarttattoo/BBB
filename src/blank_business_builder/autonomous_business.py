@@ -26,7 +26,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Callable
+from typing import Dict, List, Optional, Callable, Set
 import logging
 
 from .features.market_research import MarketResearch
@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 
 class AgentRole(Enum):
     """Agent roles in autonomous business."""
+
     RESEARCHER = "researcher"  # Market research, competitive analysis
     MARKETER = "marketer"  # Content creation, SEO, advertising
     SALES = "sales"  # Lead gen, cold outreach, sales calls
@@ -58,6 +59,7 @@ class AgentRole(Enum):
 
 class TaskStatus(Enum):
     """Status of autonomous tasks."""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -68,6 +70,7 @@ class TaskStatus(Enum):
 @dataclass
 class AutonomousTask:
     """Represents a task for autonomous agents."""
+
     task_id: str
     role: AgentRole
     description: str
@@ -83,6 +86,7 @@ class AutonomousTask:
 @dataclass
 class BusinessMetrics:
     """Real-time business performance metrics."""
+
     total_revenue: float = 0.0
     monthly_revenue: float = 0.0
     customer_count: int = 0
@@ -97,6 +101,7 @@ class BusinessMetrics:
 @dataclass
 class AgentPerformance:
     """Track individual agent performance."""
+
     agent_id: str
     role: AgentRole
     tasks_completed: int = 0
@@ -126,7 +131,7 @@ class Level6BusinessAgent:
         payment_processor: PaymentProcessor = None,
         social_media: SocialMedia = None,
         prompt_registry: PromptRegistry = None,
-        hive_mind: HiveMindCoordinator = None
+        hive_mind: HiveMindCoordinator = None,
     ):
         self.agent_id = agent_id
         self.role = role
@@ -157,12 +162,12 @@ class Level6BusinessAgent:
                 AgentRole.HR: AgentType.OPTIMIZATION,
                 AgentRole.META_MANAGER: AgentType.LEVEL9_OPTIMIZATION,
                 AgentRole.EXECUTIVE: AgentType.ECH0_OVERSEER,
-                AgentRole.CREATIVE_DIRECTOR: AgentType.PRODUCT
+                AgentRole.CREATIVE_DIRECTOR: AgentType.PRODUCT,
             }
             self.hive_mind.register_agent(
                 self.agent_id,
                 hive_role_map.get(self.role, AgentType.ANALYTICS),
-                autonomy_level=self.autonomy_level
+                autonomy_level=self.autonomy_level,
             )
 
     @property
@@ -212,7 +217,7 @@ class Level6BusinessAgent:
             "role": self.role.value,
             "current_time": datetime.now().isoformat(),
             "performance_history": self.performance.__dict__,
-            "knowledge_available": len(self.knowledge_graph)
+            "knowledge_available": len(self.knowledge_graph),
         }
 
     async def _orient(self, context: Dict) -> Dict:
@@ -223,7 +228,7 @@ class Level6BusinessAgent:
             "market_conditions": "favorable",  # Would use real data
             "competitor_activity": "moderate",
             "customer_demand": "high",
-            "confidence": 0.85
+            "confidence": 0.85,
         }
 
     async def _decide(self, world_model: Dict, task: AutonomousTask) -> Dict:
@@ -275,12 +280,12 @@ class Level6BusinessAgent:
                 "Identify top 10 competitors",
                 "Track pricing strategies",
                 "Monitor industry trends",
-                "Generate insights report"
+                "Generate insights report",
             ],
             "estimated_time": 30,  # minutes
             "confidence": 0.90,
             "scraped_data": scraped_data,
-            "search_results": search_results
+            "search_results": search_results,
         }
 
     async def _plan_marketing(self, task: AutonomousTask) -> Dict:
@@ -290,7 +295,7 @@ class Level6BusinessAgent:
                 from_email="marketing@mybusiness.com",
                 to_emails=["customer@example.com"],
                 subject="Check out our new blog post!",
-                html_content="<p>We've just published a new blog post that you might find interesting.</p>"
+                html_content="<p>We've just published a new blog post that you might find interesting.</p>",
             )
 
         if self.social_media:
@@ -303,10 +308,10 @@ class Level6BusinessAgent:
                 "Create social media content (LinkedIn, Twitter, Facebook)",
                 "Design email campaign",
                 "Run Google Ads campaign",
-                "Track engagement metrics"
+                "Track engagement metrics",
             ],
             "estimated_time": 45,
-            "confidence": 0.88
+            "confidence": 0.88,
         }
 
     async def _plan_sales(self, task: AutonomousTask) -> Dict:
@@ -319,7 +324,7 @@ class Level6BusinessAgent:
             from_email="sales@mybusiness.com",
             to_emails=["lead@example.com"],
             subject="Following up on your interest",
-            html_content="<p>I'd love to schedule a quick call to discuss how we can help you.</p>"
+            html_content="<p>I'd love to schedule a quick call to discuss how we can help you.</p>",
         )
         return {
             "action": "sales_outreach",
@@ -329,11 +334,11 @@ class Level6BusinessAgent:
                 "Schedule sales calls (Shift " + str(self.current_shift) + ")",
                 "Conduct discovery calls using active listening",
                 "Ask for the sale explicitly (at least once)",
-                "Counter objections with pain-point rebuttals"
+                "Counter objections with pain-point rebuttals",
             ],
             "context": f"{sales_tactics}\n{comm_guidelines}",
             "estimated_time": 60,
-            "confidence": 0.88
+            "confidence": 0.88,
         }
 
     async def _plan_fulfillment(self, task: AutonomousTask) -> Dict:
@@ -345,10 +350,10 @@ class Level6BusinessAgent:
                 "Deliver product/service",
                 "Ensure quality standards",
                 "Collect feedback",
-                "Handle issues proactively"
+                "Handle issues proactively",
             ],
             "estimated_time": 40,
-            "confidence": 0.92
+            "confidence": 0.92,
         }
 
     async def _plan_support(self, task: AutonomousTask) -> Dict:
@@ -360,10 +365,10 @@ class Level6BusinessAgent:
                 "Respond to emails/messages within 1 hour",
                 "Resolve issues with empathy",
                 "Upsell relevant products",
-                "Track satisfaction scores"
+                "Track satisfaction scores",
             ],
             "estimated_time": 35,
-            "confidence": 0.87
+            "confidence": 0.87,
         }
 
     async def _plan_finance(self, task: AutonomousTask) -> Dict:
@@ -371,7 +376,7 @@ class Level6BusinessAgent:
         checkout_url = await self.payment_processor.create_checkout_session(
             price_id="price_12345",  # Replace with a real Price ID
             success_url="https://example.com/success",
-            cancel_url="https://example.com/cancel"
+            cancel_url="https://example.com/cancel",
         )
         return {
             "action": "financial_management",
@@ -380,11 +385,11 @@ class Level6BusinessAgent:
                 "Process payments",
                 "Track revenue metrics",
                 "Create financial reports",
-                "Optimize pricing strategy"
+                "Optimize pricing strategy",
             ],
             "estimated_time": 25,
             "confidence": 0.95,
-            "checkout_url": checkout_url
+            "checkout_url": checkout_url,
         }
 
     async def _plan_hr(self, task: AutonomousTask) -> Dict:
@@ -399,11 +404,11 @@ class Level6BusinessAgent:
                 "Allocate budget tokens to high-performing agents",
                 "Review internal transaction logs",
                 "Approve pending high-cost actions",
-                "Generate financial health report"
+                "Generate financial health report",
             ],
             "strategy_used": strategy,
             "estimated_time": 20,
-            "confidence": 0.95
+            "confidence": 0.95,
         }
 
     async def _plan_meta_manager(self, task: AutonomousTask) -> Dict:
@@ -416,11 +421,11 @@ class Level6BusinessAgent:
                 "Collect status reports from assigned agents",
                 "Identify bottlenecks in task queues",
                 "Re-prioritize blocked tasks",
-                "Aggregate metrics for executive review"
+                "Aggregate metrics for executive review",
             ],
             "strategy_used": strategy,
             "estimated_time": 15,
-            "confidence": 0.90
+            "confidence": 0.90,
         }
 
     async def _plan_executive(self, task: AutonomousTask) -> Dict:
@@ -431,7 +436,7 @@ class Level6BusinessAgent:
         shift_focus = {
             1: "Review overnight performance and set daily goals",
             2: "Mid-day course correction and resource optimization",
-            3: "End-of-day analysis and preparation for next cycle"
+            3: "End-of-day analysis and preparation for next cycle",
         }
 
         return {
@@ -440,11 +445,11 @@ class Level6BusinessAgent:
                 f"Shift {self.current_shift} Focus: {shift_focus.get(self.current_shift, 'General oversight')}",
                 "Review overall business health metrics",
                 "Set strategic direction based on current scale",
-                "Evaluate Meta Manager performance"
+                "Evaluate Meta Manager performance",
             ],
             "strategy_used": strategy,
             "estimated_time": 10,
-            "confidence": 0.98
+            "confidence": 0.98,
         }
 
     async def _plan_deep_research(self, task: AutonomousTask) -> Dict:
@@ -457,11 +462,11 @@ class Level6BusinessAgent:
                 "Query academic databases and whitepapers",
                 "Cross-reference data sources for integrity",
                 "Synthesize complex findings",
-                "Generate actionable intelligence report"
+                "Generate actionable intelligence report",
             ],
             "strategy_used": strategy,
             "estimated_time": 120,
-            "confidence": 0.92
+            "confidence": 0.92,
         }
 
     async def _plan_osint(self, task: AutonomousTask) -> Dict:
@@ -474,11 +479,11 @@ class Level6BusinessAgent:
                 "Monitor competitor social media channels",
                 "Analyze public filings and news mentions",
                 "Identify potential vulnerabilities or opportunities",
-                "Update competitive landscape map"
+                "Update competitive landscape map",
             ],
             "strategy_used": strategy,
             "estimated_time": 45,
-            "confidence": 0.89
+            "confidence": 0.89,
         }
 
     async def _plan_creative_director(self, task: AutonomousTask) -> Dict:
@@ -492,11 +497,11 @@ class Level6BusinessAgent:
                 "Oversee text-to-video production",
                 "Manage voiceover synthesis",
                 "Generate background music (text-to-music)",
-                "Review social media aesthetic consistency"
+                "Review social media aesthetic consistency",
             ],
             "strategy_used": strategy,
             "estimated_time": 90,
-            "confidence": 0.94
+            "confidence": 0.94,
         }
 
     async def _act(self, action_plan: Dict) -> Dict:
@@ -507,54 +512,55 @@ class Level6BusinessAgent:
         await asyncio.sleep(0.1)  # Simulate work
 
         # Calculate success (would use real metrics)
-        success = action_plan['confidence'] > 0.75
+        success = action_plan["confidence"] > 0.75
 
         return {
             "success": success,
-            "action": action_plan['action'],
-            "confidence": action_plan['confidence'],
+            "action": action_plan["action"],
+            "confidence": action_plan["confidence"],
             "outcome": "Task completed successfully" if success else "Task requires retry",
             "metrics": {
-                "time_taken": action_plan.get('estimated_time', 30),
-                "quality_score": action_plan['confidence']
-            }
+                "time_taken": action_plan.get("estimated_time", 30),
+                "quality_score": action_plan["confidence"],
+            },
         }
 
     async def _learn(self, result: Dict) -> None:
         """Update internal models based on outcomes."""
-        if result['success']:
+        if result["success"]:
             self.performance.tasks_completed += 1
             self.performance.success_rate = (
-                (self.performance.success_rate * (self.performance.tasks_completed - 1) + 1.0) /
-                self.performance.tasks_completed
-            )
+                self.performance.success_rate * (self.performance.tasks_completed - 1) + 1.0
+            ) / self.performance.tasks_completed
 
         # Update knowledge graph (simplified)
-        action = result['action']
+        action = result["action"]
         if action not in self.knowledge_graph:
             self.knowledge_graph[action] = {
                 "attempts": 0,
                 "successes": 0,
-                "average_confidence": 0.0
+                "average_confidence": 0.0,
             }
 
         self.knowledge_graph[action]["attempts"] += 1
-        if result['success']:
+        if result["success"]:
             self.knowledge_graph[action]["successes"] += 1
 
     async def _meta_learn(self, result: Dict) -> None:
         """Improve decision-making process itself (Level 6 capability)."""
         # Adjust confidence calibration
-        predicted_confidence = result['confidence']
-        actual_success = 1.0 if result['success'] else 0.0
+        predicted_confidence = result["confidence"]
+        actual_success = 1.0 if result["success"] else 0.0
 
         # Update meta-knowledge
         calibration_error = abs(predicted_confidence - actual_success)
         if calibration_error > 0.1:
             # Adjust future confidence estimates
-            self.performance.confidence_score *= (1.0 - calibration_error * 0.1)
+            self.performance.confidence_score *= 1.0 - calibration_error * 0.1
 
-        logger.debug(f"[{self.agent_id}] Meta-learning: calibration error = {calibration_error:.3f}")
+        logger.debug(
+            f"[{self.agent_id}] Meta-learning: calibration error = {calibration_error:.3f}"
+        )
 
     async def _report(self, task: AutonomousTask, result: Dict) -> Dict:
         """Log key insights and progress metrics."""
@@ -563,11 +569,11 @@ class Level6BusinessAgent:
             "role": self.role.value,
             "task_id": task.task_id,
             "task_description": task.description,
-            "outcome": result['outcome'],
-            "success": result['success'],
-            "confidence": result['confidence'],
-            "metrics": result['metrics'],
-            "timestamp": datetime.now().isoformat()
+            "outcome": result["outcome"],
+            "success": result["success"],
+            "confidence": result["confidence"],
+            "metrics": result["metrics"],
+            "timestamp": datetime.now().isoformat(),
         }
 
 
@@ -580,10 +586,11 @@ class ChiefEnhancementOfficer:
     - Optimize agent prompts/instructions
     - Make one new improvement every hour
     """
-    def __init__(self, orchestrator: 'AutonomousBusinessOrchestrator'):
+
+    def __init__(self, orchestrator: "AutonomousBusinessOrchestrator"):
         self.orchestrator = orchestrator
         self.last_improvement_time = datetime.now()
-        self.improvement_interval = timedelta(hours=1) # 1 hour
+        self.improvement_interval = timedelta(hours=1)  # 1 hour
         # For demo purposes, we might want this shorter, but I'll stick to the spec "every hour"
         # The runner loop runs every 5 seconds, so we check there.
 
@@ -604,15 +611,21 @@ class ChiefEnhancementOfficer:
         pending_tasks = [t for t in self.orchestrator.task_queue if t.status == TaskStatus.PENDING]
 
         if len(blocked_tasks) > 2:
-            logger.warning(f"[CEO Daemon] Detected {len(blocked_tasks)} blocked tasks. Analyzing root cause...")
+            logger.warning(
+                f"[CEO Daemon] Detected {len(blocked_tasks)} blocked tasks. Analyzing root cause..."
+            )
             # In a real system, this would trigger a re-planning or resource reallocation
 
         if len(pending_tasks) > 10:
-            logger.warning(f"[CEO Daemon] High backlog detected ({len(pending_tasks)} tasks). Suggesting scale-up.")
+            logger.warning(
+                f"[CEO Daemon] High backlog detected ({len(pending_tasks)} tasks). Suggesting scale-up."
+            )
 
     async def _make_improvement(self):
         """Make one new improvement to the system."""
-        logger.info("[CEO Daemon] 🧠 Time for scheduled improvement! Analyzing system performance...")
+        logger.info(
+            "[CEO Daemon] 🧠 Time for scheduled improvement! Analyzing system performance..."
+        )
 
         # Simple heuristic: Improve the prompt for the role with the lowest success rate
         worst_role = self._find_underperforming_role()
@@ -620,7 +633,9 @@ class ChiefEnhancementOfficer:
         if worst_role:
             await self._optimize_prompt_for_role(worst_role)
         else:
-            logger.info("[CEO Daemon] All agents performing well. Optimizing 'sales' for higher revenue.")
+            logger.info(
+                "[CEO Daemon] All agents performing well. Optimizing 'sales' for higher revenue."
+            )
             await self._optimize_prompt_for_role(AgentRole.SALES)
 
     def _find_underperforming_role(self) -> Optional[AgentRole]:
@@ -636,7 +651,7 @@ class ChiefEnhancementOfficer:
             return None
 
         # Calculate average success rate per role
-        avg_stats = {r: sum(s)/len(s) for r, s in role_stats.items()}
+        avg_stats = {r: sum(s) / len(s) for r, s in role_stats.items()}
         # Return role with min score
         return min(avg_stats, key=avg_stats.get)
 
@@ -648,7 +663,7 @@ class ChiefEnhancementOfficer:
             AgentRole.SALES: "sales_outreach_strategy",
             AgentRole.HR: "hr_finance_strategy",
             AgentRole.META_MANAGER: "meta_management_strategy",
-            AgentRole.EXECUTIVE: "executive_strategy"
+            AgentRole.EXECUTIVE: "executive_strategy",
         }
 
         key = prompt_key_map.get(role)
@@ -660,11 +675,15 @@ class ChiefEnhancementOfficer:
 
         # In a real system, this would call an LLM to rewrite the prompt.
         # Here we simulate an improvement.
-        improvement_note = f" [Optimized by CEO at {datetime.now().strftime('%H:%M')} for better performance]"
+        improvement_note = (
+            f" [Optimized by CEO at {datetime.now().strftime('%H:%M')} for better performance]"
+        )
         new_content = current_content + improvement_note
 
         registry.update_prompt(key, new_content, score_improvement=0.05)
-        logger.info(f"[CEO Daemon] ✅ IMPROVEMENT MADE: Optimized prompt '{key}' for {role.value} agent.")
+        logger.info(
+            f"[CEO Daemon] ✅ IMPROVEMENT MADE: Optimized prompt '{key}' for {role.value} agent."
+        )
 
 
 class AutonomousBusinessOrchestrator:
@@ -684,12 +703,13 @@ class AutonomousBusinessOrchestrator:
         twitter_consumer_key: str = None,
         twitter_consumer_secret: str = None,
         twitter_access_token: str = None,
-        twitter_access_token_secret: str = None
+        twitter_access_token_secret: str = None,
     ):
         self.business_concept = business_concept
         self.founder_name = founder_name
         self.agents: Dict[str, Level6BusinessAgent] = {}
         self.task_queue: List[AutonomousTask] = []
+        self.completed_task_ids: Set[str] = set()
         self.metrics = BusinessMetrics()
         self.running = False
         self.market_research = MarketResearch(api_key=market_research_api_key)
@@ -699,7 +719,7 @@ class AutonomousBusinessOrchestrator:
             consumer_key=twitter_consumer_key,
             consumer_secret=twitter_consumer_secret,
             access_token=twitter_access_token,
-            access_token_secret=twitter_access_token_secret
+            access_token_secret=twitter_access_token_secret,
         )
         self.prompt_registry = PromptRegistry()
         self.ceo = ChiefEnhancementOfficer(self)
@@ -718,11 +738,13 @@ class AutonomousBusinessOrchestrator:
                 business_concept=self.business_concept,
                 autonomy_level=6,
                 market_research=self.market_research if role == AgentRole.RESEARCHER else None,
-                email_service=self.email_service if role in [AgentRole.MARKETER, AgentRole.SALES] else None,
+                email_service=(
+                    self.email_service if role in [AgentRole.MARKETER, AgentRole.SALES] else None
+                ),
                 payment_processor=self.payment_processor if role == AgentRole.FINANCE else None,
                 social_media=self.social_media if role == AgentRole.MARKETER else None,
                 prompt_registry=self.prompt_registry,
-                hive_mind=self.hive_mind
+                hive_mind=self.hive_mind,
             )
             self.agents[agent_id] = agent
             logger.info(f"✓ Deployed {role.value} agent: {agent_id}")
@@ -740,11 +762,13 @@ class AutonomousBusinessOrchestrator:
                 business_concept=self.business_concept,
                 autonomy_level=6,
                 market_research=self.market_research if role == AgentRole.RESEARCHER else None,
-                email_service=self.email_service if role in [AgentRole.MARKETER, AgentRole.SALES] else None,
+                email_service=(
+                    self.email_service if role in [AgentRole.MARKETER, AgentRole.SALES] else None
+                ),
                 payment_processor=self.payment_processor if role == AgentRole.FINANCE else None,
                 social_media=self.social_media if role == AgentRole.MARKETER else None,
                 prompt_registry=self.prompt_registry,
-                hive_mind=self.hive_mind
+                hive_mind=self.hive_mind,
             )
             self.agents[agent_id] = agent
             logger.info(f"⚡ Scaled up: Added new {role.value} agent: {agent_id}")
@@ -753,102 +777,126 @@ class AutonomousBusinessOrchestrator:
         """Generate initial task plan for business launch."""
 
         # Research tasks
-        self.task_queue.append(AutonomousTask(
-            task_id="research_001",
-            role=AgentRole.RESEARCHER,
-            description="Conduct comprehensive market analysis and identify target customers",
-            priority=10
-        ))
+        self.task_queue.append(
+            AutonomousTask(
+                task_id="research_001",
+                role=AgentRole.RESEARCHER,
+                description="Conduct comprehensive market analysis and identify target customers",
+                priority=10,
+            )
+        )
 
         # Marketing tasks
-        self.task_queue.append(AutonomousTask(
-            task_id="marketing_001",
-            role=AgentRole.MARKETER,
-            description="Create content marketing strategy and launch campaigns",
-            priority=9,
-            dependencies=["research_001"]
-        ))
+        self.task_queue.append(
+            AutonomousTask(
+                task_id="marketing_001",
+                role=AgentRole.MARKETER,
+                description="Create content marketing strategy and launch campaigns",
+                priority=9,
+                dependencies=["research_001"],
+            )
+        )
 
         # Sales tasks
-        self.task_queue.append(AutonomousTask(
-            task_id="sales_001",
-            role=AgentRole.SALES,
-            description="Generate leads and initiate outreach campaigns",
-            priority=8,
-            dependencies=["marketing_001"]
-        ))
+        self.task_queue.append(
+            AutonomousTask(
+                task_id="sales_001",
+                role=AgentRole.SALES,
+                description="Generate leads and initiate outreach campaigns",
+                priority=8,
+                dependencies=["marketing_001"],
+            )
+        )
 
         # Fulfillment setup
-        self.task_queue.append(AutonomousTask(
-            task_id="fulfillment_001",
-            role=AgentRole.FULFILLMENT,
-            description="Set up service delivery infrastructure",
-            priority=7
-        ))
+        self.task_queue.append(
+            AutonomousTask(
+                task_id="fulfillment_001",
+                role=AgentRole.FULFILLMENT,
+                description="Set up service delivery infrastructure",
+                priority=7,
+            )
+        )
 
         # Support setup
-        self.task_queue.append(AutonomousTask(
-            task_id="support_001",
-            role=AgentRole.SUPPORT,
-            description="Deploy customer support automation",
-            priority=6
-        ))
+        self.task_queue.append(
+            AutonomousTask(
+                task_id="support_001",
+                role=AgentRole.SUPPORT,
+                description="Deploy customer support automation",
+                priority=6,
+            )
+        )
 
         # Finance setup
-        self.task_queue.append(AutonomousTask(
-            task_id="finance_001",
-            role=AgentRole.FINANCE,
-            description="Set up payment processing and revenue tracking",
-            priority=10
-        ))
+        self.task_queue.append(
+            AutonomousTask(
+                task_id="finance_001",
+                role=AgentRole.FINANCE,
+                description="Set up payment processing and revenue tracking",
+                priority=10,
+            )
+        )
 
         # HR / Finance Resource setup
-        self.task_queue.append(AutonomousTask(
-            task_id="hr_001",
-            role=AgentRole.HR,
-            description="Allocate initial budget and resource tokens to agents",
-            priority=10
-        ))
+        self.task_queue.append(
+            AutonomousTask(
+                task_id="hr_001",
+                role=AgentRole.HR,
+                description="Allocate initial budget and resource tokens to agents",
+                priority=10,
+            )
+        )
 
         # Meta Manager setup
-        self.task_queue.append(AutonomousTask(
-            task_id="meta_001",
-            role=AgentRole.META_MANAGER,
-            description="Initialize agent supervision protocols",
-            priority=9
-        ))
+        self.task_queue.append(
+            AutonomousTask(
+                task_id="meta_001",
+                role=AgentRole.META_MANAGER,
+                description="Initialize agent supervision protocols",
+                priority=9,
+            )
+        )
 
         # Executive setup
-        self.task_queue.append(AutonomousTask(
-            task_id="exec_001",
-            role=AgentRole.EXECUTIVE,
-            description="Define strategic roadmap for Q1",
-            priority=10
-        ))
+        self.task_queue.append(
+            AutonomousTask(
+                task_id="exec_001",
+                role=AgentRole.EXECUTIVE,
+                description="Define strategic roadmap for Q1",
+                priority=10,
+            )
+        )
 
         # Deep Research setup
-        self.task_queue.append(AutonomousTask(
-            task_id="deep_res_001",
-            role=AgentRole.DEEP_RESEARCHER,
-            description="Conduct initial deep dive into market fundamentals",
-            priority=8
-        ))
+        self.task_queue.append(
+            AutonomousTask(
+                task_id="deep_res_001",
+                role=AgentRole.DEEP_RESEARCHER,
+                description="Conduct initial deep dive into market fundamentals",
+                priority=8,
+            )
+        )
 
         # OSINT setup
-        self.task_queue.append(AutonomousTask(
-            task_id="osint_001",
-            role=AgentRole.OSINT_SPECIALIST,
-            description="Map initial competitor landscape via OSINT",
-            priority=8
-        ))
+        self.task_queue.append(
+            AutonomousTask(
+                task_id="osint_001",
+                role=AgentRole.OSINT_SPECIALIST,
+                description="Map initial competitor landscape via OSINT",
+                priority=8,
+            )
+        )
 
         # Creative Director setup
-        self.task_queue.append(AutonomousTask(
-            task_id="creative_001",
-            role=AgentRole.CREATIVE_DIRECTOR,
-            description="Establish brand identity and asset generation pipeline",
-            priority=9
-        ))
+        self.task_queue.append(
+            AutonomousTask(
+                task_id="creative_001",
+                role=AgentRole.CREATIVE_DIRECTOR,
+                description="Establish brand identity and asset generation pipeline",
+                priority=9,
+            )
+        )
 
     async def run_autonomous_loop(self, duration_hours: float = 24.0) -> None:
         """
@@ -903,8 +951,7 @@ class AutonomousBusinessOrchestrator:
 
             # Find agent with matching role
             agent = next(
-                (a for a in self.agents.values() if a.role == task.role and a.active),
-                None
+                (a for a in self.agents.values() if a.role == task.role and a.active), None
             )
 
             if agent:
@@ -928,10 +975,11 @@ class AutonomousBusinessOrchestrator:
 
         # Update task status
         for task, result in zip(in_progress, results):
-            if result['success']:
+            if result["success"]:
                 task.status = TaskStatus.COMPLETED
                 task.completed_at = datetime.now()
                 task.result = result
+                self.completed_task_ids.add(task.task_id)
             else:
                 task.status = TaskStatus.FAILED
 
@@ -943,9 +991,9 @@ class AutonomousBusinessOrchestrator:
             self.metrics.tasks_completed += 1
 
             # Simulate revenue generation (would use real data)
-            if result.get('success'):
+            if result.get("success"):
                 # Different roles contribute different revenue
-                agent = self.agents[result['agent_id']]
+                agent = self.agents[result["agent_id"]]
                 if agent.role == AgentRole.SALES:
                     revenue = 500.0  # Average deal size
                     self.metrics.total_revenue += revenue
@@ -966,21 +1014,25 @@ class AutonomousBusinessOrchestrator:
         """Generate new tasks based on outcomes (adaptive strategy)."""
         # If sales are strong, generate more marketing tasks
         if self.metrics.monthly_revenue > 5000:
-            self.task_queue.append(AutonomousTask(
-                task_id=f"marketing_{len(self.task_queue)}",
-                role=AgentRole.MARKETER,
-                description="Scale successful marketing campaigns",
-                priority=9
-            ))
+            self.task_queue.append(
+                AutonomousTask(
+                    task_id=f"marketing_{len(self.task_queue)}",
+                    role=AgentRole.MARKETER,
+                    description="Scale successful marketing campaigns",
+                    priority=9,
+                )
+            )
 
         # If conversion rate is low, generate research task
         if self.metrics.conversion_rate < 0.05:
-            self.task_queue.append(AutonomousTask(
-                task_id=f"research_{len(self.task_queue)}",
-                role=AgentRole.RESEARCHER,
-                description="Analyze low conversion and recommend improvements",
-                priority=10
-            ))
+            self.task_queue.append(
+                AutonomousTask(
+                    task_id=f"research_{len(self.task_queue)}",
+                    role=AgentRole.RESEARCHER,
+                    description="Analyze low conversion and recommend improvements",
+                    priority=10,
+                )
+            )
 
     async def _report_progress(self) -> None:
         """Report current business status."""
@@ -1012,19 +1064,32 @@ class AutonomousBusinessOrchestrator:
                 "revenue": {
                     "total": self.metrics.total_revenue,
                     "monthly": self.metrics.monthly_revenue,
-                    "quarterly_pace": self.metrics.monthly_revenue * 3
+                    "quarterly_pace": self.metrics.monthly_revenue * 3,
                 },
                 "customers": {
                     "total": self.metrics.customer_count,
                     "leads": self.metrics.leads_generated,
-                    "conversion_rate": self.metrics.conversion_rate
+                    "conversion_rate": self.metrics.conversion_rate,
                 },
                 "operations": {
                     "tasks_completed": self.metrics.tasks_completed,
-                    "tasks_pending": len([t for t in self.task_queue if t.status == TaskStatus.PENDING]),
-                    "success_rate": sum(1 for t in self.task_queue if t.status == TaskStatus.COMPLETED) /
-                                   max(1, len([t for t in self.task_queue if t.status in [TaskStatus.COMPLETED, TaskStatus.FAILED]]))
-                }
+                    "tasks_pending": len(
+                        [t for t in self.task_queue if t.status == TaskStatus.PENDING]
+                    ),
+                    "success_rate": sum(
+                        1 for t in self.task_queue if t.status == TaskStatus.COMPLETED
+                    )
+                    / max(
+                        1,
+                        len(
+                            [
+                                t
+                                for t in self.task_queue
+                                if t.status in [TaskStatus.COMPLETED, TaskStatus.FAILED]
+                            ]
+                        ),
+                    ),
+                },
             },
             "agents": [
                 {
@@ -1034,19 +1099,17 @@ class AutonomousBusinessOrchestrator:
                         "tasks_completed": agent.performance.tasks_completed,
                         "success_rate": agent.performance.success_rate,
                         "revenue_generated": agent.performance.revenue_generated,
-                        "confidence": agent.performance.confidence_score
-                    }
+                        "confidence": agent.performance.confidence_score,
+                    },
                 }
                 for agent in self.agents.values()
             ],
-            "last_updated": self.metrics.last_updated.isoformat()
+            "last_updated": self.metrics.last_updated.isoformat(),
         }
 
 
 async def launch_autonomous_business(
-    business_concept: str,
-    founder_name: str,
-    duration_hours: float = 24.0
+    business_concept: str, founder_name: str, duration_hours: float = 24.0
 ) -> Dict:
     """
     Launch a fully autonomous business.
@@ -1058,10 +1121,7 @@ async def launch_autonomous_business(
     Returns:
         Final business metrics after autonomous operation
     """
-    orchestrator = AutonomousBusinessOrchestrator(
-        business_concept,
-        founder_name
-    )
+    orchestrator = AutonomousBusinessOrchestrator(business_concept, founder_name)
 
     # Deploy Level 6 agents
     await orchestrator.deploy_agents()
@@ -1091,9 +1151,9 @@ if __name__ == "__main__":
             duration_hours=0.1,  # 6 minutes for demo
         )
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("FINAL AUTONOMOUS BUSINESS METRICS")
-        print("="*60)
+        print("=" * 60)
         print(json.dumps(result, indent=2))
 
     asyncio.run(demo())
