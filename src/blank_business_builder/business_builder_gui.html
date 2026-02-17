@@ -3,17 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Builder - Find Your $20K/Quarter Business</title>
+    <title>Business Builder - Autonomous Enterprise Onboarding</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         :root {
             --primary: #00ff88;
             --primary-dark: #00cc6a;
+            --secondary: #00bfff;
             --bg-dark: #0a0e27;
             --bg-card: #151933;
             --text: #e8eaf6;
@@ -24,77 +19,104 @@
             --error: #f44336;
         }
 
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             background: linear-gradient(135deg, var(--bg-dark) 0%, #1a1f3a 100%);
             color: var(--text);
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 2rem;
+            width: 100%;
+            flex: 1;
         }
 
         header {
             text-align: center;
-            margin-bottom: 3rem;
-            padding: 2rem 0;
-            background: rgba(0, 255, 136, 0.05);
-            border-radius: 16px;
-            border: 1px solid rgba(0, 255, 136, 0.2);
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
         }
 
         h1 {
             font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, var(--primary), #00bfff);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
         }
 
-        .subtitle {
-            color: var(--text-dim);
-            font-size: 1.1rem;
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
 
-        .nav-tabs {
+        /* Wizard Styles */
+        .wizard-progress {
             display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            border-bottom: 2px solid var(--border);
-            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-bottom: 3rem;
+            position: relative;
         }
 
-        .nav-tab {
-            padding: 1rem 2rem;
-            background: transparent;
-            border: none;
+        .wizard-progress::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--border);
+            z-index: 0;
+            transform: translateY(-50%);
+        }
+
+        .step-indicator {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+            font-weight: bold;
             color: var(--text-dim);
-            cursor: pointer;
             transition: all 0.3s ease;
-            font-size: 1rem;
-            border-bottom: 3px solid transparent;
         }
 
-        .nav-tab:hover {
-            color: var(--text);
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .nav-tab.active {
+        .step-indicator.active {
+            border-color: var(--primary);
             color: var(--primary);
-            border-bottom-color: var(--primary);
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
         }
 
-        .tab-content {
+        .step-indicator.completed {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--bg-dark);
+        }
+
+        .step-content {
             display: none;
+            animation: fadeIn 0.4s ease;
         }
 
-        .tab-content.active {
+        .step-content.active {
             display: block;
-            animation: fadeIn 0.3s ease;
         }
 
         @keyframes fadeIn {
@@ -102,23 +124,8 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .card {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 2rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid var(--border);
-            transition: all 0.3s ease;
-        }
-
-        .card:hover {
-            border-color: var(--primary);
-            box-shadow: 0 8px 24px rgba(0, 255, 136, 0.1);
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
+        /* Form Elements */
+        .form-group { margin-bottom: 1.5rem; }
 
         label {
             display: block;
@@ -127,922 +134,633 @@
             font-weight: 600;
         }
 
-        input, select, textarea {
+        input, select {
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.8rem;
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid var(--border);
             border-radius: 8px;
             color: var(--text);
             font-size: 1rem;
-            transition: all 0.3s ease;
         }
 
-        input:focus, select:focus, textarea:focus {
+        input:focus, select:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
         }
 
         .btn {
-            padding: 0.75rem 2rem;
+            padding: 0.8rem 2rem;
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             border: none;
             border-radius: 8px;
             color: var(--bg-dark);
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
             font-size: 1rem;
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(0, 255, 136, 0.3);
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        .btn-outline:hover { background: rgba(0, 255, 136, 0.1); }
+
+        /* Specific Views */
+        .service-item {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.03);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
         }
 
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text);
+        .service-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 1rem;
         }
 
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .idea-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .idea-card {
-            background: var(--bg-card);
+        .console-log {
+            background: #000;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            color: var(--primary);
+            height: 200px;
+            overflow-y: auto;
             border: 1px solid var(--border);
-            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .business-option {
+            border: 1px solid var(--border);
             padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
             cursor: pointer;
             transition: all 0.3s ease;
+            background: var(--bg-card);
         }
 
-        .idea-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0, 255, 136, 0.15);
-        }
-
-        .idea-card.selected {
+        .business-option:hover {
             border-color: var(--primary);
             background: rgba(0, 255, 136, 0.05);
         }
 
-        .idea-name {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: var(--primary);
-        }
-
-        .idea-industry {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            background: rgba(0, 191, 255, 0.2);
-            border-radius: 4px;
-            font-size: 0.85rem;
-            margin-bottom: 1rem;
-            color: #00bfff;
-        }
-
-        .idea-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
-            font-size: 0.9rem;
-        }
-
-        .stat {
-            color: var(--text-dim);
-        }
-
-        .stat strong {
-            color: var(--text);
-        }
-
-        .filter-bar {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .results-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .results-table th,
-        .results-table td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .results-table th {
+        .business-option.selected {
+            border-color: var(--primary);
             background: rgba(0, 255, 136, 0.1);
-            color: var(--primary);
-            font-weight: 600;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
         }
 
-        .results-table tr:hover {
-            background: rgba(255, 255, 255, 0.02);
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
         }
 
-        .probability-bar {
-            height: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
+        .pricing-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: 16px;
+            text-align: center;
+            position: relative;
             overflow: hidden;
         }
 
-        .probability-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary), #00bfff);
-            transition: width 0.5s ease;
+        .pricing-card.featured {
+            border-color: var(--primary);
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.1);
         }
 
-        .badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            font-weight: 600;
+        .price { font-size: 2.5rem; font-weight: bold; margin: 1rem 0; color: var(--text); }
+        .price span { font-size: 1rem; color: var(--text-dim); font-weight: normal; }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
         }
 
-        .badge-success {
-            background: rgba(76, 175, 80, 0.2);
-            color: var(--success);
-        }
-
-        .badge-warning {
-            background: rgba(255, 152, 0, 0.2);
-            color: var(--warning);
-        }
-
-        .badge-error {
-            background: rgba(244, 67, 54, 0.2);
-            color: var(--error);
-        }
-
-        .onboarding-steps {
-            counter-reset: step;
-        }
-
-        .step {
-            position: relative;
-            padding-left: 3rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .step::before {
-            counter-increment: step;
-            content: counter(step);
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 2rem;
-            height: 2rem;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: var(--bg-dark);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-        }
-
-        .progress-ring {
-            transform: rotate(-90deg);
-        }
-
-        .progress-ring-circle {
-            transition: stroke-dashoffset 0.5s ease;
-        }
-
-        .chart-container {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 12px;
-            padding: 2rem;
-            margin: 2rem 0;
-        }
-
-        .export-buttons {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-
-            h1 {
-                font-size: 1.8rem;
-            }
-
-            .nav-tabs {
-                flex-direction: column;
-            }
-
-            .idea-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .filter-bar {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .jiminy-alert {
-            background: rgba(0, 191, 255, 0.1);
-            border-left: 4px solid #00bfff;
-            padding: 1rem;
+        .metric-card {
+            background: rgba(0,0,0,0.2);
+            padding: 1.5rem;
             border-radius: 8px;
-            margin: 1rem 0;
+            text-align: center;
         }
 
-        .jiminy-alert::before {
-            content: "🦗 Jiminy Says: ";
-            font-weight: 700;
-            color: #00bfff;
+        .metric-val { font-size: 2rem; font-weight: bold; color: var(--primary); }
+        .metric-label { color: var(--text-dim); font-size: 0.9rem; margin-top: 0.5rem; }
+
+        /* Admin Bypass */
+        .admin-bypass {
+            margin-top: 2rem;
+            text-align: right;
+            font-size: 0.8rem;
+            color: var(--text-dim);
         }
+        .bypass-input {
+            display: none;
+            margin-top: 0.5rem;
+        }
+        .bypass-input.visible { display: block; }
+
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🚀 Business Builder</h1>
-            <p class="subtitle">Find Your $20,000/Quarter Business Opportunity with Quantum-Inspired Optimization</p>
+            <h1>🚀 Business Builder OS</h1>
+            <p style="color: var(--text-dim);">Autonomous Enterprise Deployment System</p>
         </header>
 
-        <div class="nav-tabs">
-            <button class="nav-tab active" onclick="switchTab('onboarding')">📝 Onboarding</button>
-            <button class="nav-tab" onclick="switchTab('explore')">🔍 Explore Ideas</button>
-            <button class="nav-tab" onclick="switchTab('optimize')">⚡ Optimize</button>
-            <button class="nav-tab" onclick="switchTab('plan')">📊 Business Plan</button>
-            <button class="nav-tab" onclick="switchTab('financials')">💰 Financials</button>
-            <button class="nav-tab" onclick="switchTab('dashboard')">🚀 Live Dashboard</button>
-            <button class="nav-tab" onclick="switchTab('library')">📚 Library</button>
-            <button class="nav-tab" onclick="switchTab('zero-touch')">💎 Zero-Touch</button>
-            <button class="nav-tab" onclick="switchTab('quantum-analysis')">🔬 Quantum</button>
-            <button class="nav-tab" onclick="switchTab('recovery')">🛡️ Recovery</button>
-            <button class="nav-tab" onclick="switchTab('status')">🌐 Status</button>
+        <!-- WIZARD CONTAINER -->
+        <div id="wizard-container">
+            <div class="wizard-progress">
+                <div class="step-indicator active" id="ind-1">1</div>
+                <div class="step-indicator" id="ind-2">2</div>
+                <div class="step-indicator" id="ind-3">3</div>
+                <div class="step-indicator" id="ind-4">4</div>
+                <div class="step-indicator" id="ind-5">5</div>
+                <div class="step-indicator" id="ind-6">6</div>
+            </div>
+
+            <!-- Step 1: Profile -->
+            <div class="step-content active" id="step-1">
+                <div class="card">
+                    <h2>👤 Founder Profile</h2>
+                    <p class="subtitle">Let's get your details to personalize the deployment.</p>
+                    <br>
+                    <form id="profileForm">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="founderName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Mailing Address</label>
+                            <input type="text" id="address" placeholder="Street Address" required>
+                        </div>
+                        <div class="form-group">
+                            <label>State of Operation</label>
+                            <input type="text" id="locationState" placeholder="e.g. California" required>
+                        </div>
+                        <div class="form-group">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div>
+                                    <label>Weekly Hours Available</label>
+                                    <input type="number" id="weeklyHours" value="20" required>
+                                </div>
+                                <div>
+                                    <label>Startup Budget ($)</label>
+                                    <input type="number" id="startupBudget" value="5000" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Preferred Industry</label>
+                            <select id="preferredIndustry">
+                                <option value="Generalist">Open to Recommendations (Generalist)</option>
+                                <option value="Technology">Technology</option>
+                                <option value="Ecommerce">Ecommerce</option>
+                                <option value="Finance">Finance</option>
+                                <option value="Services">Services</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn" onclick="submitProfile()">Next Step →</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Step 2: Legal / EIN -->
+            <div class="step-content" id="step-2">
+                <div class="card">
+                    <h2>🏛️ Legal Registration</h2>
+                    <p>You need a Federal Tax ID (EIN) to operate. Registration is free on the IRS website.</p>
+
+                    <div style="background: rgba(0, 191, 255, 0.1); padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; border-left: 4px solid var(--secondary);">
+                        <strong>Instructions:</strong>
+                        <ol style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                            <li>Click the button below to open the IRS EIN Assistant.</li>
+                            <li>Complete the application (takes ~5 minutes).</li>
+                            <li>Download your EIN Confirmation Letter (PDF).</li>
+                            <li>Return here and confirm you have your EIN.</li>
+                        </ol>
+                    </div>
+
+                    <a href="https://www.irs.gov/businesses/small-businesses-self-employed/apply-for-an-employer-identification-number-ein-online"
+                       target="_blank" class="btn btn-outline" style="display: block; text-align: center; margin-bottom: 1.5rem;">
+                        Open IRS.gov EIN Application ↗
+                    </a>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="einConfirmed" onchange="toggleStep2Btn()">
+                            I have received my EIN and saved the documentation.
+                        </label>
+                    </div>
+
+                    <button type="button" class="btn" id="btn-step-2" disabled onclick="nextStep(3)">Next Step →</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Service Setup -->
+            <div class="step-content" id="step-3">
+                <div class="card">
+                    <h2>🔌 Service Integrations</h2>
+                    <p>We need to connect these services to enable autonomous operations.</p>
+                    <br>
+
+                    <div class="service-item">
+                        <input type="checkbox" class="svc-check">
+                        <div style="flex:1">
+                            <strong>Stripe</strong> - For processing payments.
+                            <br><a href="https://dashboard.stripe.com/register" target="_blank" style="color: var(--secondary); font-size: 0.9rem;">Sign Up ↗</a>
+                        </div>
+                    </div>
+
+                    <div class="service-item">
+                        <input type="checkbox" class="svc-check">
+                        <div style="flex:1">
+                            <strong>Twilio</strong> - For SMS and voice capabilities.
+                            <br><a href="https://www.twilio.com/try-twilio" target="_blank" style="color: var(--secondary); font-size: 0.9rem;">Sign Up ↗</a>
+                        </div>
+                    </div>
+
+                    <div class="service-item">
+                        <input type="checkbox" class="svc-check">
+                        <div style="flex:1">
+                            <strong>ElevenLabs</strong> - For realistic AI voice generation.
+                            <br><a href="https://elevenlabs.io/sign-up" target="_blank" style="color: var(--secondary); font-size: 0.9rem;">Sign Up ↗</a>
+                        </div>
+                    </div>
+
+                    <div class="service-item">
+                        <input type="checkbox" class="svc-check">
+                        <div style="flex:1">
+                            <strong>Professional Email</strong> - (e.g. Google Workspace or Zoho).
+                            <br><small style="color: var(--text-dim);">Main contact for all businesses.</small>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn" onclick="nextStep(4)">Next Step →</button>
+                </div>
+            </div>
+
+            <!-- Step 4: OSINT Research -->
+            <div class="step-content" id="step-4">
+                <div class="card">
+                    <h2>🕵️ Market Analysis & OSINT</h2>
+                    <p>Agents are scanning local data and global trends to find the best opportunities.</p>
+                    <br>
+                    <div class="console-log" id="osintLog">
+                        > Initializing OSINT agents...<br>
+                    </div>
+                    <div id="researchProgress" style="width: 0%; height: 4px; background: var(--primary); transition: width 2s ease;"></div>
+                    <br>
+                    <button type="button" class="btn" id="btn-research" onclick="startResearch()">Start Analysis</button>
+                </div>
+            </div>
+
+            <!-- Step 5: Selection -->
+            <div class="step-content" id="step-5">
+                <div class="card">
+                    <h2>🎯 Select Your Business</h2>
+                    <p>Based on our analysis, these are the top automated businesses for you.</p>
+                    <br>
+                    <div id="recommendations-list">
+                        <!-- Populated by JS -->
+                        <p style="text-align: center;">Loading recommendations...</p>
+                    </div>
+                    <input type="hidden" id="selectedBusiness">
+                    <button type="button" class="btn" id="btn-select" disabled onclick="nextStep(6)">Confirm Selection →</button>
+                </div>
+            </div>
+
+            <!-- Step 6: Licensing -->
+            <div class="step-content" id="step-6">
+                <div class="card">
+                    <h2>📝 Licensing & Revenue Agreement</h2>
+                    <p>Choose your operating model. This choice is final for the contract duration.</p>
+
+                    <div class="pricing-grid">
+                        <!-- Partner Tier -->
+                        <div class="pricing-card featured" onclick="selectTier('partner')" id="card-partner">
+                            <h3>Partner Tier</h3>
+                            <div class="price">$0 <span>/ upfront</span></div>
+                            <p style="color: var(--primary); font-weight: bold; margin-bottom: 1rem;">50% Revenue Share</p>
+                            <ul style="text-align: left; margin-bottom: 1.5rem; color: var(--text-dim); list-style: none;">
+                                <li>✓ Instant Setup</li>
+                                <li>✓ No Capital Risk</li>
+                                <li>✓ Full Automation Suite</li>
+                                <li>⚠ <strong>Platform takes 50% of profit</strong></li>
+                                <li>⚠ <strong>Locked: No switching later</strong></li>
+                            </ul>
+                            <button class="btn btn-outline" style="width: 100%;">Select Partner</button>
+                        </div>
+
+                        <!-- Paid Tier -->
+                        <div class="pricing-card" onclick="selectTier('paid')" id="card-paid">
+                            <h3>Owner Tier</h3>
+                            <div class="price">$5,000 <span>/ year</span></div>
+                            <p style="color: var(--secondary); font-weight: bold; margin-bottom: 1rem;">100% You Keep It</p>
+                            <ul style="text-align: left; margin-bottom: 1.5rem; color: var(--text-dim); list-style: none;">
+                                <li>✓ Full Ownership</li>
+                                <li>✓ You Keep 100% Profit</li>
+                                <li>✓ Priority Support</li>
+                                <li>✓ Advanced Analytics</li>
+                            </ul>
+                            <button class="btn btn-outline" style="width: 100%;">Select Owner</button>
+                        </div>
+                    </div>
+
+                    <div class="admin-bypass">
+                        <span style="cursor: pointer;" onclick="document.getElementById('bypassInput').classList.toggle('visible')">Admin Bypass</span>
+                        <div id="bypassInput" class="bypass-input">
+                            <input type="password" id="adminCode" placeholder="Enter Admin Code" style="width: 200px; display: inline-block;">
+                            <button class="btn" style="padding: 0.5rem 1rem;" onclick="applyBypass()">Unlock</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Onboarding Tab -->
-        <div id="onboarding" class="tab-content active">
+        <!-- DASHBOARD CONTAINER (Hidden initially) -->
+        <div id="dashboard-container" style="display: none;">
             <div class="card">
-                <h2 style="margin-bottom: 1.5rem;">👋 Welcome! Let's Build Your Business</h2>
-
-                <div class="jiminy-alert">
-                    This wizard will guide you through discovering the perfect business for your situation. All recommendations are based on your actual budget, available time, and preferred industry.
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2>📊 Command Center</h2>
+                    <div id="license-badge" style="padding: 0.5rem 1rem; background: rgba(0, 255, 136, 0.1); border: 1px solid var(--primary); border-radius: 20px; color: var(--primary);">
+                        Checking License...
+                    </div>
                 </div>
 
-                <form id="onboardingForm">
-                    <div class="form-group">
-                        <label for="founderName">Your Name</label>
-                        <input type="text" id="founderName" required>
+                <div class="dashboard-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">Status</div>
+                        <div class="metric-val" id="status-val">Active</div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="locationState">U.S. State</label>
-                        <input type="text" id="locationState" placeholder="e.g., California" required>
+                    <div class="metric-card">
+                        <div class="metric-label">Active Agents</div>
+                        <div class="metric-val" id="agents-val">0</div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="preferredIndustry">Preferred Industry</label>
-                        <select id="preferredIndustry" required>
-                            <option value="">Select Industry...</option>
-                            <option value="Education">Education & Training</option>
-                            <option value="Professional Services">Professional Services</option>
-                            <option value="Ecommerce">Ecommerce</option>
-                            <option value="Finance">Finance & Accounting</option>
-                            <option value="Healthcare">Healthcare</option>
-                            <option value="Technology">Technology & Software</option>
-                            <option value="Logistics">Logistics & Operations</option>
-                            <option value="Marketing">Marketing & Creative</option>
-                            <option value="Real Estate">Real Estate</option>
-                            <option value="Services">Home Services</option>
-                            <option value="Consulting">Consulting & Advisory</option>
-                            <option value="Generalist">Open to All (Generalist)</option>
-                        </select>
+                    <div class="metric-card">
+                        <div class="metric-label">Revenue Today</div>
+                        <div class="metric-val" id="revenue-today">$0.00</div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="weeklyHours">Weekly Time Commitment (hours)</label>
-                        <input type="number" id="weeklyHours" min="10" max="80" value="20" required>
-                        <small style="color: var(--text-dim);">How many hours per week can you dedicate?</small>
+                    <div class="metric-card">
+                        <div class="metric-label">Your Share</div>
+                        <div class="metric-val" id="user-share">$0.00</div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="startupBudget">Startup Budget (USD)</label>
-                        <input type="number" id="startupBudget" min="0" step="100" value="3000" required>
-                        <small style="color: var(--text-dim);">How much capital can you invest upfront?</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="riskPosture">Risk Tolerance</label>
-                        <select id="riskPosture" required>
-                            <option value="conservative">Conservative - Minimize risk, steady growth</option>
-                            <option value="balanced" selected>Balanced - Moderate risk, good returns</option>
-                            <option value="bold">Bold - Higher risk, maximum potential</option>
-                        </select>
-                    </div>
-
-                    <button type="submit" class="btn" style="width: 100%;">✨ Find My Perfect Business</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- Explore Ideas Tab -->
-        <div id="explore" class="tab-content">
-            <div class="filter-bar">
-                <div class="form-group">
-                    <label for="filterIndustry">Filter by Industry</label>
-                    <select id="filterIndustry" onchange="filterIdeas()">
-                        <option value="">All Industries</option>
-                        <option value="Education">Education</option>
-                        <option value="Professional Services">Professional Services</option>
-                        <option value="Ecommerce">Ecommerce</option>
-                        <option value="Finance">Finance</option>
-                        <option value="Healthcare">Healthcare</option>
-                        <option value="Technology">Technology</option>
-                        <option value="Logistics">Logistics</option>
-                        <option value="Marketing">Marketing</option>
-                        <option value="Creative">Creative</option>
-                        <option value="Real Estate">Real Estate</option>
-                        <option value="Services">Services</option>
-                        <option value="Consulting">Consulting</option>
-                    </select>
                 </div>
 
-                <div class="form-group">
-                    <label for="filterBudget">Max Startup Cost</label>
-                    <input type="number" id="filterBudget" placeholder="$10,000" onchange="filterIdeas()">
-                </div>
-
-                <div class="form-group">
-                    <label for="filterHours">Max Weekly Hours</label>
-                    <input type="number" id="filterHours" placeholder="40" onchange="filterIdeas()">
-                </div>
-
-                <div class="form-group">
-                    <label for="searchIdeas">Search</label>
-                    <input type="text" id="searchIdeas" placeholder="Search ideas..." oninput="filterIdeas()">
-                </div>
-            </div>
-
-            <div id="ideasGrid" class="idea-grid">
-                <!-- Ideas populated by JavaScript -->
-            </div>
-        </div>
-
-        <!-- Optimize Tab -->
-        <div id="optimize" class="tab-content">
-            <div class="card">
-                <h2 style="margin-bottom: 1rem;">⚡ Quantum Optimization Results</h2>
-                <p style="color: var(--text-dim); margin-bottom: 2rem;">
-                    Using quantum-inspired probability amplitudes to rank business concepts by projected 90-day profit and success probability.
-                </p>
-
-                <div id="optimizationResults">
-                    <p style="text-align: center; padding: 3rem; color: var(--text-dim);">
-                        Complete the onboarding form to see your personalized recommendations.
-                    </p>
+                <br><br>
+                <h3>Active Businesses</h3>
+                <div id="active-business-list" style="margin-top: 1rem;">
+                    Loading...
                 </div>
             </div>
         </div>
 
-        <!-- Business Plan Tab -->
-        <div id="plan" class="tab-content">
-            <div class="card">
-                <h2 style="margin-bottom: 1rem;">📊 Your Business Plan</h2>
-
-                <div id="businessPlanContent">
-                    <p style="text-align: center; padding: 3rem; color: var(--text-dim);">
-                        Complete onboarding to generate your personalized business plan.
-                    </p>
-                </div>
-
-                <div class="export-buttons" style="display: none;" id="exportButtons">
-                    <button class="btn" onclick="exportPlan('markdown')">📄 Export Markdown</button>
-                    <button class="btn" onclick="exportPlan('json')">📋 Export JSON</button>
-                    <button class="btn-secondary btn" onclick="printPlan()">🖨️ Print Plan</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Financials Tab -->
-        <div id="financials" class="tab-content">
-            <div class="card">
-                <h2 style="margin-bottom: 1rem;">💰 Financial Projections</h2>
-
-                <div id="financialsContent">
-                    <p style="text-align: center; padding: 3rem; color: var(--text-dim);">
-                        Select a business from the optimization results to see detailed financial projections.
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Live Dashboard Tab -->
-        <div id="dashboard" class="tab-content">
-            <iframe src="bbb_realtime_dashboard.html" style="width: 100%; height: 85vh; border: none; border-radius: 12px;"></iframe>
-        </div>
-
-        <!-- Library Tab -->
-        <div id="library" class="tab-content">
-            <iframe src="bbb_unified_library_dashboard.html" style="width: 100%; height: 85vh; border: none; border-radius: 12px;"></iframe>
-        </div>
-
-        <!-- Zero-Touch Tab -->
-        <div id="zero-touch" class="tab-content">
-            <iframe src="zero_touch_businesses_dashboard.html" style="width: 100%; height: 85vh; border: none; border-radius: 12px;"></iframe>
-        </div>
-
-        <!-- Quantum Analysis Tab -->
-        <div id="quantum-analysis" class="tab-content">
-            <iframe src="quantum_analysis_dashboard.html" style="width: 100%; height: 85vh; border: none; border-radius: 12px;"></iframe>
-        </div>
-
-        <!-- Recovery Tab -->
-        <div id="recovery" class="tab-content">
-            <iframe src="disaster_recovery_dashboard.html" style="width: 100%; height: 85vh; border: none; border-radius: 12px;"></iframe>
-        </div>
-
-        <!-- Status Tab -->
-        <div id="status" class="tab-content">
-            <iframe src="website_status_dashboard.html" style="width: 100%; height: 85vh; border: none; border-radius: 12px;"></iframe>
-        </div>
     </div>
 
     <script>
-        // Business ideas data (loaded from Python backend or embedded)
-        const businessIdeas = [
-            // This would be populated from business_data.py in production
-            // For demo, we'll add a subset here
-        ];
+        // API Base URL
+        const API = 'http://localhost:8000/api';
 
-        let currentProfile = null;
-        let selectedIdea = null;
-        let optimizationResults = [];
+        // State
+        let currentStep = 1;
 
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.nav-tab').forEach(btn => {
-                btn.classList.remove('active');
-            });
+        // Initialization
+        async function init() {
+            // Check if already onboarded/licensed
+            try {
+                const res = await fetch(`${API}/dashboard`);
+                const data = await res.json();
+                if (data.license && data.license.active) {
+                    showDashboard(data);
+                }
+            } catch (e) {
+                console.log("Not onboarded yet or server down");
+            }
+        }
+        init();
 
-            document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
+        // Navigation
+        function nextStep(step) {
+            // Update UI
+            document.querySelector('.step-indicator.active').classList.add('completed');
+            document.querySelector('.step-indicator.active').classList.remove('active');
+            document.getElementById(`ind-${step}`).classList.add('active');
+
+            document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(`step-${step}`).classList.add('active');
+
+            currentStep = step;
         }
 
-        // Handle onboarding form submission
-        document.getElementById('onboardingForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            currentProfile = {
+        // Step 1: Profile
+        async function submitProfile() {
+            const profile = {
                 name: document.getElementById('founderName').value,
                 location_state: document.getElementById('locationState').value,
                 preferred_industry: document.getElementById('preferredIndustry').value,
                 weekly_hours: parseInt(document.getElementById('weeklyHours').value),
                 startup_budget: parseFloat(document.getElementById('startupBudget').value),
-                risk_posture: document.getElementById('riskPosture').value
+                risk_posture: "balanced" // simplified for UI
             };
 
-            // In production, call Python backend API
-            // For now, simulate optimization
-            runOptimization();
-
-            // Switch to optimize tab
-            switchTab('optimize');
-            document.querySelectorAll('.nav-tab')[2].classList.add('active');
-        });
-
-        function runOptimization() {
-            // Simulate quantum optimization
-            // In production, this would call the QuantumOptimizer via API
-
-            const results = businessIdeas
-                .filter(idea => {
-                    return idea.startup_cost <= currentProfile.startup_budget * 1.2 &&
-                           idea.time_commitment_hours_per_week <= currentProfile.weekly_hours * 1.2;
-                })
-                .map(idea => {
-                    const profit = calculateProfit(idea);
-                    const probability = Math.random() * 0.5 + 0.4; // Demo simulation
-
-                    return {
-                        idea,
-                        three_month_profit: profit,
-                        monthly_average: profit / 3,
-                        success_probability: probability,
-                        meets_floor: (profit / 3) >= 4500,
-                        meets_target: profit >= 20000
-                    };
-                })
-                .sort((a, b) => b.success_probability - a.success_probability);
-
-            optimizationResults = results.slice(0, 5);
-            displayOptimizationResults();
-        }
-
-        function calculateProfit(idea) {
-            // Simplified profit calculation
-            let totalProfit = 0;
-            const monthlyProfit = idea.expected_monthly_revenue - idea.expected_monthly_expenses;
-
-            for (let month = 1; month <= 3; month++) {
-                const rampRatio = month <= idea.ramp_up_months
-                    ? month / idea.ramp_up_months
-                    : 1.0;
-                totalProfit += monthlyProfit * rampRatio;
+            if (!profile.name || !profile.location_state) {
+                alert("Please complete all required fields.");
+                return;
             }
 
-            return Math.max(0, totalProfit - idea.startup_cost);
-        }
-
-        function displayOptimizationResults() {
-            const container = document.getElementById('optimizationResults');
-
-            let html = '<table class="results-table"><thead><tr>';
-            html += '<th>Business</th><th>Industry</th><th>3-Month Profit</th>';
-            html += '<th>Monthly Avg</th><th>Success Probability</th><th>Status</th>';
-            html += '</tr></thead><tbody>';
-
-            optimizationResults.forEach(result => {
-                const statusBadge = result.meets_target
-                    ? '<span class="badge badge-success">✓ Meets Target</span>'
-                    : result.meets_floor
-                    ? '<span class="badge badge-warning">Meets Floor</span>'
-                    : '<span class="badge badge-error">Below Floor</span>';
-
-                html += `<tr onclick="selectBusinessForPlan('${result.idea.name}')">
-                    <td><strong>${result.idea.name}</strong></td>
-                    <td><span class="idea-industry">${result.idea.industry}</span></td>
-                    <td><strong>$${result.three_month_profit.toLocaleString()}</strong></td>
-                    <td>$${result.monthly_average.toLocaleString()}</td>
-                    <td>
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <div class="probability-bar" style="flex: 1;">
-                                <div class="probability-fill" style="width: ${result.success_probability * 100}%"></div>
-                            </div>
-                            <span>${(result.success_probability * 100).toFixed(1)}%</span>
-                        </div>
-                    </td>
-                    <td>${statusBadge}</td>
-                </tr>`;
-            });
-
-            html += '</tbody></table>';
-
-            if (optimizationResults.length === 0) {
-                html = '<div class="jiminy-alert">No businesses match your criteria. Try adjusting your budget or time commitment.</div>';
-            }
-
-            container.innerHTML = html;
-
-            if (optimizationResults.length > 0) {
-                selectBusinessForPlan(optimizationResults[0].idea.name);
+            try {
+                await fetch(`${API}/onboarding`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(profile)
+                });
+                nextStep(2);
+            } catch (e) {
+                alert("Error connecting to server.");
             }
         }
 
-        function selectBusinessForPlan(businessName) {
-            const result = optimizationResults.find(r => r.idea.name === businessName);
-            if (!result) return;
-
-            selectedIdea = result;
-            generateBusinessPlan();
-            generateFinancials();
+        // Step 2: Legal
+        function toggleStep2Btn() {
+            document.getElementById('btn-step-2').disabled = !document.getElementById('einConfirmed').checked;
         }
 
-        function generateBusinessPlan() {
-            const result = selectedIdea;
-            const idea = result.idea;
+        // Step 4: Research
+        async function startResearch() {
+            document.getElementById('btn-research').disabled = true;
+            document.getElementById('osintLog').innerHTML += "> Initializing Business Intelligence Engine...<br>";
 
-            let html = `
-                <h3 style="color: var(--primary); margin-bottom: 1rem;">${idea.name}</h3>
-                <p style="margin-bottom: 2rem;">${idea.description}</p>
+            // Start actual analysis on server
+            try {
+                const res = await fetch(`${API}/research`);
+                const data = await res.json();
 
-                <div class="onboarding-steps">
-                    <div class="step">
-                        <h4>Hello ${currentProfile.name}, based in ${currentProfile.location_state}</h4>
-                        <p>Let's formalize your business idea and hit that $20,000 quarterly target.</p>
-                    </div>
-
-                    <div class="step">
-                        <h4>Your Recommended Concept</h4>
-                        <p><strong>${idea.name}</strong> (${idea.industry})</p>
-                        <p>Expected monthly profit: <strong>$${result.monthly_average.toLocaleString()}</strong></p>
-                        <p>Success probability: <strong>${(result.success_probability * 100).toFixed(1)}%</strong></p>
-                    </div>
-
-                    <div class="step">
-                        <h4>Confirm Your Business Structure</h4>
-                        <p>Decide on LLC, sole proprietorship, or corporation with a local advisor or attorney.</p>
-                    </div>
-
-                    <div class="step">
-                        <h4>Apply for Your EIN</h4>
-                        <p>Get your Employer Identification Number from the official IRS portal:</p>
-                        <a href="https://www.irs.gov/businesses/small-businesses-self-employed/apply-for-an-employer-identification-number-ein-online"
-                           target="_blank"
-                           style="color: var(--primary);">
-                            IRS EIN Application Portal →
-                        </a>
-                    </div>
-
-                    <div class="step">
-                        <h4>Register State & Local Permits</h4>
-                        <p>Check requirements for ${currentProfile.location_state} and your local jurisdiction.</p>
-                    </div>
-
-                    <div class="step">
-                        <h4>Set Up Business Banking</h4>
-                        <p>Open a dedicated business bank account and set up bookkeeping (QuickBooks, Wave, etc.).</p>
-                    </div>
-
-                    <div class="step">
-                        <h4>Create Your 90-Day Execution Plan</h4>
-                        <p>Break down your launch into weekly milestones with specific revenue and customer acquisition goals.</p>
-                    </div>
-                </div>
-
-                <div class="jiminy-alert" style="margin-top: 2rem;">
-                    ${result.meets_target
-                        ? 'Your business meets the $20K quarterly target! Focus on execution.'
-                        : 'This business is below the $20K target. Consider increasing your budget, time commitment, or exploring premium service tiers.'}
-                </div>
-            `;
-
-            document.getElementById('businessPlanContent').innerHTML = html;
-            document.getElementById('exportButtons').style.display = 'flex';
-        }
-
-        function generateFinancials() {
-            const result = selectedIdea;
-            const idea = result.idea;
-
-            let html = `
-                <h3 style="color: var(--primary); margin-bottom: 1rem;">${idea.name} - Financial Model</h3>
-
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-                    <div class="card" style="text-align: center;">
-                        <div style="font-size: 0.9rem; color: var(--text-dim);">Startup Cost</div>
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--primary);">$${idea.startup_cost.toLocaleString()}</div>
-                    </div>
-                    <div class="card" style="text-align: center;">
-                        <div style="font-size: 0.9rem; color: var(--text-dim);">Monthly Revenue</div>
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--success);">$${idea.expected_monthly_revenue.toLocaleString()}</div>
-                    </div>
-                    <div class="card" style="text-align: center;">
-                        <div style="font-size: 0.9rem; color: var(--text-dim);">Monthly Expenses</div>
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--error);">$${idea.expected_monthly_expenses.toLocaleString()}</div>
-                    </div>
-                    <div class="card" style="text-align: center;">
-                        <div style="font-size: 0.9rem; color: var(--text-dim);">Net Profit (Month)</div>
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--primary);">$${(idea.expected_monthly_revenue - idea.expected_monthly_expenses).toLocaleString()}</div>
-                    </div>
-                </div>
-
-                <h4 style="margin: 2rem 0 1rem;">90-Day Cash Flow Projection</h4>
-                <table class="results-table">
-                    <thead>
-                        <tr>
-                            <th>Month</th>
-                            <th>Revenue</th>
-                            <th>Expenses</th>
-                            <th>Net Profit</th>
-                            <th>Cumulative</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            let cumulative = -idea.startup_cost;
-            for (let month = 1; month <= 3; month++) {
-                const rampRatio = month <= idea.ramp_up_months ? month / idea.ramp_up_months : 1.0;
-                const revenue = idea.expected_monthly_revenue * rampRatio;
-                const expenses = idea.expected_monthly_expenses * rampRatio;
-                const netProfit = revenue - expenses;
-                cumulative += netProfit;
-
-                html += `<tr>
-                    <td>Month ${month}</td>
-                    <td>$${revenue.toLocaleString()}</td>
-                    <td>$${expenses.toLocaleString()}</td>
-                    <td style="color: ${netProfit > 0 ? 'var(--success)' : 'var(--error)'};">$${netProfit.toLocaleString()}</td>
-                    <td style="font-weight: 700; color: ${cumulative > 0 ? 'var(--success)' : 'var(--error)'};">$${cumulative.toLocaleString()}</td>
-                </tr>`;
-            }
-
-            html += `
-                    </tbody>
-                </table>
-
-                <h4 style="margin: 2rem 0 1rem;">Key Metrics</h4>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                    <div>
-                        <strong>Break-even Month:</strong>
-                        <span>${calculateBreakEven(idea)}</span>
-                    </div>
-                    <div>
-                        <strong>Time Commitment:</strong>
-                        <span>${idea.time_commitment_hours_per_week} hrs/week</span>
-                    </div>
-                    <div>
-                        <strong>Ramp-up Period:</strong>
-                        <span>${idea.ramp_up_months} months</span>
-                    </div>
-                    <div>
-                        <strong>ROI (90 days):</strong>
-                        <span style="color: ${result.three_month_profit > 0 ? 'var(--success)' : 'var(--error)'};">
-                            ${((result.three_month_profit / idea.startup_cost) * 100).toFixed(1)}%
-                        </span>
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('financialsContent').innerHTML = html;
-        }
-
-        function calculateBreakEven(idea) {
-            let cumulative = -idea.startup_cost;
-            const monthlyProfit = idea.expected_monthly_revenue - idea.expected_monthly_expenses;
-
-            for (let month = 1; month <= 12; month++) {
-                const rampRatio = month <= idea.ramp_up_months ? month / idea.ramp_up_months : 1.0;
-                cumulative += monthlyProfit * rampRatio;
-                if (cumulative >= 0) {
-                    return `Month ${month}`;
+                if (data.error) {
+                    alert(data.error);
+                    document.getElementById('btn-research').disabled = false;
+                    return;
                 }
+
+                // Stream the real analysis logs
+                const logs = data.logs || [];
+                const logDiv = document.getElementById('osintLog');
+                const progress = document.getElementById('researchProgress');
+
+                let i = 0;
+                // Faster streaming for real logs as there might be many
+                const interval = setInterval(() => {
+                    if (i >= logs.length) {
+                        clearInterval(interval);
+                        progress.style.width = '100%';
+                        setTimeout(() => {
+                            // Pass recommendations directly if available, else fetch
+                            if (data.recommendations) {
+                                renderRecommendations(data.recommendations);
+                            } else {
+                                loadRecommendations();
+                            }
+                            nextStep(5);
+                        }, 1000);
+                        return;
+                    }
+                    logDiv.innerHTML += `> ${logs[i]}<br>`;
+                    logDiv.scrollTop = logDiv.scrollHeight;
+                    progress.style.width = `${((i+1)/logs.length)*90}%`;
+                    i++;
+                }, 100); // 100ms per log line for speed
+            } catch (e) {
+                console.error(e);
+                alert("Error connecting to analysis engine.");
+                document.getElementById('btn-research').disabled = false;
             }
-            return '12+ months';
         }
 
-        function filterIdeas() {
-            // Filter and display ideas based on criteria
-            const industry = document.getElementById('filterIndustry').value;
-            const budget = parseFloat(document.getElementById('filterBudget').value) || Infinity;
-            const hours = parseFloat(document.getElementById('filterHours').value) || Infinity;
-            const search = document.getElementById('searchIdeas').value.toLowerCase();
-
-            const filtered = businessIdeas.filter(idea => {
-                const matchIndustry = !industry || idea.industry.includes(industry);
-                const matchBudget = idea.startup_cost <= budget;
-                const matchHours = idea.time_commitment_hours_per_week <= hours;
-                const matchSearch = !search ||
-                    idea.name.toLowerCase().includes(search) ||
-                    idea.description.toLowerCase().includes(search);
-
-                return matchIndustry && matchBudget && matchHours && matchSearch;
-            });
-
-            displayIdeas(filtered);
+        // Step 5: Recommendations
+        async function loadRecommendations() {
+            const res = await fetch(`${API}/recommendations`);
+            const ideas = await res.json();
+            renderRecommendations(ideas);
         }
 
-        function displayIdeas(ideas) {
-            const container = document.getElementById('ideasGrid');
-
+        function renderRecommendations(ideas) {
+            const container = document.getElementById('recommendations-list');
             container.innerHTML = ideas.map(idea => `
-                <div class="idea-card" onclick="selectIdea('${idea.name}')">
-                    <div class="idea-name">${idea.name}</div>
-                    <span class="idea-industry">${idea.industry}</span>
-                    <p style="color: var(--text-dim); margin: 1rem 0; font-size: 0.9rem;">
-                        ${idea.description}
-                    </p>
-                    <div class="idea-stats">
-                        <div class="stat">
-                            <strong>Startup:</strong> $${idea.startup_cost.toLocaleString()}
-                        </div>
-                        <div class="stat">
-                            <strong>Monthly:</strong> $${(idea.expected_monthly_revenue - idea.expected_monthly_expenses).toLocaleString()}
-                        </div>
-                        <div class="stat">
-                            <strong>Time:</strong> ${idea.time_commitment_hours_per_week}h/week
-                        </div>
-                        <div class="stat">
-                            <strong>Ramp:</strong> ${idea.ramp_up_months} months
-                        </div>
+                <div class="business-option" onclick="selectBusiness(this, '${idea.name}')">
+                    <h3 style="color: var(--primary)">${idea.name}</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-dim);">${idea.industry}</p>
+                    <p style="margin: 0.5rem 0;">${idea.description}</p>
+                    <div style="display: flex; gap: 1rem; font-size: 0.85rem; color: var(--text-dim);">
+                        <span>💰 Rev: $${idea.expected_monthly_revenue}/mo</span>
+                        <span>🚀 Cost: $${idea.startup_cost}</span>
+                        <span>⏱ ${idea.time_commitment_hours_per_week}h/week</span>
                     </div>
                 </div>
             `).join('');
         }
 
-        function selectIdea(ideaName) {
-            console.log('Selected idea:', ideaName);
-            // Implementation for selecting individual ideas
+        function selectBusiness(el, name) {
+            document.querySelectorAll('.business-option').forEach(d => d.classList.remove('selected'));
+            el.classList.add('selected');
+            document.getElementById('selectedBusiness').value = name;
+            document.getElementById('btn-select').disabled = false;
         }
 
-        function exportPlan(format) {
-            if (format === 'markdown') {
-                // Generate Markdown
-                const markdown = generateMarkdownPlan();
-                downloadFile('business-plan.md', markdown, 'text/markdown');
-            } else if (format === 'json') {
-                // Generate JSON
-                const json = JSON.stringify({
-                    profile: currentProfile,
-                    selected_business: selectedIdea,
-                    recommendations: optimizationResults
-                }, null, 2);
-                downloadFile('business-plan.json', json, 'application/json');
+        // Step 6: Licensing
+        async function selectTier(tier) {
+            const businessName = document.getElementById('selectedBusiness').value;
+
+            // First save business selection
+            await fetch(`${API}/select-business`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ business_name: businessName })
+            });
+
+            if (tier === 'partner') {
+                if (!confirm("Confirm Partner Tier?\n\n- 50% Revenue Share\n- NO switching later allowed\n- Instant Setup")) return;
+            }
+
+            try {
+                const res = await fetch(`${API}/license`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ tier: tier })
+                });
+
+                if (!res.ok) throw await res.json();
+
+                // Success - reload to show dashboard
+                window.location.reload();
+            } catch (e) {
+                alert("Error: " + (e.detail || "Setup failed"));
             }
         }
 
-        function generateMarkdownPlan() {
-            const idea = selectedIdea.idea;
-            return `# Business Plan: ${idea.name}
-
-## Founder Profile
-- **Name:** ${currentProfile.name}
-- **Location:** ${currentProfile.location_state}
-- **Industry Preference:** ${currentProfile.preferred_industry}
-- **Budget:** $${currentProfile.startup_budget.toLocaleString()}
-- **Time Commitment:** ${currentProfile.weekly_hours} hours/week
-
-## Business Concept
-${idea.description}
-
-**Industry:** ${idea.industry}
-**Startup Cost:** $${idea.startup_cost.toLocaleString()}
-**Expected Monthly Revenue:** $${idea.expected_monthly_revenue.toLocaleString()}
-**Expected Monthly Expenses:** $${idea.expected_monthly_expenses.toLocaleString()}
-**Net Monthly Profit:** $${(idea.expected_monthly_revenue - idea.expected_monthly_expenses).toLocaleString()}
-
-## 90-Day Financial Projection
-- **3-Month Profit:** $${selectedIdea.three_month_profit.toLocaleString()}
-- **Monthly Average:** $${selectedIdea.monthly_average.toLocaleString()}
-- **Success Probability:** ${(selectedIdea.success_probability * 100).toFixed(1)}%
-
-## Action Steps
-1. Confirm business structure (LLC, sole proprietorship, etc.)
-2. Apply for EIN at [IRS Portal](https://www.irs.gov/businesses/small-businesses-self-employed/apply-for-an-employer-identification-number-ein-online)
-3. Register for state and local permits
-4. Set up business banking and bookkeeping
-5. Create 90-day execution plan with weekly milestones
-
----
-Generated by Business Builder - ${new Date().toLocaleDateString()}
-`;
-        }
-
-        function downloadFile(filename, content, mimeType) {
-            const blob = new Blob([content], { type: mimeType });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        function printPlan() {
-            window.print();
-        }
-
-        // Initialize with sample ideas for demo
-        // In production, load from API
-        businessIdeas.push(
-            {
-                name: "AI Chatbot Integration Service",
-                industry: "Technology",
-                startup_cost: 800,
-                expected_monthly_revenue: 8200,
-                expected_monthly_expenses: 2200,
-                time_commitment_hours_per_week: 18,
-                ramp_up_months: 1,
-                description: "Deploy and train ChatGPT-powered customer service bots for small businesses."
-            },
-            {
-                name: "SEO Content Agency for Local Businesses",
-                industry: "Marketing",
-                startup_cost: 600,
-                expected_monthly_revenue: 7800,
-                expected_monthly_expenses: 2100,
-                time_commitment_hours_per_week: 20,
-                ramp_up_months: 1,
-                description: "Blog writing, local SEO, and Google My Business optimization."
+        async function applyBypass() {
+            const code = document.getElementById('adminCode').value;
+            try {
+                const res = await fetch(`${API}/admin-bypass`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ code: code })
+                });
+                if (res.ok) {
+                    alert("Admin Bypass Successful! Unlocked Owner Tier.");
+                    window.location.reload();
+                } else {
+                    alert("Invalid Code");
+                }
+            } catch (e) {
+                alert("Error applying code");
             }
-        );
+        }
 
-        // Initialize ideas grid
-        displayIdeas(businessIdeas);
+        // Dashboard
+        function showDashboard(data) {
+            document.getElementById('wizard-container').style.display = 'none';
+            document.getElementById('dashboard-container').style.display = 'block';
+
+            // Populate dashboard
+            const lic = data.license;
+            const badge = document.getElementById('license-badge');
+
+            if (lic.tier === 'partner') {
+                badge.innerText = `Partner Tier (${lic.revenue_share_percentage * 100}% Rev Share)`;
+                badge.style.borderColor = 'var(--secondary)';
+                badge.style.color = 'var(--secondary)';
+            } else {
+                badge.innerText = "Owner Tier (100% Equity)";
+            }
+
+            document.getElementById('status-val').innerText = data.status;
+            document.getElementById('agents-val').innerText = data.agents_active;
+            document.getElementById('revenue-today').innerText = `$${data.revenue_today}`;
+            document.getElementById('user-share').innerText = `$${data.user_share}`;
+
+            document.getElementById('active-business-list').innerHTML = `
+                <div class="card" style="border: 1px solid var(--primary); background: rgba(0,255,136,0.05);">
+                    <h3>${data.business_name}</h3>
+                    <p style="color: var(--success);">● Systems Operational</p>
+                </div>
+            `;
+        }
+
     </script>
 </body>
 </html>
