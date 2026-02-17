@@ -403,31 +403,22 @@ class StandardDomainExpert(DomainExpert):
 
 
 class ChemistryExpert(StandardDomainExpert):
-    """Expert in Chemistry domain."""
     def __init__(self, expert_id: str, vector_store: VectorStore):
         super().__init__(expert_id, ExpertDomain.CHEMISTRY, vector_store)
 
-
 class BiologyExpert(StandardDomainExpert):
-    """Expert in Biology domain."""
     def __init__(self, expert_id: str, vector_store: VectorStore):
         super().__init__(expert_id, ExpertDomain.BIOLOGY, vector_store)
 
-
 class PhysicsExpert(StandardDomainExpert):
-    """Expert in Physics domain."""
     def __init__(self, expert_id: str, vector_store: VectorStore):
         super().__init__(expert_id, ExpertDomain.PHYSICS, vector_store)
 
-
 class MaterialsScienceExpert(StandardDomainExpert):
-    """Expert in Materials Science domain."""
     def __init__(self, expert_id: str, vector_store: VectorStore):
         super().__init__(expert_id, ExpertDomain.MATERIALS_SCIENCE, vector_store)
 
-
 class LegalExpert(StandardDomainExpert):
-    """Expert in Legal domain."""
     def __init__(self, expert_id: str, vector_store: VectorStore):
         super().__init__(expert_id, ExpertDomain.LEGAL, vector_store)
 
@@ -652,9 +643,29 @@ class MultiDomainExpertSystem:
             # Auto-select best expert(s)
             return await self._auto_select_expert(query)
 
+    def identify_best_domain(self, query: str) -> Optional[ExpertDomain]:
+        """Identify the most relevant domain for a query efficiently."""
+        # Single search across all domains
+        results = self.vector_store.search(query, top_k=1, domain=None)
+        if results:
+            return results[0][0].domain
+        return None
+
     async def _auto_select_expert(self, query: ExpertQuery) -> ExpertResponse:
         """Automatically select best expert for query."""
-        # Query all experts and select highest confidence
+
+        # Optimization: Try to identify domain first
+        best_domain = self.identify_best_domain(query.query)
+
+        if best_domain:
+            expert = self.experts.get(best_domain)
+            if expert:
+                # If we found a specific domain match via vector search, query just that expert.
+                # This reduces N searches to 1 global search + 1 specific search.
+                return await expert.answer_query(query)
+
+        # Fallback to querying all experts if no clear domain match
+        # (or if identified domain expert is missing, which shouldn't happen)
         expert_tasks = [expert.answer_query(query) for expert in self.experts.values()]
         responses = await asyncio.gather(*expert_tasks)
 
