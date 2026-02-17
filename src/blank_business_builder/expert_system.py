@@ -347,7 +347,15 @@ class DomainExpert(ABC):
 
     async def retrieve_context(self, query: str, max_results: int = 5) -> List[Tuple[KnowledgeDocument, float]]:
         """Retrieve relevant context from vector store."""
-        return self.vector_store.search(query, top_k=max_results, domain=self.domain)
+        # Use run_in_executor to avoid blocking the event loop with synchronous vector search
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(
+            None,
+            self.vector_store.search,
+            query,
+            max_results,
+            self.domain
+        )
 
 
 class StandardDomainExpert(DomainExpert):
@@ -394,6 +402,25 @@ class StandardDomainExpert(DomainExpert):
         return response
 
 
+class ChemistryExpert(StandardDomainExpert):
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.CHEMISTRY, vector_store)
+
+class BiologyExpert(StandardDomainExpert):
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.BIOLOGY, vector_store)
+
+class PhysicsExpert(StandardDomainExpert):
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.PHYSICS, vector_store)
+
+class MaterialsScienceExpert(StandardDomainExpert):
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.MATERIALS_SCIENCE, vector_store)
+
+class LegalExpert(StandardDomainExpert):
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.LEGAL, vector_store)
 
 
 class MultiExpertEnsemble:
@@ -616,9 +643,29 @@ class MultiDomainExpertSystem:
             # Auto-select best expert(s)
             return await self._auto_select_expert(query)
 
+    def identify_best_domain(self, query: str) -> Optional[ExpertDomain]:
+        """Identify the most relevant domain for a query efficiently."""
+        # Single search across all domains
+        results = self.vector_store.search(query, top_k=1, domain=None)
+        if results:
+            return results[0][0].domain
+        return None
+
     async def _auto_select_expert(self, query: ExpertQuery) -> ExpertResponse:
         """Automatically select best expert for query."""
-        # Query all experts and select highest confidence
+
+        # Optimization: Try to identify domain first
+        best_domain = self.identify_best_domain(query.query)
+
+        if best_domain:
+            expert = self.experts.get(best_domain)
+            if expert:
+                # If we found a specific domain match via vector search, query just that expert.
+                # This reduces N searches to 1 global search + 1 specific search.
+                return await expert.answer_query(query)
+
+        # Fallback to querying all experts if no clear domain match
+        # (or if identified domain expert is missing, which shouldn't happen)
         expert_tasks = [expert.answer_query(query) for expert in self.experts.values()]
         responses = await asyncio.gather(*expert_tasks)
 
