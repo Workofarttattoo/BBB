@@ -43,16 +43,6 @@ except ImportError:
     FAISS_AVAILABLE = False
     logger.warning("FAISS not available - install with: pip install faiss-cpu")
 
-try:
-    import torch
-    import torch.nn as nn
-    from torch.utils.data import Dataset, DataLoader
-    TORCH_AVAILABLE = True
-except ImportError:
-    TORCH_AVAILABLE = False
-    logger.warning("PyTorch not available - fine-tuning disabled")
-
-
 class ExpertDomain(Enum):
     """Supported expert domains."""
     # Science domains
