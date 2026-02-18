@@ -640,11 +640,26 @@ class MultiDomainExpertSystem:
             return results[0][0].domain
         return None
 
+    async def identify_best_domain_async(self, query: str) -> Optional[ExpertDomain]:
+        """Identify the most relevant domain for a query efficiently (Non-blocking)."""
+        # Use run_in_executor to avoid blocking the event loop with synchronous vector search
+        loop = asyncio.get_running_loop()
+        results = await loop.run_in_executor(
+            None,
+            self.vector_store.search,
+            query,
+            1,  # top_k
+            None,  # domain
+        )
+        if results:
+            return results[0][0].domain
+        return None
+
     async def _auto_select_expert(self, query: ExpertQuery) -> ExpertResponse:
         """Automatically select best expert for query."""
 
         # Optimization: Try to identify domain first
-        best_domain = self.identify_best_domain(query.query)
+        best_domain = await self.identify_best_domain_async(query.query)
 
         if best_domain:
             expert = self.experts.get(best_domain)
