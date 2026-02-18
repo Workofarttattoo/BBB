@@ -320,8 +320,10 @@ class AIContentGenerator:
 
         # Try to generate content with ECH0 first
         try:
-            return await self.ech0_service.generate_content(request.topic, request.content_type.value)
-        except Exception:
+            # Use the local Ollama/ECH0 core for reasoning
+            return await self.ech0_service.generate(prompt)
+        except Exception as e:
+            logger.warning(f"ECH0 generation failed: {e}. Falling back to default model.")
             # Fallback to OpenAI if ECH0 fails
             if request.ai_model in [AIModel.GPT4, AIModel.GPT4_TURBO]:
                 return await self._generate_with_openai(prompt, request)

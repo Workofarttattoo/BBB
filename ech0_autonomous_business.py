@@ -94,8 +94,13 @@ class ECH0AutonomousCore:
         self.llm_engine = None
         if LLM_AVAILABLE:
             try:
-                self.llm_engine = ECH0LLMEngine()
-                print("✓ LLM Engine initialized")
+                llm_config = self.config.get("llm", {})
+                self.llm_engine = ECH0LLMEngine(
+                    provider=llm_config.get("provider", "ollama"),
+                    endpoint=llm_config.get("endpoint", "http://localhost:11434/api/generate"),
+                    api_key=llm_config.get("api_key", "")
+                )
+                print(f"✓ LLM Engine initialized (Provider: {self.llm_engine.provider})")
             except Exception as e:
                 print(f"[ERROR] LLM Engine init failed: {e}")
 
@@ -133,11 +138,12 @@ class ECH0AutonomousCore:
 
         return config
 
+    def _create_default_config(self) -> Dict:
         # Default configuration
         default_config = {
             "llm": {
-                "provider": "huggingface",  # huggingface, together, custom
-                "endpoint": "https://workofarttattoo-echo-prime-agi.hf.space/api/predict",
+                "provider": "ollama",
+                "endpoint": "http://localhost:11434/api/generate",
                 "api_key": ""
             },
             "owner": {

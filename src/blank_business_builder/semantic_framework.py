@@ -112,9 +112,10 @@ class SemanticScheduler:
 scheduler = SemanticScheduler()
 every = scheduler.every
 
-# AI and DB wrappers will be integrated with existing BBB modules
+# Semantic AI framework integration
 class SemanticAI:
     def __init__(self):
+        # Local import to break circular dependency
         from .ech0_service import ECH0Service
         self.engine = ECH0Service()
 
@@ -122,7 +123,21 @@ class SemanticAI:
         print(f"[AI] Generating with prompt: {prompt}")
         return await self.engine.generate(prompt, schema=schema)
 
-ai = SemanticAI()
+# Delayed initialization to avoid circular imports
+_ai_instance = None
+
+class LazyAI:
+    @property
+    def _instance(self):
+        global _ai_instance
+        if _ai_instance is None:
+            _ai_instance = SemanticAI()
+        return _ai_instance
+
+    async def generate(self, prompt: str, schema: Optional[SemanticProxy] = None):
+        return await self._instance.generate(prompt, schema=schema)
+
+ai = LazyAI()
 
 class SemanticDB:
     def list(self, type_proxy: SemanticProxy):

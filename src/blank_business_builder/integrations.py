@@ -109,6 +109,8 @@ if Mail is None:  # pragma: no cover
             self.subject = subject
             self.html_content = html_content
 
+from .ech0_service import ECH0Service
+from .config import settings
 
 
 class OpenAIService:
@@ -505,9 +507,30 @@ class TwilioService:
     def __init__(self):
         self.account_sid = os.getenv("TWILIO_ACCOUNT_SID", "")
         self.auth_token = os.getenv("TWILIO_AUTH_TOKEN", "")
+        self.api_key_sid = os.getenv("TWILIO_API_KEY_SID", "")
+        self.api_key_secret = os.getenv("TWILIO_API_KEY_SECRET", "")
         self.from_number = os.getenv("TWILIO_FROM_NUMBER", "")
-        if TWILIO_AVAILABLE and self.account_sid and self.auth_token:
-            self.client = TwilioClient(self.account_sid, self.auth_token)
+        
+        # DEBUG
+        # print(f"[DEBUG] Twilio Init: AV={TWILIO_AVAILABLE}, SID={bool(self.account_sid)}, KEY={bool(self.api_key_sid)}")
+        
+        if TWILIO_AVAILABLE:
+            if self.api_key_sid and self.api_key_secret and self.account_sid:
+                # Modern API Key Authentication
+                try:
+                    self.client = TwilioClient(self.api_key_sid, self.api_key_secret, self.account_sid)
+                except Exception as e:
+                    print(f"[DEBUG] Twilio Client Init Error (API): {e}")
+                    self.client = None
+            elif self.account_sid and self.auth_token:
+                # Legacy Auth Token Authentication
+                try:
+                    self.client = TwilioClient(self.account_sid, self.auth_token)
+                except Exception as e:
+                    print(f"[DEBUG] Twilio Client Init Error (Legacy): {e}")
+                    self.client = None
+            else:
+                self.client = None
         else:
             self.client = None
 
@@ -665,8 +688,10 @@ class IntegrationFactory:
     """Factory for creating integration instances."""
 
     @staticmethod
-    def get_openai_service() -> OpenAIService:
-        """Get OpenAI service instance."""
+    def get_openai_service() -> OpenAIService | ECH0Service:
+        """Get OpenAI service instance, or ECH0 if configured."""
+        if settings.LLM_PROVIDER == "ollama":
+            return ECH0Service(model=settings.OLLAMA_MODEL, base_url=settings.OLLAMA_BASE_URL)
         return OpenAIService()
 
     @staticmethod
@@ -675,8 +700,10 @@ class IntegrationFactory:
         return SendGridService()
 
     @staticmethod
-    def get_anthropic_service() -> AnthropicService:
-        """Get Anthropic service instance."""
+    def get_anthropic_service() -> AnthropicService | ECH0Service:
+        """Get Anthropic service instance, or ECH0 if configured."""
+        if settings.LLM_PROVIDER == "ollama":
+            return ECH0Service(model=settings.OLLAMA_MODEL, base_url=settings.OLLAMA_BASE_URL)
         return AnthropicService()
 
     @staticmethod

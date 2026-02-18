@@ -31,6 +31,8 @@ class Config:
     # API Keys & Integrations
     TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
     TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
+    TWILIO_API_KEY_SID = os.getenv("TWILIO_API_KEY_SID", "")
+    TWILIO_API_KEY_SECRET = os.getenv("TWILIO_API_KEY_SECRET", "")
     TWILIO_FROM_NUMBER = os.getenv("TWILIO_FROM_NUMBER", "")
 
     ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
@@ -58,6 +60,7 @@ class Config:
     ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 
     # Ollama / Echo
+    LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama")
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "echo")
 

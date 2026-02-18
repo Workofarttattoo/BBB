@@ -13,6 +13,7 @@ import urllib.error
 from typing import Dict, Optional
 from .task_queue import task_queue
 from .semantic_framework import semantic
+from .config import settings
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -23,7 +24,7 @@ class ECH0Service:
     Service for interacting with the ECH0 local brain via Ollama.
     """
 
-    def __init__(self, model: str = "echo", base_url: str = "http://localhost:11434"):
+    def __init__(self, model: str = settings.OLLAMA_MODEL, base_url: str = settings.OLLAMA_BASE_URL):
         self.model = model
         self.base_url = base_url
         self.system_prompt = (
