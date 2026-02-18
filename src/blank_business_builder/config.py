@@ -40,6 +40,8 @@ class Config:
 
     BUFFER_ACCESS_TOKEN = os.getenv("BUFFER_ACCESS_TOKEN", "")
 
+    STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
+
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 
