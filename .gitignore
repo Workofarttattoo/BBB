@@ -64,3 +64,8 @@ chroma_db/
 # Local state files
 ech0_state_*.json
 *_credentials.json
+
+# Virtual Environment
+venv/
+.venv/
+env/

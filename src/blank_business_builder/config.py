@@ -34,6 +34,10 @@ class Config:
     TWILIO_FROM_NUMBER = os.getenv("TWILIO_FROM_NUMBER", "")
 
     ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
+    
+    TWITTER_CONSUMER_KEY = os.getenv("TWITTER_CONSUMER_KEY", "")
+    TWITTER_CONSUMER_SECRET = os.getenv("TWITTER_CONSUMER_SECRET", "")
+    TWITTER_BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN", "")
 
     SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
     SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL", "noreply@betterbusinessbuilder.com")

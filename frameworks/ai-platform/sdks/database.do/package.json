@@ -1,0 +1,54 @@
+{
+  "name": "database.do",
+  "version": "1.0.0",
+  "description": "TypeScript SDK for database.do - Tenant-specific ACID-compliant database with Payload CMS integration",
+  "author": "dot-do",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "TEST_URL=https://db.dotdo.workers.dev vitest run --config vitest.e2e.config.ts",
+    "test:e2e:local": "TEST_URL=http://localhost:8788 vitest run --config vitest.e2e.config.ts",
+    "test:acid": "TEST_URL=http://localhost:8788 vitest run --config vitest.e2e.config.ts --grep 'ACID'",
+    "prepublishOnly": "pnpm build"
+  },
+  "keywords": [
+    "database",
+    "sdk",
+    "typescript",
+    "cloudflare",
+    "workers",
+    "durable-objects",
+    "payload-cms",
+    "acid",
+    "database.do"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dot-do/platform.git",
+    "directory": "ai/sdks/database.do"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

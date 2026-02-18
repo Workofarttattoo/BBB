@@ -34,8 +34,12 @@ from .features.email_service import EmailService
 from .features.payment_processor import PaymentProcessor
 from .features.social_media import SocialMedia
 from .prompt_registry import PromptRegistry
+from .semantic_framework import semantic, on, send, every
+from .ech0_service import ECH0Service
 from .hive_mind_coordinator import HiveMindCoordinator, AgentType
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -131,7 +135,7 @@ class Level6BusinessAgent:
         payment_processor: PaymentProcessor = None,
         social_media: SocialMedia = None,
         prompt_registry: PromptRegistry = None,
-        hive_mind: HiveMindCoordinator = None,
+        hive_mind: ECH0Service = None, # Changed type hint to ECH0Service
     ):
         self.agent_id = agent_id
         self.role = role
@@ -147,6 +151,12 @@ class Level6BusinessAgent:
         self.prompt_registry = prompt_registry or PromptRegistry()
         self.hive_mind = hive_mind
 
+        # Semantic Framework Integration
+        self.semantic = semantic
+        self.on = on
+        self.send = send
+        self.every = every
+        
         # Register with HiveMind
         if self.hive_mind:
             # Map role to hive AgentType where possible, else default to ANALYTICS/SUPPORT

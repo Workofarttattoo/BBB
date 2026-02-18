@@ -12,6 +12,7 @@ import urllib.request
 import urllib.error
 from typing import Dict, Optional
 from .task_queue import task_queue
+from .semantic_framework import semantic
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -57,6 +58,14 @@ class ECH0Service:
         except Exception as e:
             logger.error(f"Error invoking ECH0: {e}")
             return f"Error: {str(e)}"
+
+    async def generate(self, prompt: str, schema: Optional[Any] = None) -> str:
+        """
+        Semantic-aware generation.
+        """
+        if schema:
+            prompt = f"Using semantic schema {str(schema)}, {prompt}"
+        return await self._call_ollama(prompt)
 
     async def chat(self, message: str) -> str:
         """

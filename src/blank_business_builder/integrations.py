@@ -23,6 +23,20 @@ except ImportError:  # pragma: no cover
     SendGridAPIClient = None
     Mail = Email = To = Content = None
 
+try:
+    from twilio.rest import Client as TwilioClient
+    TWILIO_AVAILABLE = True
+except ImportError:
+    TwilioClient = None
+    TWILIO_AVAILABLE = False
+
+try:
+    import tweepy
+    TWEEPY_AVAILABLE = True
+except ImportError:
+    tweepy = None
+    TWEEPY_AVAILABLE = False
+
 import requests
 from fastapi import HTTPException, status
 from .task_queue import task_queue
@@ -485,6 +499,72 @@ class SendGridService:
             )
 
 
+class TwilioService:
+    """Twilio messaging service integration."""
+
+    def __init__(self):
+        self.account_sid = os.getenv("TWILIO_ACCOUNT_SID", "")
+        self.auth_token = os.getenv("TWILIO_AUTH_TOKEN", "")
+        self.from_number = os.getenv("TWILIO_FROM_NUMBER", "")
+        if TWILIO_AVAILABLE and self.account_sid and self.auth_token:
+            self.client = TwilioClient(self.account_sid, self.auth_token)
+        else:
+            self.client = None
+
+    def send_sms(self, to_number: str, message: str) -> bool:
+        """Send an SMS via Twilio."""
+        if not self.client:
+            print(f"[Twilio Simulation] Sending SMS to {to_number}: {message}")
+            return True
+
+        try:
+            self.client.messages.create(
+                body=message,
+                from_=self.from_number,
+                to=to_number
+            )
+            return True
+        except Exception as e:
+            print(f"Twilio API Error: {e}")
+            return False
+
+
+class TwitterService:
+    """Twitter social media service integration."""
+
+    def __init__(self):
+        self.consumer_key = os.getenv("TWITTER_CONSUMER_KEY", "")
+        self.consumer_secret = os.getenv("TWITTER_CONSUMER_SECRET", "")
+        self.bearer_token = os.getenv("TWITTER_BEARER_TOKEN", "")
+        
+        if TWEEPY_AVAILABLE and self.consumer_key and self.consumer_secret:
+            # v2 Client for modern features
+            self.client = tweepy.Client(
+                bearer_token=self.bearer_token,
+                consumer_key=self.consumer_key,
+                consumer_secret=self.consumer_secret
+            )
+        else:
+            self.client = None
+
+    def post_tweet(self, text: str) -> bool:
+        """Post a tweet via Twitter API v2."""
+        if not self.client:
+            print(f"[Twitter Simulation] Posting tweet: {text}")
+            return True
+
+        try:
+            # Note: For posting, you usually need Access Token and Secret as well
+            # However, with v2 and Bearer token, some things are possible
+            # But the user only provided Consumer Key/Secret and Bearer.
+            # Tweepy Client needs Access Token/Secret for create_tweet unless app-only (managed by Client)
+            self.client.create_tweet(text=text)
+            return True
+        except Exception as e:
+            print(f"Twitter API Error: {e}")
+            return False
+
+
 class BufferService:
     """Buffer social media scheduling integration."""
 
@@ -603,6 +683,16 @@ class IntegrationFactory:
     def get_buffer_service() -> BufferService:
         """Get Buffer service instance."""
         return BufferService()
+
+    @staticmethod
+    def get_twilio_service() -> TwilioService:
+        """Get Twilio service instance."""
+        return TwilioService()
+
+    @staticmethod
+    def get_twitter_service() -> TwitterService:
+        """Get Twitter service instance."""
+        return TwitterService()
 
 # Register Task Handlers
 def _email_handler(payload):

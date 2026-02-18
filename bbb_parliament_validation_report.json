@@ -1,15 +1,17 @@
 {
   "summary": {
     "total": 31,
-    "verified": 29,
-    "warnings": 2,
-    "failed": 0
+    "verified": 0,
+    "warnings": 30,
+    "failed": 1
   },
-  "failed_businesses": [],
+  "failed_businesses": [
+    "NFT Collection Trading"
+  ],
   "detailed_results": [
     {
       "business_name": "Zapier Automation Agency",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -85,17 +87,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6073795180722892
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 1600%/month is unrealistically high"
+        "ROI of 1600%/month is unrealistically high",
+        "Parliament score 61% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7816541164658635
     },
     {
       "business_name": "Claude AI Consulting",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -171,17 +178,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6073795180722892
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 4000%/month is unrealistically high"
+        "ROI of 4000%/month is unrealistically high",
+        "Parliament score 61% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7816541164658635
     },
     {
       "business_name": "AI Social Media Manager (Autonomous)",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -257,17 +269,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6203915662650602
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 3000%/month is unrealistically high"
+        "ROI of 3000%/month is unrealistically high",
+        "Parliament score 62% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7875095381526104
     },
     {
       "business_name": "No-Code AI SaaS Builder",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -343,17 +360,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6073795180722892
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 1500%/month is unrealistically high"
+        "ROI of 1500%/month is unrealistically high",
+        "Parliament score 61% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7816541164658635
     },
     {
       "business_name": "AI-Powered Blogging Empire",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -429,17 +451,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6203915662650602
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 1125%/month is unrealistically high"
+        "ROI of 1125%/month is unrealistically high",
+        "Parliament score 62% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7875095381526104
     },
     {
       "business_name": "Faceless YouTube Automation",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -515,17 +542,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.5958132530120482
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 1333%/month is unrealistically high"
+        "ROI of 1333%/month is unrealistically high",
+        "Parliament score 60% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.776449297188755
     },
     {
       "business_name": "AI Niche Newsletter",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -601,17 +633,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6203915662650602
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 1750%/month is unrealistically high"
+        "ROI of 1750%/month is unrealistically high",
+        "Parliament score 62% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7875095381526104
     },
     {
       "business_name": "AI-Generated eBook Empire",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -687,17 +724,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6203915662650602
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 3000%/month is unrealistically high"
+        "ROI of 3000%/month is unrealistically high",
+        "Parliament score 62% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7875095381526104
     },
     {
       "business_name": "AI Print-on-Demand Store",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -773,17 +815,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6203915662650602
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 1833%/month is unrealistically high"
+        "ROI of 1833%/month is unrealistically high",
+        "Parliament score 62% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7875095381526104
     },
     {
       "business_name": "AI Dropshipping Store",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -859,17 +906,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6203915662650602
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 875%/month is unrealistically high"
+        "ROI of 875%/month is unrealistically high",
+        "Parliament score 62% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7875095381526104
     },
     {
       "business_name": "Stock Photography Passive Income",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -946,15 +998,21 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6088253012048193
         }
       },
-      "overall_status": "VERIFIED",
-      "red_flags": [],
-      "verification_confidence": 1.0
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
+      "red_flags": [
+        "Parliament score 61% below threshold 85%"
+      ],
+      "verification_confidence": 0.8239713855421686
     },
     {
       "business_name": "AI-Powered Affiliate Niche Site",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -1030,17 +1088,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6203915662650602
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 1000%/month is unrealistically high"
+        "ROI of 1000%/month is unrealistically high",
+        "Parliament score 62% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7875095381526104
     },
     {
       "business_name": "AI Product Comparison Sites",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -1116,17 +1179,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6203915662650602
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 1083%/month is unrealistically high"
+        "ROI of 1083%/month is unrealistically high",
+        "Parliament score 62% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7875095381526104
     },
     {
       "business_name": "AI Chatbot-as-a-Service",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -1202,17 +1270,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6073795180722892
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 1250%/month is unrealistically high"
+        "ROI of 1250%/month is unrealistically high",
+        "Parliament score 61% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7816541164658635
     },
     {
       "business_name": "Customer Support AI Agent",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -1288,17 +1361,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6073795180722892
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 1500%/month is unrealistically high"
+        "ROI of 1500%/month is unrealistically high",
+        "Parliament score 61% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7816541164658635
     },
     {
       "business_name": "AI-Generated Online Courses",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -1374,17 +1452,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6073795180722892
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 1600%/month is unrealistically high"
+        "ROI of 1600%/month is unrealistically high",
+        "Parliament score 61% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7816541164658635
     },
     {
       "business_name": "AI Micro-Learning Platform",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -1460,17 +1543,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6203915662650602
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 1167%/month is unrealistically high"
+        "ROI of 1167%/month is unrealistically high",
+        "Parliament score 62% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7875095381526104
     },
     {
       "business_name": "AI Lead Generation Service",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -1546,17 +1634,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6203915662650602
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 2250%/month is unrealistically high"
+        "ROI of 2250%/month is unrealistically high",
+        "Parliament score 62% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7875095381526104
     },
     {
       "business_name": "AI Market Research Service",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -1632,17 +1725,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6203915662650602
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 1833%/month is unrealistically high"
+        "ROI of 1833%/month is unrealistically high",
+        "Parliament score 62% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7875095381526104
     },
     {
       "business_name": "AI Bookkeeping Service",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -1718,17 +1816,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6073795180722892
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 1250%/month is unrealistically high"
+        "ROI of 1250%/month is unrealistically high",
+        "Parliament score 61% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7816541164658635
     },
     {
       "business_name": "AI Invoice Factoring Platform",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -1804,18 +1907,23 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6073795180722892
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
         "ROI of 600%/month is unrealistically high",
-        "Hard difficulty business unlikely to profit in 2 months"
+        "Hard difficulty business unlikely to profit in 2 months",
+        "Parliament score 61% below threshold 85%"
       ],
-      "verification_confidence": 0.8888888888888888
+      "verification_confidence": 0.7399874497991968
     },
     {
       "business_name": "Quantum-Optimized Crypto Mining",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -1891,19 +1999,24 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6120783132530121
         }
       },
       "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
         "Highly automated (>100%) businesses rarely exceed $30K/mo revenue",
         "Automation level 100% is unrealistic - 100% automation is nearly impossible",
-        "Hallucination pattern detected: 'quantum.*(?!computing|physics)'"
+        "Hallucination pattern detected: 'quantum.*(?!computing|physics)'",
+        "Parliament score 61% below threshold 85%"
       ],
-      "verification_confidence": 0.8333333333333334
+      "verification_confidence": 0.7004352409638555
     },
     {
       "business_name": "NFT Collection Trading",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -1980,20 +2093,25 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6088253012048193
         }
       },
-      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
+      "overall_status": "FAILED_VALIDATION",
       "red_flags": [
         "Revenue $52500 exceeds typical automation business max $50000",
         "Highly automated (>98%) businesses rarely exceed $30K/mo revenue",
         "Automation level 98% is unrealistic - 100% automation is nearly impossible",
-        "Hallucination pattern detected: 'quantum.*(?!computing|physics)'"
+        "Hallucination pattern detected: 'quantum.*(?!computing|physics)'",
+        "Parliament score 61% below threshold 85%"
       ],
-      "verification_confidence": 0.8333333333333334
+      "verification_confidence": 0.6989713855421686
     },
     {
       "business_name": "SaaS Micro-Tools Empire",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -2070,15 +2188,21 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6088253012048193
         }
       },
-      "overall_status": "VERIFIED",
-      "red_flags": [],
-      "verification_confidence": 1.0
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
+      "red_flags": [
+        "Parliament score 61% below threshold 85%"
+      ],
+      "verification_confidence": 0.8239713855421686
     },
     {
       "business_name": "Amazon FBA Arbitrage",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -2155,15 +2279,21 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6088253012048193
         }
       },
-      "overall_status": "VERIFIED",
-      "red_flags": [],
-      "verification_confidence": 1.0
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
+      "red_flags": [
+        "Parliament score 61% below threshold 85%"
+      ],
+      "verification_confidence": 0.8239713855421686
     },
     {
       "business_name": "Print-on-Demand Empire",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -2239,18 +2369,23 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6088253012048193
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
         "ROI of 1320%/month is unrealistically high",
-        "Automation level 97% is unrealistic - 100% automation is nearly impossible"
+        "Automation level 97% is unrealistic - 100% automation is nearly impossible",
+        "Parliament score 61% below threshold 85%"
       ],
-      "verification_confidence": 0.8888888888888888
+      "verification_confidence": 0.7406380522088354
     },
     {
       "business_name": "Automated Tax Preparation",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -2326,17 +2461,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6088253012048193
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 1000%/month is unrealistically high"
+        "ROI of 1000%/month is unrealistically high",
+        "Parliament score 61% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7823047188755019
     },
     {
       "business_name": "SEO Content Agency",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -2412,17 +2552,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6088253012048193
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 1500%/month is unrealistically high"
+        "ROI of 1500%/month is unrealistically high",
+        "Parliament score 61% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.7823047188755019
     },
     {
       "business_name": "Virtual Executive Assistant",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -2498,17 +2643,22 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.5958132530120482
         }
       },
-      "overall_status": "VERIFIED",
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
       "red_flags": [
-        "ROI of 2400%/month is unrealistically high"
+        "ROI of 2400%/month is unrealistically high",
+        "Parliament score 60% below threshold 85%"
       ],
-      "verification_confidence": 0.9444444444444445
+      "verification_confidence": 0.776449297188755
     },
     {
       "business_name": "Financial Literacy Courses",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -2585,15 +2735,21 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6088253012048193
         }
       },
-      "overall_status": "VERIFIED",
-      "red_flags": [],
-      "verification_confidence": 1.0
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
+      "red_flags": [
+        "Parliament score 61% below threshold 85%"
+      ],
+      "verification_confidence": 0.8239713855421686
     },
     {
       "business_name": "Automated Dropshipping",
-      "timestamp": 1770812810.117125,
+      "timestamp": 1771387279.689403,
       "validation_stages": {
         "truth_verification": {
           "total_checks": 6,
@@ -2670,11 +2826,17 @@
         "market_check": {
           "is_realistic": true,
           "issues": []
+        },
+        "parliament": {
+          "status": "NEEDS_REFINEMENT",
+          "approval_score": 0.6088253012048193
         }
       },
-      "overall_status": "VERIFIED",
-      "red_flags": [],
-      "verification_confidence": 1.0
+      "overall_status": "ACCEPTABLE_WITH_WARNINGS",
+      "red_flags": [
+        "Parliament score 61% below threshold 85%"
+      ],
+      "verification_confidence": 0.8239713855421686
     }
   ]
 }

@@ -4,7 +4,6 @@ ECH0 Autonomous Business Automation System
 Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
 
 This system provides full autonomous business operations including:
-- Fiverr gig management and customer communication
 - Website content management (GitHub-based)
 - Email automation
 - Social media marketing
@@ -15,16 +14,21 @@ This system provides full autonomous business operations including:
 
 import sys
 import time
-import threading
-import asyncio
-import json
 import os
+import json
+import threading
 import smtplib
-from datetime import datetime, timedelta
+from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+
+# Load environment variables
+try:
+    from src.blank_business_builder.config import settings
+except ImportError:
+    settings = None
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 import subprocess
 
 # Add src to path to allow importing business libraries
@@ -43,13 +47,6 @@ except ImportError:
     BUSINESS_LIB_AVAILABLE = False
     print("[WARN] Business libraries not available")
 
-# Import Fiverr autonomous manager
-try:
-    from fiverr_autonomous_manager import FiverrAutonomousManager
-    FIVERR_CLIENT_AVAILABLE = True
-except ImportError:
-    FIVERR_CLIENT_AVAILABLE = False
-    print("[WARN] Fiverr autonomous manager not available")
 
 try:
     from ech0_llm_engine import ECH0LLMEngine
@@ -104,7 +101,6 @@ class ECH0AutonomousCore:
 
         # Initialize modules
         self.modules = {
-            "fiverr": FiverrAutomation(self),
             "websites": WebsiteAutomation(self),
             "email": EmailAutomation(self),
             "social": SocialMediaAutomation(self),
@@ -121,7 +117,21 @@ class ECH0AutonomousCore:
         """Load or create configuration file."""
         if os.path.exists(self.config_path):
             with open(self.config_path, 'r') as f:
-                return json.load(f)
+                config = json.load(f)
+        else:
+            config = self._create_default_config()
+
+        # Override with environment variables from settings if available
+        if settings:
+            if settings.TWILIO_ACCOUNT_SID:
+                config.setdefault('twilio', {})['account_sid'] = settings.TWILIO_ACCOUNT_SID
+                config['twilio']['auth_token'] = settings.TWILIO_AUTH_TOKEN
+                config['twilio']['from_number'] = settings.TWILIO_FROM_NUMBER
+            if settings.SENDGRID_API_KEY:
+                config.setdefault('email', {})['sendgrid_api_key'] = settings.SENDGRID_API_KEY
+                config['email']['from_email'] = settings.SENDGRID_FROM_EMAIL
+
+        return config
 
         # Default configuration
         default_config = {
@@ -138,15 +148,6 @@ class ECH0AutonomousCore:
                     "ech0": "echo@aios.is",
                     "flowstatus": "echo@flowstatus.work"
                 }
-            },
-            "fiverr": {
-                "username": "",  # User fills this in
-                "password": "",
-                "chrome_profile_path": "/Users/noone/Library/Application Support/Google/Chrome",
-                "chrome_profile_directory": "Default",
-                "gigs": [],
-                "auto_respond": True,
-                "check_interval_minutes": 15
             },
             "websites": {
                 "aios": {
@@ -313,11 +314,6 @@ class ECH0AutonomousCore:
 
     def _schedule_recurring_tasks(self):
         """Schedule all recurring automated tasks."""
-        # Fiverr checks
-        if self.config['fiverr'].get('username'):
-            interval = self.config['fiverr']['check_interval_minutes'] * 60
-            self._schedule_task(interval, self.modules['fiverr'].check_messages)
-            self._schedule_task(interval, self.modules['fiverr'].check_orders)
 
         # Email checks
         interval = self.config['email']['check_interval_minutes'] * 60
@@ -369,182 +365,6 @@ class ECH0AutonomousCore:
         print("✓ ECH0 shutdown complete")
 
 
-class FiverrAutomation:
-    """Automated Fiverr gig management and customer communication using FiverrManager."""
-
-    def __init__(self, core: ECH0AutonomousCore):
-        self.core = core
-        self.fiverr_manager = None
-        self.llm_engine = None
-        if LLM_AVAILABLE:
-            self.llm_engine = ECH0LLMEngine()
-        print("  ✓ Fiverr automation module loaded")
-
-    def _init_fiverr_manager(self):
-        """Initialize Fiverr Autonomous Manager with Chrome profile."""
-        if not FIVERR_CLIENT_AVAILABLE:
-            self.core.log_activity("fiverr", "INIT_SKIP", "FiverrAutonomousManager not available")
-            return False
-
-        if self.fiverr_manager:
-            return True
-
-        # Set environment variables for the manager
-        profile_path = self.core.config['fiverr'].get('chrome_profile_path')
-        profile_dir = self.core.config['fiverr'].get('chrome_profile_directory', 'Default')
-
-        if not profile_path or "INSERT" in profile_path:
-            self.core.log_activity("fiverr", "INIT_SKIP", "Chrome profile path not configured")
-            return False
-
-        os.environ['FIVERR_CHROME_PROFILE_PATH'] = profile_path
-        os.environ['FIVERR_PROFILE_DIRECTORY'] = profile_dir
-
-        try:
-            self.fiverr_manager = FiverrAutonomousManager()
-            self.core.log_activity("fiverr", "INIT_SUCCESS", "FiverrAutonomousManager initialized")
-            return True
-        except Exception as e:
-            self.core.log_activity("fiverr", "INIT_FAILED", str(e))
-            return False
-
-    def check_messages(self):
-        """Check for new Fiverr messages using FiverrAutonomousManager."""
-        if not self._init_fiverr_manager():
-            return
-
-        try:
-            if self.fiverr_manager.connect_to_dashboard():
-                num_messages = self.fiverr_manager.scan_inbox()
-
-                if num_messages > 0:
-                    self.core.log_activity("fiverr", "MESSAGES_FOUND", f"{num_messages} unread")
-
-                    # Auto-respond using LLM engine
-                    if self.core.config['fiverr'].get('auto_respond', False):
-                        if self.core.llm_engine:
-                            self.core.log_activity("fiverr", "AUTO_RESPOND", "Engaging LLM...")
-                            self.fiverr_manager.respond_to_unread_messages(self.core.llm_engine.generate_response)
-                        else:
-                            self.core.log_activity("fiverr", "AUTO_RESPOND_SKIP", "LLM Engine not available")
-
-                elif num_messages == 0:
-                    self.core.log_activity("fiverr", "MESSAGES_CHECK", "No new messages")
-                else:
-                    self.core.log_activity("fiverr", "MESSAGE_CHECK_ERROR", "Scan failed")
-            else:
-                self.core.log_activity("fiverr", "INBOX_FAILED", "Could not connect to dashboard")
-
-        except Exception as e:
-            self.core.log_activity("fiverr", "MESSAGE_CHECK_ERROR", str(e))
-
-    def check_orders(self):
-        """Check for new orders and route them to appropriate business agents."""
-        if not self._init_fiverr_manager():
-            return
-
-        try:
-            # 1. Get active orders requiring attention
-            active_orders = self.fiverr_manager.get_active_orders_details()
-
-            if not active_orders:
-                self.core.log_activity("fiverr", "ORDERS_CHECK", "No active orders requiring attention")
-                return
-
-            self.core.log_activity("fiverr", "ORDERS_FOUND", f"{len(active_orders)} orders to process")
-
-            for order in active_orders:
-                try:
-                    gig_title = order['gig_title']
-                    buyer = order['buyer']
-                    url = order['url']
-
-                    self.core.log_activity("fiverr", "ROUTING", f"Routing order '{gig_title}' from {buyer}")
-
-                    # 2. Resolve Business Orchestrator
-                    orchestrator = self.core.get_or_create_business(gig_title)
-
-                    response_text = ""
-
-                    if orchestrator and BUSINESS_LIB_AVAILABLE:
-                        # 3. Create Task for Agents
-                        task_desc = f"Process new Fiverr order from {buyer} for '{gig_title}'. Current Status: {order['status']}."
-
-                        # Decide which agent handles this. Usually SUPPORT or FULFILLMENT.
-                        # For initial contact, SUPPORT is good.
-                        task = AutonomousTask(
-                            task_id=f"fiverr_order_{int(time.time())}",
-                            role=AgentRole.SUPPORT,
-                            description=task_desc,
-                            priority=10
-                        )
-
-                        # Find the agent
-                        agent = next((a for a in orchestrator.agents.values() if a.role == AgentRole.SUPPORT), None)
-
-                        if agent:
-                            self.core.log_activity("fiverr", "AGENT_ASSIGNED", f"Assigned to {agent.agent_id}")
-
-                            # Execute task (Sync wrapper for async)
-                            # In a real async system, we would await. Here we use asyncio.run
-                            result = asyncio.run(agent.execute_task(task))
-
-                            if result['success']:
-                                # Construct a response based on the agent's action
-                                # The agent's _plan_support returns steps, but we need a message.
-                                # Ideally, the agent returns a message.
-                                # For now, we fallback to LLM using the agent's context.
-                                pass
-
-                        # 4. Generate Response (using LLM with business context)
-                        # We use the Orchestrator's context to inform the LLM
-                        context = {
-                            "business": orchestrator.business_concept,
-                            "role": "Support Agent",
-                            "order_status": order['status'],
-                            "agent_plan": "Reviewing order details and preparing for fulfillment."
-                        }
-                    else:
-                        self.core.log_activity("fiverr", "ROUTING_FAILED", f"No business found for '{gig_title}'")
-                        context = {"order_status": order['status']}
-
-                    if self.llm_engine:
-                        response_text = self.llm_engine.generate_response(
-                            order['last_message'] or "New Order",
-                            buyer,
-                            context=context
-                        )
-                    else:
-                        response_text = f"Hi {buyer}, thanks for your order! I'll get started right away."
-
-                    # 5. Send Reply
-                    if response_text:
-                        self.fiverr_manager.send_reply(url, response_text)
-                        self.core.log_activity("fiverr", "REPLY_SENT", f"Replied to {buyer}")
-
-                except Exception as e:
-                    self.core.log_activity("fiverr", "ORDER_PROC_ERROR", f"Failed to process {order.get('url')}: {e}")
-
-        except Exception as e:
-            self.core.log_activity("fiverr", "ORDER_CHECK_ERROR", str(e))
-
-    def create_gig(self, gig_data: Dict):
-        """Create a new Fiverr gig."""
-        if not self.login():
-            return False
-
-        try:
-            self.driver.get("https://www.fiverr.com/gigs/create")
-            time.sleep(2)
-
-            # Fill in gig creation form
-            # This is complex and would need detailed field mapping
-
-            self.core.log_activity("fiverr", "GIG_CREATED", gig_data.get('title', 'Unknown'))
-            return True
-        except Exception as e:
-            self.core.log_activity("fiverr", "GIG_CREATE_ERROR", str(e))
-            return False
 
 
 class WebsiteAutomation:
@@ -639,10 +459,23 @@ class EmailAutomation:
         self.core.log_activity("email", "INBOX_CHECK", "Checked all inboxes")
 
     def send_email(self, to: str, subject: str, body: str, from_addr: str = None):
-        """Send email via SMTP."""
+        """Send email via SMTP or SendGrid, with Twilio SMS fallback for urgent reports."""
         if not from_addr:
             from_addr = self.core.config['owner']['emails']['primary']
 
+        # 1. Try SendGrid if API key available
+        sg_key = self.core.config.get('email', {}).get('sendgrid_api_key')
+        if sg_key:
+            try:
+                from src.blank_business_builder.integrations import IntegrationFactory
+                service = IntegrationFactory.get_sendgrid_service()
+                if service.send_email_direct(to, subject, body):
+                    self.core.log_activity("email", "SENT_SENDGRID", f"To: {to}")
+                    return True
+            except Exception as e:
+                self.core.log_activity("email", "SENDGRID_ERROR", str(e))
+
+        # 2. Try SMTP
         try:
             msg = MIMEMultipart()
             msg['From'] = from_addr
@@ -655,16 +488,32 @@ class EmailAutomation:
                 self.core.config['email']['smtp_port']
             )
             smtp.starttls()
-            # Would need credentials from config
-            # smtp.login(username, password)
-            # smtp.send_message(msg)
+            # If creds provided in JSON
+            user = self.core.config['email'].get('user')
+            password = self.core.config['email'].get('password')
+            if user and password:
+                smtp.login(user, password)
+                smtp.send_message(msg)
             smtp.quit()
 
-            self.core.log_activity("email", "SENT", f"To: {to}")
+            self.core.log_activity("email", "SENT_SMTP", f"To: {to}")
             return True
         except Exception as e:
-            self.core.log_activity("email", "SEND_ERROR", str(e))
-            return False
+            self.core.log_activity("email", "SMTP_ERROR", str(e))
+
+        # 3. Fallback to SMS if it's a critical report or urgent
+        if "REPORT" in subject.upper() or "URGENT" in subject.upper():
+            try:
+                from src.blank_business_builder.integrations import IntegrationFactory
+                twilio = IntegrationFactory.get_twilio_service()
+                recipient_phone = self.core.config['owner'].get('phone')
+                if twilio.send_sms(recipient_phone, f"{subject}: {body[:100]}..."):
+                    self.core.log_activity("email", "FALLBACK_SMS", f"Sent SMS to {recipient_phone}")
+                    return True
+            except Exception as e:
+                self.core.log_activity("email", "TWILIO_ERROR", str(e))
+
+        return False
 
 
 class SocialMediaAutomation:
@@ -675,9 +524,17 @@ class SocialMediaAutomation:
         print("  ✓ Social media automation module loaded")
 
     def post_to_twitter(self, content: str):
-        """Post to Twitter/X."""
-        # Would use Twitter API
-        self.core.log_activity("social", "TWITTER_POST", content[:50])
+        """Post to Twitter/X using live API."""
+        try:
+            from src.blank_business_builder.integrations import IntegrationFactory
+            service = IntegrationFactory.get_twitter_service()
+            if service.post_tweet(content):
+                self.core.log_activity("social", "TWITTER_POST_SUCCESS", content[:50])
+                return True
+        except Exception as e:
+            self.core.log_activity("social", "TWITTER_POST_ERROR", str(e))
+        
+        return False
 
     def post_to_linkedin(self, content: str):
         """Post to LinkedIn."""
