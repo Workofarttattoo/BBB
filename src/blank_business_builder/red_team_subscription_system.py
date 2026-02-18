@@ -13,7 +13,7 @@ import uuid
 import hashlib
 import json
 from datetime import datetime, timedelta
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, Any
 from dataclasses import dataclass, asdict
 from enum import Enum
 
@@ -274,7 +274,7 @@ class RedTeamLicenseManager:
                 "tier": str,
                 "status": str,
                 "expires": datetime,
-                "tools_enabled": List[str],
+                "tools_enabled": list[str],
                 "message": str
             }
         """
@@ -412,7 +412,7 @@ class RedTeamLicenseManager:
             created_at=datetime.fromisoformat(sub["created_at"].replace("Z", "+00:00")) if sub.get("created_at") else None
         )
 
-    async def get_subscription_licenses(self, subscription_id: str) -> List[License]:
+    async def get_subscription_licenses(self, subscription_id: str) -> list[License]:
         """Get all licenses for a subscription"""
         result = self.client.table("licenses")\
             .select("*")\
@@ -530,68 +530,3 @@ class RedTeamLicenseManager:
         )
 
 
-# CLI for testing
-if __name__ == "__main__":
-    import asyncio
-
-    async def demo():
-        """Demo the licensing system"""
-        print("Red Team Tools - License Manager Demo")
-        print("=" * 60)
-
-        # Initialize
-        manager = RedTeamLicenseManager()
-
-        # Create customer
-        print("\n1. Creating customer...")
-        customer = await manager.create_customer(
-            email="pentest@example.com"
-        )
-        print(f"   Customer ID: {customer.id}")
-        print(f"   Email: {customer.email}")
-
-        # Create subscription
-        print("\n2. Creating Professional subscription...")
-        subscription = await manager.create_subscription(
-            customer_id=customer.id,
-            tier=SubscriptionTier.PROFESSIONAL,
-            trial_days=14
-        )
-        print(f"   Subscription ID: {subscription.id}")
-        print(f"   Tier: {subscription.tier.value}")
-        print(f"   Status: {subscription.status.value}")
-        print(f"   Expires: {subscription.current_period_end}")
-        print(f"   Seats: {subscription.seats_used}/{subscription.seats_total}")
-
-        # Get licenses
-        print("\n3. Getting license keys...")
-        licenses = await manager.get_subscription_licenses(subscription.id)
-        for lic in licenses:
-            print(f"   License: {lic.license_key}")
-
-        # Validate license
-        print("\n4. Validating license...")
-        validation = await manager.validate_license(
-            license_key=licenses[0].license_key,
-            machine_id="demo-machine-001"
-        )
-        print(f"   Valid: {validation['valid']}")
-        print(f"   Tier: {validation['tier']}")
-        print(f"   Tools: {len(validation['tools_enabled'])} enabled")
-
-        # Log usage
-        print("\n5. Logging tool usage...")
-        event = await manager.log_usage_event(
-            license_key=licenses[0].license_key,
-            tool_name="aurorascan",
-            event_type="scan",
-            metadata={"targets": 5, "vulnerabilities": 2}
-        )
-        print(f"   Event ID: {event.id}")
-        print(f"   Tool: {event.tool_name}")
-        print(f"   Type: {event.event_type}")
-
-        print("\n" + "=" * 60)
-        print("Demo complete! License system ready for production.")
-
-    asyncio.run(demo())

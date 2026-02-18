@@ -14,7 +14,6 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import numpy as np
 import hashlib
@@ -44,16 +43,6 @@ except ImportError:
     FAISS_AVAILABLE = False
     logger.warning("FAISS not available - install with: pip install faiss-cpu")
 
-try:
-    import torch
-    import torch.nn as nn
-    from torch.utils.data import Dataset, DataLoader
-    TORCH_AVAILABLE = True
-except ImportError:
-    TORCH_AVAILABLE = False
-    logger.warning("PyTorch not available - fine-tuning disabled")
-
-
 class ExpertDomain(Enum):
     """Supported expert domains."""
     # Science domains
@@ -77,6 +66,9 @@ class ExpertDomain(Enum):
     DATA_SCIENCE = "data_science"
     MACHINE_LEARNING = "machine_learning"
     QUANTUM_COMPUTING = "quantum_computing"
+
+    # Legal
+    LEGAL = "legal"
 
     # General
     GENERAL = "general"
@@ -344,17 +336,25 @@ class DomainExpert(ABC):
 
     async def retrieve_context(self, query: str, max_results: int = 5) -> List[Tuple[KnowledgeDocument, float]]:
         """Retrieve relevant context from vector store."""
-        return self.vector_store.search(query, top_k=max_results, domain=self.domain)
+        # Use run_in_executor to avoid blocking the event loop with synchronous vector search
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(
+            None,
+            self.vector_store.search,
+            query,
+            max_results,
+            self.domain
+        )
 
 
-class ChemistryExpert(DomainExpert):
-    """Expert in chemistry."""
+class StandardDomainExpert(DomainExpert):
+    """Standard implementation of a domain expert."""
 
-    def __init__(self, expert_id: str, vector_store: VectorStore):
-        super().__init__(expert_id, ExpertDomain.CHEMISTRY, vector_store)
+    def __init__(self, expert_id: str, domain: ExpertDomain, vector_store: VectorStore):
+        super().__init__(expert_id, domain, vector_store)
 
     async def answer_query(self, query: ExpertQuery) -> ExpertResponse:
-        """Answer chemistry query."""
+        """Answer query using domain expertise."""
         # Retrieve relevant documents
         context_docs = await self.retrieve_context(query.query, query.max_results)
 
@@ -370,7 +370,8 @@ class ChemistryExpert(DomainExpert):
         ]
 
         # Generate answer based on domain knowledge
-        answer = f"[Chemistry Expert] Based on {len(sources)} sources: {query.query}"
+        domain_name = self.domain.value.replace('_', ' ').title()
+        answer = f"[{domain_name} Expert] Based on {len(sources)} sources: {query.query}"
         if context_docs:
             top_doc, top_score = context_docs[0]
             answer += f"\n\nKey insight: {top_doc.content[:300]}"
@@ -382,7 +383,7 @@ class ChemistryExpert(DomainExpert):
             domain=self.domain,
             confidence=confidence * self.specialization_score,
             sources=sources,
-            reasoning="RAG-based synthesis from chemistry knowledge base",
+            reasoning=f"RAG-based synthesis from {self.domain.value.replace('_', ' ')} knowledge base",
             expert_id=self.expert_id
         )
 
@@ -390,124 +391,25 @@ class ChemistryExpert(DomainExpert):
         return response
 
 
-class BiologyExpert(DomainExpert):
-    """Expert in biology."""
+class ChemistryExpert(StandardDomainExpert):
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.CHEMISTRY, vector_store)
 
+class BiologyExpert(StandardDomainExpert):
     def __init__(self, expert_id: str, vector_store: VectorStore):
         super().__init__(expert_id, ExpertDomain.BIOLOGY, vector_store)
 
-    async def answer_query(self, query: ExpertQuery) -> ExpertResponse:
-        """Answer biology query."""
-        context_docs = await self.retrieve_context(query.query, query.max_results)
-
-        sources = [
-            {
-                "doc_id": doc.doc_id,
-                "content": doc.content[:200],
-                "relevance": score,
-                "metadata": doc.metadata
-            }
-            for doc, score in context_docs
-        ]
-
-        answer = f"[Biology Expert] Based on {len(sources)} sources: {query.query}"
-        if context_docs:
-            top_doc, top_score = context_docs[0]
-            answer += f"\n\nKey insight: {top_doc.content[:300]}"
-
-        confidence = np.mean([score for _, score in context_docs]) if context_docs else 0.5
-
-        response = ExpertResponse(
-            answer=answer,
-            domain=self.domain,
-            confidence=confidence * self.specialization_score,
-            sources=sources,
-            reasoning="RAG-based synthesis from biology knowledge base",
-            expert_id=self.expert_id
-        )
-
-        self.query_history.append((query.query, response))
-        return response
-
-
-class PhysicsExpert(DomainExpert):
-    """Expert in physics."""
-
+class PhysicsExpert(StandardDomainExpert):
     def __init__(self, expert_id: str, vector_store: VectorStore):
         super().__init__(expert_id, ExpertDomain.PHYSICS, vector_store)
 
-    async def answer_query(self, query: ExpertQuery) -> ExpertResponse:
-        """Answer physics query."""
-        context_docs = await self.retrieve_context(query.query, query.max_results)
-
-        sources = [
-            {
-                "doc_id": doc.doc_id,
-                "content": doc.content[:200],
-                "relevance": score,
-                "metadata": doc.metadata
-            }
-            for doc, score in context_docs
-        ]
-
-        answer = f"[Physics Expert] Based on {len(sources)} sources: {query.query}"
-        if context_docs:
-            top_doc, top_score = context_docs[0]
-            answer += f"\n\nKey insight: {top_doc.content[:300]}"
-
-        confidence = np.mean([score for _, score in context_docs]) if context_docs else 0.5
-
-        response = ExpertResponse(
-            answer=answer,
-            domain=self.domain,
-            confidence=confidence * self.specialization_score,
-            sources=sources,
-            reasoning="RAG-based synthesis from physics knowledge base",
-            expert_id=self.expert_id
-        )
-
-        self.query_history.append((query.query, response))
-        return response
-
-
-class MaterialsScienceExpert(DomainExpert):
-    """Expert in materials science."""
-
+class MaterialsScienceExpert(StandardDomainExpert):
     def __init__(self, expert_id: str, vector_store: VectorStore):
         super().__init__(expert_id, ExpertDomain.MATERIALS_SCIENCE, vector_store)
 
-    async def answer_query(self, query: ExpertQuery) -> ExpertResponse:
-        """Answer materials science query."""
-        context_docs = await self.retrieve_context(query.query, query.max_results)
-
-        sources = [
-            {
-                "doc_id": doc.doc_id,
-                "content": doc.content[:200],
-                "relevance": score,
-                "metadata": doc.metadata
-            }
-            for doc, score in context_docs
-        ]
-
-        answer = f"[Materials Science Expert] Based on {len(sources)} sources: {query.query}"
-        if context_docs:
-            top_doc, top_score = context_docs[0]
-            answer += f"\n\nKey insight: {top_doc.content[:300]}"
-
-        confidence = np.mean([score for _, score in context_docs]) if context_docs else 0.5
-
-        response = ExpertResponse(
-            answer=answer,
-            domain=self.domain,
-            confidence=confidence * self.specialization_score,
-            sources=sources,
-            reasoning="RAG-based synthesis from materials science knowledge base",
-            expert_id=self.expert_id
-        )
-
-        self.query_history.append((query.query, response))
-        return response
+class LegalExpert(StandardDomainExpert):
+    def __init__(self, expert_id: str, vector_store: VectorStore):
+        super().__init__(expert_id, ExpertDomain.LEGAL, vector_store)
 
 
 class MultiExpertEnsemble:
@@ -700,13 +602,15 @@ class MultiDomainExpertSystem:
     def _initialize_experts(self) -> None:
         """Initialize all domain experts."""
         # Science experts
+       
         self.experts[ExpertDomain.CHEMISTRY] = ChemistryExpert("chem_001", self.vector_store)
         self.experts[ExpertDomain.BIOLOGY] = BiologyExpert("bio_001", self.vector_store)
         self.experts[ExpertDomain.PHYSICS] = PhysicsExpert("phys_001", self.vector_store)
         self.experts[ExpertDomain.MATERIALS_SCIENCE] = MaterialsScienceExpert("matsci_001", self.vector_store)
+        self.experts[ExpertDomain.LEGAL] = LegalExpert("legal_001", self.vector_store)
 
         # Additional experts can be added here
-        logger.info("Initialized domain experts: chemistry, biology, physics, materials_science")
+        logger.info("Initialized domain experts: chemistry, biology, physics, materials_science, legal")
 
     def add_knowledge(self, documents: List[KnowledgeDocument]) -> None:
         """Add documents to knowledge base."""
@@ -728,9 +632,29 @@ class MultiDomainExpertSystem:
             # Auto-select best expert(s)
             return await self._auto_select_expert(query)
 
+    def identify_best_domain(self, query: str) -> Optional[ExpertDomain]:
+        """Identify the most relevant domain for a query efficiently."""
+        # Single search across all domains
+        results = self.vector_store.search(query, top_k=1, domain=None)
+        if results:
+            return results[0][0].domain
+        return None
+
     async def _auto_select_expert(self, query: ExpertQuery) -> ExpertResponse:
         """Automatically select best expert for query."""
-        # Query all experts and select highest confidence
+
+        # Optimization: Try to identify domain first
+        best_domain = self.identify_best_domain(query.query)
+
+        if best_domain:
+            expert = self.experts.get(best_domain)
+            if expert:
+                # If we found a specific domain match via vector search, query just that expert.
+                # This reduces N searches to 1 global search + 1 specific search.
+                return await expert.answer_query(query)
+
+        # Fallback to querying all experts if no clear domain match
+        # (or if identified domain expert is missing, which shouldn't happen)
         expert_tasks = [expert.answer_query(query) for expert in self.experts.values()]
         responses = await asyncio.gather(*expert_tasks)
 
@@ -759,103 +683,3 @@ class MultiDomainExpertSystem:
         }
 
 
-# Example usage and demonstration
-async def demo_expert_system():
-    """Demonstrate expert system capabilities."""
-    print("="*80)
-    print("Multi-Domain Expert System Demo")
-    print("="*80)
-
-    # Initialize system
-    system = MultiDomainExpertSystem(use_chromadb=CHROMADB_AVAILABLE)
-
-    # Add sample knowledge
-    sample_docs = [
-        KnowledgeDocument(
-            doc_id="chem_001",
-            content="Chemical bonds form when atoms share or transfer electrons. Covalent bonds involve sharing, ionic bonds involve transfer.",
-            domain=ExpertDomain.CHEMISTRY,
-            metadata={"source": "chemistry_textbook", "chapter": 1}
-        ),
-        KnowledgeDocument(
-            doc_id="bio_001",
-            content="DNA replication is semiconservative - each strand serves as a template for a new complementary strand.",
-            domain=ExpertDomain.BIOLOGY,
-            metadata={"source": "biology_textbook", "chapter": 3}
-        ),
-        KnowledgeDocument(
-            doc_id="phys_001",
-            content="Newton's laws of motion: 1) Object at rest stays at rest unless acted upon by force. 2) F=ma. 3) Every action has equal and opposite reaction.",
-            domain=ExpertDomain.PHYSICS,
-            metadata={"source": "physics_textbook", "chapter": 2}
-        ),
-        KnowledgeDocument(
-            doc_id="matsci_001",
-            content="Crystalline materials have ordered atomic structure. Amorphous materials lack long-range order. Crystal structure determines material properties.",
-            domain=ExpertDomain.MATERIALS_SCIENCE,
-            metadata={"source": "materials_science_textbook", "chapter": 1}
-        )
-    ]
-
-    system.add_knowledge(sample_docs)
-
-    # Query individual expert
-    print("\n1. Querying Chemistry Expert:")
-    print("-" * 80)
-    query = ExpertQuery(
-        query="What are the types of chemical bonds?",
-        domain=ExpertDomain.CHEMISTRY
-    )
-    response = await system.query(query)
-    print(f"Answer: {response.answer}")
-    print(f"Confidence: {response.confidence:.2f}")
-    print(f"Sources: {len(response.sources)}")
-
-    # Query with ensemble
-    print("\n2. Querying with Ensemble:")
-    print("-" * 80)
-    query = ExpertQuery(
-        query="How do atomic structures affect material properties?",
-        use_ensemble=True
-    )
-    response = await system.query(query)
-    print(f"Consensus: {response.consensus_answer[:200]}...")
-    print(f"Agreement: {response.agreement_score:.2f}")
-    print(f"Confidence: {response.confidence:.2f}")
-    print(f"Domains consulted: {[d.value for d in response.domains_consulted]}")
-
-    # Auto-select expert
-    print("\n3. Auto-selecting Best Expert:")
-    print("-" * 80)
-    query = ExpertQuery(
-        query="Explain DNA replication"
-    )
-    response = await system.query(query)
-    print(f"Selected expert: {response.expert_id} ({response.domain.value})")
-    print(f"Answer: {response.answer[:200]}...")
-    print(f"Confidence: {response.confidence:.2f}")
-
-    # Specialization
-    print("\n4. Specializing Chemistry Expert:")
-    print("-" * 80)
-    training_data = [
-        ("What is a covalent bond?", "Electrons shared between atoms", 0.9),
-        ("What is an ionic bond?", "Electrons transferred between atoms", 0.85),
-        ("What determines bond strength?", "Depends on electronegativity difference", 0.8)
-    ]
-    new_score = await system.specialize_expert(ExpertDomain.CHEMISTRY, training_data)
-    print(f"New specialization score: {new_score:.3f}")
-
-    # System status
-    print("\n5. System Status:")
-    print("-" * 80)
-    status = system.get_system_status()
-    print(json.dumps(status, indent=2, default=str))
-
-    print("\n" + "="*80)
-    print("Demo complete!")
-    print("="*80)
-
-
-if __name__ == "__main__":
-    asyncio.run(demo_expert_system())

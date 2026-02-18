@@ -13,6 +13,7 @@ This system provides full autonomous business operations including:
 - Daily reporting
 """
 
+import sys
 import time
 import threading
 import asyncio
@@ -26,6 +27,22 @@ from pathlib import Path
 from typing import Dict, List, Optional
 import subprocess
 
+# Add src to path to allow importing business libraries
+sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+
+# Import business libraries
+try:
+    from blank_business_builder.autonomous_business import (
+        AutonomousBusinessOrchestrator,
+        AgentRole,
+        AutonomousTask
+    )
+    from blank_business_builder.business_data import default_ideas
+    BUSINESS_LIB_AVAILABLE = True
+except ImportError:
+    BUSINESS_LIB_AVAILABLE = False
+    print("[WARN] Business libraries not available")
+
 # Import Fiverr autonomous manager
 try:
     from fiverr_autonomous_manager import FiverrAutonomousManager
@@ -33,6 +50,13 @@ try:
 except ImportError:
     FIVERR_CLIENT_AVAILABLE = False
     print("[WARN] Fiverr autonomous manager not available")
+
+try:
+    from ech0_llm_engine import ECH0LLMEngine
+    LLM_AVAILABLE = True
+except ImportError:
+    LLM_AVAILABLE = False
+    print("[WARN] ECH0 LLM Engine not available")
 
 # Selenium imports for other web automation
 try:
@@ -67,6 +91,16 @@ class ECH0AutonomousCore:
         self.task_queue = []
         self.activity_log = []
         self.daily_summary = []
+        self.active_businesses = {}  # Registry of active AutonomousBusinessOrchestrator instances
+
+        # Initialize LLM Engine
+        self.llm_engine = None
+        if LLM_AVAILABLE:
+            try:
+                self.llm_engine = ECH0LLMEngine()
+                print("✓ LLM Engine initialized")
+            except Exception as e:
+                print(f"[ERROR] LLM Engine init failed: {e}")
 
         # Initialize modules
         self.modules = {
@@ -91,6 +125,11 @@ class ECH0AutonomousCore:
 
         # Default configuration
         default_config = {
+            "llm": {
+                "provider": "huggingface",  # huggingface, together, custom
+                "endpoint": "https://workofarttattoo-echo-prime-agi.hf.space/api/predict",
+                "api_key": ""
+            },
             "owner": {
                 "name": "Joshua Hendricks Cole",
                 "phone": "7252242617",
@@ -189,10 +228,70 @@ class ECH0AutonomousCore:
                     self.log_activity(module, "ERROR", str(e))
                     print(f"[ERROR] {module}: {e}")
 
+            # Also pump the loops of any active business orchestrators
+            # (In a real system, these would run in their own threads/processes)
+            for biz_name, orchestrator in self.active_businesses.items():
+                if orchestrator.running:
+                    # Execute one cycle of tasks if possible
+                    # Since run_autonomous_loop is a blocking async loop, we can't easily interleave it here
+                    # without refactoring Orchestrator to be tick-based or running it in a thread.
+                    # For now, we assume dispatching tasks to it is enough.
+                    pass
+
             time.sleep(1)
 
         self.system_status = "SHUTDOWN"
         print("\n🛑 ECH0 SYSTEM SHUTDOWN COMPLETE")
+
+    def get_or_create_business(self, gig_title: str) -> Optional[object]:
+        """
+        Resolve a gig title to an AutonomousBusinessOrchestrator.
+        If not active, initializes it.
+        """
+        if not BUSINESS_LIB_AVAILABLE:
+            return None
+
+        # Simple keyword matching to find the business concept
+        # In production, this would be a sophisticated semantic match
+        matched_idea = None
+        for idea in default_ideas():
+            # Check if significant words from idea name are in gig title
+            idea_keywords = set(idea.name.lower().split())
+            gig_keywords = set(gig_title.lower().split())
+
+            # If 50% match
+            intersection = idea_keywords.intersection(gig_keywords)
+            if len(intersection) / len(idea_keywords) > 0.3: # Low threshold for demo
+                matched_idea = idea
+                break
+
+        if not matched_idea:
+            # Fallback: Create a generic one if no match found
+            # Or return None
+            # For robustness, let's create a generic "Service Business" if we can't match
+            # But strictly, let's try to match existing logic
+            return None
+
+        if matched_idea.name in self.active_businesses:
+            return self.active_businesses[matched_idea.name]
+
+        # Initialize new orchestrator
+        print(f"ECH0_CORE: Initializing new autonomous business for: {matched_idea.name}")
+        orchestrator = AutonomousBusinessOrchestrator(
+            business_concept=matched_idea.name,
+            founder_name=self.config['owner']['name']
+        )
+
+        # Deploy agents (async, but we'll run it sync here for simplicity or spawn a task)
+        # Since deploy_agents is async, we need to run it.
+        try:
+            asyncio.run(orchestrator.deploy_agents())
+        except Exception as e:
+             print(f"ECH0_CORE: Failed to deploy agents: {e}")
+             return None
+
+        self.active_businesses[matched_idea.name] = orchestrator
+        return orchestrator
 
     def startup(self):
         """Start autonomous operations."""
@@ -276,6 +375,9 @@ class FiverrAutomation:
     def __init__(self, core: ECH0AutonomousCore):
         self.core = core
         self.fiverr_manager = None
+        self.llm_engine = None
+        if LLM_AVAILABLE:
+            self.llm_engine = ECH0LLMEngine()
         print("  ✓ Fiverr automation module loaded")
 
     def _init_fiverr_manager(self):
@@ -317,7 +419,15 @@ class FiverrAutomation:
 
                 if num_messages > 0:
                     self.core.log_activity("fiverr", "MESSAGES_FOUND", f"{num_messages} unread")
-                    # TODO: Auto-respond using LLM engine (ech0_llm_engine.py)
+
+                    # Auto-respond using LLM engine
+                    if self.core.config['fiverr'].get('auto_respond', False):
+                        if self.core.llm_engine:
+                            self.core.log_activity("fiverr", "AUTO_RESPOND", "Engaging LLM...")
+                            self.fiverr_manager.respond_to_unread_messages(self.core.llm_engine.generate_response)
+                        else:
+                            self.core.log_activity("fiverr", "AUTO_RESPOND_SKIP", "LLM Engine not available")
+
                 elif num_messages == 0:
                     self.core.log_activity("fiverr", "MESSAGES_CHECK", "No new messages")
                 else:
@@ -329,20 +439,91 @@ class FiverrAutomation:
             self.core.log_activity("fiverr", "MESSAGE_CHECK_ERROR", str(e))
 
     def check_orders(self):
-        """Check for new orders and process them using FiverrAutonomousManager."""
+        """Check for new orders and route them to appropriate business agents."""
         if not self._init_fiverr_manager():
             return
 
         try:
-            num_orders = self.fiverr_manager.check_active_orders()
+            # 1. Get active orders requiring attention
+            active_orders = self.fiverr_manager.get_active_orders_details()
 
-            if num_orders > 0:
-                self.core.log_activity("fiverr", "ORDERS_FOUND", f"{num_orders} active orders")
-                # TODO: Process orders and update status
-            elif num_orders == 0:
-                self.core.log_activity("fiverr", "ORDERS_CHECK", "No active orders")
-            else:
-                self.core.log_activity("fiverr", "ORDER_CHECK_ERROR", "Scan failed")
+            if not active_orders:
+                self.core.log_activity("fiverr", "ORDERS_CHECK", "No active orders requiring attention")
+                return
+
+            self.core.log_activity("fiverr", "ORDERS_FOUND", f"{len(active_orders)} orders to process")
+
+            for order in active_orders:
+                try:
+                    gig_title = order['gig_title']
+                    buyer = order['buyer']
+                    url = order['url']
+
+                    self.core.log_activity("fiverr", "ROUTING", f"Routing order '{gig_title}' from {buyer}")
+
+                    # 2. Resolve Business Orchestrator
+                    orchestrator = self.core.get_or_create_business(gig_title)
+
+                    response_text = ""
+
+                    if orchestrator and BUSINESS_LIB_AVAILABLE:
+                        # 3. Create Task for Agents
+                        task_desc = f"Process new Fiverr order from {buyer} for '{gig_title}'. Current Status: {order['status']}."
+
+                        # Decide which agent handles this. Usually SUPPORT or FULFILLMENT.
+                        # For initial contact, SUPPORT is good.
+                        task = AutonomousTask(
+                            task_id=f"fiverr_order_{int(time.time())}",
+                            role=AgentRole.SUPPORT,
+                            description=task_desc,
+                            priority=10
+                        )
+
+                        # Find the agent
+                        agent = next((a for a in orchestrator.agents.values() if a.role == AgentRole.SUPPORT), None)
+
+                        if agent:
+                            self.core.log_activity("fiverr", "AGENT_ASSIGNED", f"Assigned to {agent.agent_id}")
+
+                            # Execute task (Sync wrapper for async)
+                            # In a real async system, we would await. Here we use asyncio.run
+                            result = asyncio.run(agent.execute_task(task))
+
+                            if result['success']:
+                                # Construct a response based on the agent's action
+                                # The agent's _plan_support returns steps, but we need a message.
+                                # Ideally, the agent returns a message.
+                                # For now, we fallback to LLM using the agent's context.
+                                pass
+
+                        # 4. Generate Response (using LLM with business context)
+                        # We use the Orchestrator's context to inform the LLM
+                        context = {
+                            "business": orchestrator.business_concept,
+                            "role": "Support Agent",
+                            "order_status": order['status'],
+                            "agent_plan": "Reviewing order details and preparing for fulfillment."
+                        }
+                    else:
+                        self.core.log_activity("fiverr", "ROUTING_FAILED", f"No business found for '{gig_title}'")
+                        context = {"order_status": order['status']}
+
+                    if self.llm_engine:
+                        response_text = self.llm_engine.generate_response(
+                            order['last_message'] or "New Order",
+                            buyer,
+                            context=context
+                        )
+                    else:
+                        response_text = f"Hi {buyer}, thanks for your order! I'll get started right away."
+
+                    # 5. Send Reply
+                    if response_text:
+                        self.fiverr_manager.send_reply(url, response_text)
+                        self.core.log_activity("fiverr", "REPLY_SENT", f"Replied to {buyer}")
+
+                except Exception as e:
+                    self.core.log_activity("fiverr", "ORDER_PROC_ERROR", f"Failed to process {order.get('url')}: {e}")
 
         except Exception as e:
             self.core.log_activity("fiverr", "ORDER_CHECK_ERROR", str(e))

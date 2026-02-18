@@ -4,7 +4,7 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 """
 from fastapi import FastAPI, Depends, HTTPException, status, Request, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime, timedelta
@@ -27,12 +27,10 @@ from .integrations import IntegrationFactory
 from .self_healing import build_self_healing_orchestrator, self_healing_enabled
 from pydantic import BaseModel
 try:
-    from pydantic import EmailStr as _EmailStr  # type: ignore
-    from pydantic.networks import import_email_validator  # type: ignore
-    import_email_validator()
-    EmailStr = _EmailStr
-except Exception:  # pragma: no cover
-    EmailStr = str  # type: ignore
+    import email_validator  # noqa: F401
+    from pydantic import EmailStr
+except ImportError:
+    EmailStr = str
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -41,10 +39,20 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# CORS configuration
+# Read allowed origins from environment variable, default to empty list for security
+cors_origins_str = os.getenv("CORS_ORIGINS", "")
+if cors_origins_str:
+    allow_origins = [origin.strip() for origin in cors_origins_str.split(",") if origin.strip()]
+else:
+    # In production, we should default to empty list.
+    # For development, the user should set CORS_ORIGINS in .env
+    allow_origins = []
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure for production
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -223,7 +231,7 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
             metadata={"source": "better_business_builder"}
         )
         new_user.stripe_customer_id = stripe_customer.id
-    except:
+    except Exception:
         pass  # Continue without Stripe if it fails
 
     db.add(new_user)
@@ -659,9 +667,17 @@ async def activate_license(
 # Run application
 if __name__ == "__main__":
     import os
+
+    # Secure defaults: debug mode disabled, environment is production
+    debug_mode = os.getenv("DEBUG", "false").lower() == "true"
+    environment = os.getenv("ENVIRONMENT", "production").lower()
+
+    # Only enable reload in development environment
+    should_reload = debug_mode or environment == "development"
+
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
         port=int(os.getenv("PORT", 8000)),
-        reload=True
+        reload=should_reload
     )

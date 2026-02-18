@@ -11,7 +11,9 @@ try:
     from scrapingbee import ScrapingBeeClient
     SCRAPINGBEE_AVAILABLE = True
 except ImportError:
-    ScrapingBeeClient = None
+    class ScrapingBeeClient:
+        def __init__(self, *args, **kwargs): pass
+        def get(self, *args, **kwargs): return type('Response', (), {'ok': False, 'status_code': 503})()
     SCRAPINGBEE_AVAILABLE = False
 
 from ..ech0_service import ECH0Service
@@ -22,7 +24,10 @@ class MarketResearch:
     """
 
     def __init__(self, api_key: str):
-        self.client = ScrapingBeeClient(api_key=api_key)
+        if SCRAPINGBEE_AVAILABLE:
+            self.client = ScrapingBeeClient(api_key=api_key)
+        else:
+            self.client = None
         self.ech0_service = ECH0Service()
 
     async def scrape_competitors(self, urls: List[str]) -> Dict[str, str]:
@@ -36,11 +41,14 @@ class MarketResearch:
                 results[url] = await self.ech0_service.scrape_url(url)
             except Exception:
                 # Fallback to ScrapingBee
-                response = self.client.get(url)
-                if response.ok:
-                    results[url] = response.text
+                if self.client:
+                    response = self.client.get(url)
+                    if response.ok:
+                        results[url] = response.text
+                    else:
+                        results[url] = f"Error: {response.status_code}"
                 else:
-                    results[url] = f"Error: {response.status_code}"
+                    results[url] = "Error: ScrapingBee not available"
         return results
 
     async def google_search(self, query: str) -> Dict:
@@ -52,10 +60,12 @@ class MarketResearch:
             return await self.ech0_service.google_search(query)
         except Exception:
             # Fallback to ScrapingBee
-            response = self.client.get(
-                "https://www.google.com/search",
-                params={"q": query}
-            )
-            if response.ok:
-                return response.json()
-            return {"error": response.status_code}
+            if self.client:
+                response = self.client.get(
+                    "https://www.google.com/search",
+                    params={"q": query}
+                )
+                if response.ok:
+                    return response.json()
+                return {"error": response.status_code}
+            return {"error": "ScrapingBee not available"}

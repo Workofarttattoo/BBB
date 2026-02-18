@@ -7,7 +7,7 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
-from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text
+from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text, func, case
 
 from .database import get_db, User, Base
 from .auth import get_current_user
@@ -175,24 +175,25 @@ async def get_license_status(
 
     # Get agreement
     agreement = db.query(LicenseAgreement).filter(
-        LicenseAgreement.user_id == current_user.id,
+        LicenseAgreement.user_id == str(current_user.id),
         LicenseAgreement.status == "active"
     ).first()
 
-    # Get revenue reports
-    reports = db.query(RevenueReport).filter(
-        RevenueReport.user_id == current_user.id
-    ).all()
+    # Get revenue reports aggregation
+    report_stats = db.query(
+        func.sum(RevenueReport.gross_revenue),
+        func.sum(RevenueReport.revenue_share_owed),
+        func.sum(case((RevenueReport.status == "paid", func.coalesce(RevenueReport.payment_amount, 0.0)), else_=0.0)),
+        func.count(case(((RevenueReport.status == "pending") & (RevenueReport.payment_due_date < datetime.utcnow()), 1), else_=None))
+    ).filter(
+        RevenueReport.user_id == str(current_user.id)
+    ).first()
 
-    total_reported = sum(r.gross_revenue for r in reports)
-    total_owed = sum(r.revenue_share_owed for r in reports)
-    total_paid = sum(r.payment_amount or 0.0 for r in reports if r.status == "paid")
+    total_reported = report_stats[0] or 0.0
+    total_owed = report_stats[1] or 0.0
+    total_paid = report_stats[2] or 0.0
+    overdue_count = report_stats[3] or 0
     outstanding = total_owed - total_paid
-
-    overdue_count = len([
-        r for r in reports
-        if r.status == "pending" and r.payment_due_date < datetime.utcnow()
-    ])
 
     # Calculate days remaining in trial
     days_remaining = None
@@ -233,7 +234,7 @@ async def accept_revenue_share(
 
     # Check if user already has an active agreement
     existing = db.query(LicenseAgreement).filter(
-        LicenseAgreement.user_id == current_user.id,
+        LicenseAgreement.user_id == str(current_user.id),
         LicenseAgreement.status == "active"
     ).first()
 
@@ -245,7 +246,7 @@ async def accept_revenue_share(
 
     # Create agreement record
     agreement = LicenseAgreement(
-        user_id=current_user.id,
+        user_id=str(current_user.id),
         agreement_type="revenue_share",
         accepted_at=datetime.utcnow(),
         ip_address=http_request.client.host,
@@ -290,7 +291,7 @@ async def submit_revenue_report(
 
     # Check if report already exists for this month
     existing = db.query(RevenueReport).filter(
-        RevenueReport.user_id == current_user.id,
+        RevenueReport.user_id == str(current_user.id),
         RevenueReport.report_month == request.report_month
     ).first()
 
@@ -324,7 +325,7 @@ async def submit_revenue_report(
 
     # Create report
     report = RevenueReport(
-        user_id=current_user.id,
+        user_id=str(current_user.id),
         report_month=request.report_month,
         gross_revenue=gross_revenue,
         revenue_share_owed=revenue_share_owed,
@@ -362,7 +363,7 @@ async def get_revenue_reports(
     """Get all revenue reports for current user."""
 
     reports = db.query(RevenueReport).filter(
-        RevenueReport.user_id == current_user.id
+        RevenueReport.user_id == str(current_user.id)
     ).order_by(RevenueReport.report_month.desc()).all()
 
     return {
@@ -442,7 +443,7 @@ async def terminate_agreement(
     """Terminate revenue share agreement (must cease using BBB)."""
 
     agreement = db.query(LicenseAgreement).filter(
-        LicenseAgreement.user_id == current_user.id,
+        LicenseAgreement.user_id == str(current_user.id),
         LicenseAgreement.status == "active"
     ).first()
 
@@ -467,7 +468,7 @@ async def terminate_agreement(
 
     # Check for outstanding payments
     outstanding = db.query(RevenueReport).filter(
-        RevenueReport.user_id == current_user.id,
+        RevenueReport.user_id == str(current_user.id),
         RevenueReport.status != "paid"
     ).all()
 
@@ -490,7 +491,7 @@ async def get_agreement_document(
     """Get signed agreement document for records."""
 
     agreement = db.query(LicenseAgreement).filter(
-        LicenseAgreement.user_id == current_user.id
+        LicenseAgreement.user_id == str(current_user.id)
     ).first()
 
     if not agreement:

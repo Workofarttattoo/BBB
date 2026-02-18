@@ -5,7 +5,8 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 from datetime import datetime, timedelta
 from typing import Optional
 import jwt
-from hashlib import sha256
+import secrets
+import hashlib
 from hmac import compare_digest
 
 try:
@@ -30,18 +31,50 @@ if CryptContext:  # pragma: no cover - skip when passlib isn't available
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 else:  # pragma: no cover - exercised when passlib is unavailable
     class _SimpleCryptContext:
-        """Lightweight SHA-256 based password hashing fallback."""
+        """Secure PBKDF2-HMAC-SHA256 based password hashing fallback."""
+
+        # Parameters for PBKDF2
+        ALGO = 'pbkdf2_sha256'
+        ITERATIONS = 100000
+        SALT_SIZE = 16
 
         @staticmethod
         def hash(password: str) -> str:
-            return sha256(password.encode("utf-8")).hexdigest()
+            """Hash a password using PBKDF2-HMAC-SHA256 with a random salt."""
+            salt = secrets.token_hex(_SimpleCryptContext.SALT_SIZE)
+            pw_hash = hashlib.pbkdf2_hmac(
+                'sha256',
+                password.encode('utf-8'),
+                salt.encode('utf-8'),
+                _SimpleCryptContext.ITERATIONS
+            ).hex()
+            return f"{_SimpleCryptContext.ALGO}${_SimpleCryptContext.ITERATIONS}${salt}${pw_hash}"
 
         @staticmethod
         def verify(plain_password: str, hashed_password: str) -> bool:
-            return compare_digest(
-                _SimpleCryptContext.hash(plain_password),
-                hashed_password
-            )
+            """Verify a password against a hash."""
+            try:
+                # Parse secure format: algo$iterations$salt$hash
+                parts = hashed_password.split('$')
+                if len(parts) != 4:
+                    return False
+
+                algo, iterations, salt, pw_hash = parts
+
+                if algo != _SimpleCryptContext.ALGO:
+                    return False
+
+                iterations = int(iterations)
+                new_hash = hashlib.pbkdf2_hmac(
+                    'sha256',
+                    plain_password.encode('utf-8'),
+                    salt.encode('utf-8'),
+                    iterations
+                ).hex()
+
+                return compare_digest(pw_hash, new_hash)
+            except (ValueError, TypeError):
+                return False
 
     pwd_context = _SimpleCryptContext()
 
