@@ -1,198 +1,145 @@
 """
-AUTONOMOUS BUSINESS RUNNER
-Main engine for 10-year autonomous business operation.
+AUTONOMOUS BUSINESS RUNNER - REAL WORLD ENGINE
+Main engine for autonomous business operation using persistent database state.
 Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
 """
 
 import argparse
 import time
 import json
-import random
 import os
 import sys
 from datetime import datetime, timedelta
+import asyncio
 
-# Configuration
-CONFIG_FILE = "autonomous_config.json"
+# Add src to Python path
+sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
+
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+
+from blank_business_builder.database import get_db_engine, get_session, Business, MetricsHistory, AgentTask, Subscription
+from blank_business_builder.config import settings
+from blank_business_builder.integrations import IntegrationFactory
+
+# Real-world constraints
+MIN_PRICE = 5.0
+MAX_CONVERSION_RATE = 0.15 # 15%
 
 class AutonomousBusinessRunner:
-    def __init__(self, years, mode):
-        self.years = years
+    def __init__(self, mode='production'):
         self.mode = mode
-        self.config = self.load_config()
-        self.revenue = 0
-        self.customers = 0
-        self.features = 0
-        self.start_date = datetime.now()
-        self.yearly_revenue = {}
-
-    def load_config(self):
-        if os.path.exists(CONFIG_FILE):
-            with open(CONFIG_FILE, 'r') as f:
-                try:
-                    return json.load(f)
-                except json.JSONDecodeError:
-                    return {}
-        return {}
+        self.engine = get_db_engine(settings.DATABASE_URL)
+        self.log_dir = "./FlowState/logs"
+        os.makedirs(self.log_dir, exist_ok=True)
+        self.stripe_service = IntegrationFactory.get_stripe_service() if hasattr(IntegrationFactory, 'get_stripe_service') else None
 
     def log(self, message):
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{timestamp}] {message}")
+        with open(f"{self.log_dir}/autonomous_business_real.log", "a") as f:
+            f.write(f"[{timestamp}] {message}\n")
 
-        # Log to file if in production
-        if self.mode == 'production':
-            log_dir = "./FlowState/logs"
-            os.makedirs(log_dir, exist_ok=True)
-            with open(f"{log_dir}/autonomous_business.log", "a") as f:
-                f.write(f"[{timestamp}] {message}\n")
+    def execute_daily_operations(self, db: Session, business: Business):
+        """
+        Execute daily operations for a single business.
+        Updates DB state based on REAL metrics and business rules.
+        """
+        self.log(f"Processing Business: {business.business_name} ({business.id})")
 
-    def simulate_day(self, day_number):
-        # Simulation logic based on projections
-        # Year 1: 1,800 customers, $222K revenue
-        # Year 2: 4,800 customers, $604K revenue
-        # Year 5: 15,100 customers, $2.1M revenue
-        # Year 10: 88,750 customers, $14.3M revenue
+        # 1. Check Real Marketing Activity
+        # Count completed marketing tasks in the last 24h
+        marketing_tasks = db.query(AgentTask).filter(
+            AgentTask.business_id == business.id,
+            AgentTask.agent_role == 'marketer',
+            AgentTask.status == 'completed',
+            AgentTask.completed_at >= datetime.utcnow() - timedelta(days=1)
+        ).count()
 
-        year = (day_number - 1) // 365 + 1
+        # 2. Check Real Leads
+        # In a real system, leads come from landing page signups (User table) or CRM.
+        # For now, we check if we have any *new* potential customers in the User table linked to this business context?
+        # Since `Business` doesn't link to `User` as customers directly (only owner),
+        # we rely on `business.total_leads` which should be updated by the API/Webhooks.
+        # If no external update happened, new_leads is 0.
+        # This is REAL WORLD behavior: No marketing/traffic = No leads.
+        new_leads = 0
 
-        # Growth factors (calibrated to match projections roughly)
-        if year == 1:
-            # Target 1800 by end of year
-            daily_growth = 1800 / 365
-            new_customers = int(random.normalvariate(daily_growth, 2))
-            if new_customers < 0: new_customers = 0
-        elif year == 2:
-            # Target 4800 (gain 3000)
-            daily_growth = 3000 / 365
-            new_customers = int(random.normalvariate(daily_growth, 3))
-        elif year <= 5:
-            # Target 15100 (gain ~10000 over 3 years) -> ~3300/year
-            daily_growth = 3400 / 365
-            new_customers = int(random.normalvariate(daily_growth, 5))
-        else:
-            # Target 88750 (gain ~73000 over 5 years) -> ~14600/year
-            daily_growth = 14700 / 365
-            new_customers = int(random.normalvariate(daily_growth, 15))
+        # 3. Check Real Subscriptions (Stripe)
+        # We query the `Subscription` table which should be synced with Stripe via webhooks.
+        active_subs = db.query(Subscription).filter(
+            Subscription.status == 'active'
+            # In a multi-tenant system, Subscription should link to Business, but currently links to User.
+            # Assuming Business Owner's subscriptions for now, or we'd need to link Sub -> Business.
+            # For this "Business Runner", we track the *Business's* customers.
+            # The current model `Subscription` is for the *User* paying for the platform, not the Business's customers.
+            # We'll use `business.total_customers` as the source of truth, updated by external sales logic.
+        ).count()
 
-        if new_customers < 0: new_customers = 0
-        self.customers += new_customers
+        # If we have a Stripe integration for the *Business's* customers (Connect), we'd query that.
+        # Without it, we rely on what's in the DB.
+        current_customers = business.total_customers or 0
 
-        # Revenue calculation (approximate)
-        # MRR = Customers * ARPU. ARPU starts at ~$10 and grows.
-        # Year 1: $18K MRR / 1800 cust = $10
-        # Year 10: $1.2M MRR / 88750 cust = $13.5
+        # 4. Revenue (Synced from Stripe via Deposit System)
+        # We do NOT calculate revenue here. We read it.
+        daily_revenue = 0.0 # Revenue is an accumulation, not a daily rate unless we calculate daily run rate.
+        # We can calculate "Estimated Daily Revenue" based on active customers * ARPU if we want a metric.
+        # But `total_revenue` is historical.
 
-        arpu = 10 + (year * 0.35) # Slowly increasing ARPU
-        mrr = self.customers * arpu
-        daily_revenue = mrr / 30
-        self.revenue += daily_revenue
+        # 5. Record History
+        # We record the snapshot of the business state.
+        history = MetricsHistory(
+            business_id=business.id,
+            revenue=business.total_revenue, # Current total
+            customers=current_customers,
+            leads=business.total_leads,
+            conversion_rate=business.conversion_rate,
+            tasks_completed=marketing_tasks
+        )
+        db.add(history)
 
-        # Track yearly revenue
-        self.yearly_revenue[year] = self.yearly_revenue.get(year, 0) + daily_revenue
-
-        # Feature development
-        if random.random() < 0.7: # ~250 features/year
-            self.features += 1
-
-        return {
-            "day": day_number,
-            "year": year,
-            "new_customers": new_customers,
-            "total_customers": self.customers,
-            "daily_revenue": daily_revenue,
-            "total_revenue": self.revenue,
-            "features": self.features
-        }
-
-    def run_simulation(self):
-        print(f"🚀 Starting {self.years}-Year Simulation...")
-        print("==================================================")
-
-        total_days = self.years * 365
-
-        for day in range(1, total_days + 1):
-            stats = self.simulate_day(day)
-
-            # Print yearly summary
-            if day % 365 == 0:
-                year = day // 365
-                annual_rev = self.yearly_revenue.get(year, 0)
-                print(f"✅ Year {year} Complete:")
-                print(f"   • Customers: {stats['total_customers']:,}")
-                print(f"   • Annual Revenue: ${annual_rev:,.2f}")
-                print(f"   • Total Revenue: ${stats['total_revenue']:,.2f}")
-                print(f"   • Features Built: {stats['features']}")
-                print("--------------------------------------------------")
-                time.sleep(0.1) # Fast forward effect
-
-        print("\n🏆 Simulation Complete!")
-        print(f"Total Revenue over {self.years} years: ${self.revenue:,.2f}")
+        self.log(f"  -> State: {current_customers} Cust, ${business.total_revenue} Total Rev")
 
     def run_production(self):
-        self.log(f"🚀 Starting PRODUCTION mode for {self.years} years")
-        self.log("Initializing ECH0 Prime...")
-        self.log("Initializing ECH0 Vision...")
-        self.log("Connecting to Temporal Bridge...")
+        self.log(f"🚀 Starting REAL-WORLD Business Runner")
+        self.log(f"Database: {settings.DATABASE_URL}")
 
-        # Check API keys
-        if not self.config.get('stripe_secret_key'):
-            self.log("⚠️  WARNING: Stripe key not found. Payments may fail.")
+        while True:
+            try:
+                db = get_session(self.engine)
+                # Fetch active businesses
+                businesses = db.query(Business).filter(Business.status == 'active').all()
 
-        # Main loop
-        day = 1
-        while day <= self.years * 365:
-            current_time = datetime.now()
-            self.log(f"Starting operations for Day {day}")
+                if not businesses:
+                    self.log("No active businesses found. Sleeping...")
+                else:
+                    self.log(f"Found {len(businesses)} active businesses.")
+                    for biz in businesses:
+                        self.execute_daily_operations(db, biz)
 
-            # 1. Acquire customers
-            self.log("• Acquiring customers (SEO, Ads, Cold Calls)...")
-            # Call actual APIs here (mocked for safety in this environment)
+                    db.commit()
+                    self.log("✅ Daily operations cycle complete. Updates committed.")
 
-            # 2. Process payments
-            self.log("• Processing payments via Stripe...")
+                db.close()
 
-            # 3. Develop features
-            self.log("• Developing features based on usage data...")
+                # Sleep for a significant time in production (e.g. 1 hour)
+                # For responsiveness in this environment, we use 60s.
+                time.sleep(60)
 
-            # 4. Handle support
-            self.log("• Handling support tickets...")
-
-            # 5. Optimize
-            self.log("• Optimizing conversion rates (ECH0 Prime)...")
-
-            # 6. Monitor
-            self.log("• Monitoring system health (ECH0 Vision)...")
-
-            # 7. Backup
-            self.log("• Backing up data to Temporal Bridge...")
-
-            # 8. Report
-            self.log(f"✅ Day {day} operations complete.")
-
-            self.log("Sleeping for 24 hours...")
-            # For testing purposes, if in a non-daemon mode, we might want to exit or sleep short
-            # But the requirement is autonomous run.
-            # I will use a shorter sleep for demonstration if it's run interactively, but assume production usage.
-            # Since I can't block the agent indefinitely, I'll add a check.
-            if os.environ.get("AUTONOMOUS_TEST_MODE"):
-                break
-
-            time.sleep(86400)
-            day += 1
+            except Exception as e:
+                self.log(f"❌ Error in runner loop: {e}")
+                time.sleep(60)
 
 def main():
-    parser = argparse.ArgumentParser(description='Autonomous Business Runner')
-    parser.add_argument('--years', type=int, default=10, help='Number of years to run')
-    parser.add_argument('--mode', type=str, choices=['simulation', 'production'], default='simulation', help='Deployment mode')
-    # Allow unknown args to pass for flexibility
-    args, unknown = parser.parse_known_args()
+    parser = argparse.ArgumentParser(description='Autonomous Business Runner - Real World')
+    parser.add_argument('--mode', type=str, default='production', help='Execution mode')
+    args = parser.parse_args()
 
-    runner = AutonomousBusinessRunner(args.years, args.mode)
-
-    if args.mode == 'simulation':
-        runner.run_simulation()
-    else:
+    runner = AutonomousBusinessRunner(mode=args.mode)
+    try:
         runner.run_production()
+    except KeyboardInterrupt:
+        print("\nRunner stopped by user.")
 
 if __name__ == "__main__":
     main()
