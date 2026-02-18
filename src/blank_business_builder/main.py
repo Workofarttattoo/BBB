@@ -233,7 +233,7 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
             metadata={"source": "better_business_builder"}
         )
         new_user.stripe_customer_id = stripe_customer.id
-    except:
+    except Exception:
         pass  # Continue without Stripe if it fails
 
     db.add(new_user)
