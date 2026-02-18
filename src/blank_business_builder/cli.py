@@ -13,6 +13,9 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+# Ensure configuration is loaded
+from .config import settings
+
 from .onboarding import OnboardingAssistant
 
 

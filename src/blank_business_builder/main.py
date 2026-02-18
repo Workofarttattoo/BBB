@@ -13,6 +13,9 @@ import uvicorn
 import os
 from pathlib import Path
 
+# Load configuration (ensure environment variables are set)
+from .config import settings
+
 from .database import get_db, User, Business, BusinessPlan, MarketingCampaign
 from .auth import (
     AuthService,

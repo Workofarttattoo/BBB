@@ -21,12 +21,16 @@ from pydantic import BaseModel
 from .business_data import BusinessIdea, default_ideas
 from .fiduciary import FiduciaryManager
 from .features.market_research import MarketResearch
+from .ech0_service import ECH0Service
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Business Builder API")
+
+# Initialize Services
+ech0 = ECH0Service()
 
 # Allow CORS for development
 app.add_middleware(
@@ -58,6 +62,9 @@ class BypassRequest(BaseModel):
 
 class BusinessSelection(BaseModel):
     business_name: str
+
+class ChatRequest(BaseModel):
+    message: str
 
 # --- State Management (Simple In-Memory + JSON Sync) ---
 STATE_FILE = "business_state.json"
@@ -275,3 +282,13 @@ async def get_dashboard():
         "user_share": state.get("wallet", 0.0),
         "license": license_info
     }
+
+@app.post("/api/chat")
+async def chat_with_echo(request: ChatRequest):
+    """Chat with Echo via Ollama."""
+    try:
+        response = await ech0.chat(request.message)
+        return {"response": response}
+    except Exception as e:
+        logger.error(f"Chat error: {e}")
+        return {"response": "I'm having trouble connecting to my brain right now. Please check if Ollama is running."}
