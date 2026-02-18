@@ -945,8 +945,7 @@ class AutonomousBusinessOrchestrator:
 
     async def _assign_tasks(self) -> None:
         """Assign pending tasks to appropriate agents."""
-        # Optimization: Pre-compute completed task IDs for O(1) lookup
-        completed_task_ids = {t.task_id for t in self.task_queue if t.status == TaskStatus.COMPLETED}
+        # Use existing set of completed task IDs for O(1) lookup
 
         for task in self.task_queue:
             if task.status != TaskStatus.PENDING:
@@ -954,7 +953,7 @@ class AutonomousBusinessOrchestrator:
 
             # Check dependencies
             if task.dependencies:
-                deps_complete = all(dep_id in completed_task_ids for dep_id in task.dependencies)
+                deps_complete = all(dep_id in self.completed_task_ids for dep_id in task.dependencies)
                 if not deps_complete:
                     task.status = TaskStatus.BLOCKED
                     continue

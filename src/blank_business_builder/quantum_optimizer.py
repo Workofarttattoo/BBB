@@ -53,28 +53,24 @@ class QuantumOptimizer:
         profit_per_full_month = idea.monthly_profit
         return max(0.0, profit_per_full_month * effective_months - idea.startup_cost)
 
-    def _amplitudes(self, profits: Sequence[float]) -> List[float]:
+    def _calculate_probabilities(self, profits: Sequence[float]) -> List[float]:
         clipped = [max(0.0, p) for p in profits]
         total = sum(clipped)
+        count = len(profits)
         if total == 0:
-            # fallback to uniform amplitudes
-            return [1.0 / sqrt(len(profits)) for _ in profits]
-        amplitudes = [sqrt(p / total) for p in clipped]
-        norm = sqrt(sum(a * a for a in amplitudes))
-        if norm == 0:
-            return [1.0 / sqrt(len(profits)) for _ in profits]
-        return [a / norm for a in amplitudes]
+            return [1.0 / count if count > 0 else 0.0 for _ in profits]
+        return [p / total for p in clipped]
 
     def evaluate(self, ideas: Iterable[BusinessIdea], months: int = 3) -> List[OptimizationResult]:
         ideas_list = list(ideas)
         if not ideas_list:
             return []
         profits = [self.project_profit(idea, months=months) for idea in ideas_list]
-        amplitudes = self._amplitudes(profits)
+        probabilities = self._calculate_probabilities(profits)
         results: List[OptimizationResult] = []
-        for idea, profit, amplitude in zip(ideas_list, profits, amplitudes):
+        for idea, profit, probability in zip(ideas_list, profits, probabilities):
             monthly_average = profit / months if months else 0.0
-            success_probability = round(amplitude ** 2, 4)
+            success_probability = round(probability, 4)
             meets_floor = monthly_average >= self.monthly_floor
             meets_target = profit >= self.quarter_target
             results.append(
