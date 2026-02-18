@@ -1,131 +1,146 @@
 #!/usr/bin/env python3
 """
-ECH0 LLM ENGINE - Autonomous Communication Intelligence
+ECH0 LLM Engine - Cloud Inference Edition
 Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
 
-This engine powers autonomous responses for:
-- Fiverr messages
-- Email inquiries
-- Social media comments
-
-It uses OpenAI's GPT models (defaulting to gpt-4) to generate context-aware,
-human-like responses that maintain the persona of a professional freelancer/agency.
+Provides LLM capabilities via remote cloud inference (Hugging Face Spaces, Together AI)
+without requiring heavy local dependencies like 'openai' or 'torch'.
 """
 
 import os
-import sys
 import json
-import logging
+import urllib.request
+import urllib.error
 from typing import Optional, Dict, Any
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s [LLM] %(message)s')
-logger = logging.getLogger(__name__)
-
-try:
-    from openai import OpenAI
-    OPENAI_AVAILABLE = True
-except ImportError:
-    OPENAI_AVAILABLE = False
-    logger.warning("OpenAI library not found. Running in fallback mode.")
-
 
 class ECH0LLMEngine:
     """
-    LLM Engine for generating autonomous responses.
-    Handles context, persona, and fallback logic.
+    LLM Engine for generating autonomous responses via cloud APIs.
+    Supports:
+    1. Hugging Face Spaces (Gradio API)
+    2. Together AI (Serverless Inference)
+    3. Custom HTTP Endpoints
     """
 
-    def __init__(self):
-        self.api_key = os.getenv("OPENAI_API_KEY")
-        self.model = os.getenv("OPENAI_MODEL", "gpt-4")
-        self.client = None
+    def __init__(self, provider: str = "huggingface",
+                 endpoint: str = "https://workofarttattoo-echo-prime-agi.hf.space/api/predict",
+                 api_key: Optional[str] = None):
 
-        if OPENAI_AVAILABLE and self.api_key:
-            try:
-                self.client = OpenAI(api_key=self.api_key)
-                logger.info(f"ECH0 LLM Engine initialized (Model: {self.model})")
-            except Exception as e:
-                logger.error(f"Failed to initialize OpenAI client: {e}")
-        else:
-            if not OPENAI_AVAILABLE:
-                logger.warning("OpenAI library missing. Install via: pip install openai")
-            if not self.api_key:
-                logger.warning("OPENAI_API_KEY environment variable not set.")
+        self.provider = provider
+        self.endpoint = endpoint
+        self.api_key = api_key or os.getenv("ECH0_LLM_API_KEY") or os.getenv("TOGETHER_API_KEY")
 
-    def generate_response(
-        self,
-        message_text: str,
-        sender_name: str,
-        context: Optional[Dict[str, Any]] = None
-    ) -> str:
+        print(f"✓ ECH0 LLM Engine initialized (Provider: {self.provider})")
+        print(f"  Endpoint: {self.endpoint}")
+
+    def generate_response(self, user_message: str, context: str = "") -> str:
         """
-        Generate a response to a message using LLM.
-
-        Args:
-            message_text: The content of the received message
-            sender_name: The name of the sender
-            context: Optional dictionary with extra context (e.g. order details)
-
-        Returns:
-            str: Generated response
+        Generate a response to a user message using the configured cloud provider.
         """
-        # Fallback response if LLM is unavailable
-        fallback_response = (
-            f"Hi {sender_name}, thanks for your message! "
-            "I've received your inquiry and will get back to you shortly with more details. "
-            "- ECH0 Team"
-        )
-
-        if not self.client:
-            logger.info("LLM unavailable, using fallback response.")
-            return fallback_response
+        full_prompt = self._construct_prompt(user_message, context)
 
         try:
-            # Construct system prompt
-            system_prompt = (
-                "You are an expert freelancer and business consultant working for 'Corporation of Light'. "
-                "Your name is ECH0. You are professional, concise, and helpful. "
-                "You provide high-quality services in software development, AI integration, and business automation. "
-                "Do not mention you are an AI unless asked directly. "
-                "Keep responses under 100 words unless the query requires a detailed technical explanation. "
-                "Maintain a polite and confident tone."
-            )
-
-            # Add context if provided
-            context_str = ""
-            if context:
-                context_str = f"\nContext: {json.dumps(context)}"
-
-            user_prompt = f"Message from {sender_name}:\n{message_text}{context_str}\n\nDraft a response:"
-
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=0.7,
-                max_tokens=300
-            )
-
-            generated_text = response.choices[0].message.content.strip()
-            logger.info(f"Generated response for {sender_name} ({len(generated_text)} chars)")
-            return generated_text
+            if self.provider == "huggingface":
+                return self._call_huggingface_space(full_prompt)
+            elif self.provider == "together":
+                return self._call_together_ai(full_prompt)
+            else:
+                return self._call_generic_api(full_prompt)
 
         except Exception as e:
-            logger.error(f"Error generating response: {e}")
-            return fallback_response
+            print(f"[ERROR] LLM generation failed ({self.provider}): {e}")
+            return self._mock_fallback_response()
 
-# Usage verification
+    def _construct_prompt(self, user_message: str, context: str) -> str:
+        """Construct the prompt based on context."""
+        system_instruction = (
+            "You are ECH0, an autonomous business assistant. "
+            "Respond professionally and concisely. "
+        )
+        if context:
+            return f"{system_instruction}\nContext: {context}\nUser: {user_message}\nAssistant:"
+        return f"{system_instruction}\nUser: {user_message}\nAssistant:"
+
+    def _call_huggingface_space(self, prompt: str) -> str:
+        """
+        Call a Hugging Face Space via Gradio API.
+        Expected endpoint: .../api/predict
+        """
+        # specific payload for Gradio
+        # Note: This depends on how the specific space is configured (inputs/outputs)
+        # Defaulting to a single string input
+        payload = {
+            "data": [prompt]
+        }
+
+        response_data = self._make_request(self.endpoint, payload)
+
+        # Gradio usually returns {"data": ["response"]}
+        if "data" in response_data and isinstance(response_data["data"], list):
+            return response_data["data"][0]
+        return str(response_data)
+
+    def _call_together_ai(self, prompt: str) -> str:
+        """
+        Call Together AI Inference API.
+        """
+        if not self.api_key:
+            raise ValueError("API key required for Together AI")
+
+        payload = {
+            "model": "togethercomputer/llama-2-70b-chat", # Default, can be changed
+            "prompt": prompt,
+            "max_tokens": 200,
+            "temperature": 0.7,
+            "top_p": 0.7,
+            "top_k": 50,
+            "repetition_penalty": 1
+        }
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}"
+        }
+
+        response_data = self._make_request(self.endpoint, payload, headers)
+
+        # Together AI format: {"output": {"choices": [{"text": "response"}]}}
+        if "output" in response_data and "choices" in response_data["output"]:
+            return response_data["output"]["choices"][0]["text"].strip()
+        return str(response_data)
+
+    def _call_generic_api(self, prompt: str) -> str:
+        """Generic JSON API call."""
+        payload = {"prompt": prompt}
+        response_data = self._make_request(self.endpoint, payload)
+        return str(response_data)
+
+    def _make_request(self, url: str, payload: Dict[str, Any], headers: Dict[str, str] = None) -> Dict[str, Any]:
+        """
+        Helper to make HTTP POST requests using standard library.
+        """
+        if not headers:
+            headers = {}
+
+        headers["Content-Type"] = "application/json"
+        headers["User-Agent"] = "ECH0-Autonomous-Agent/1.0"
+
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(url, data=data, headers=headers)
+
+        with urllib.request.urlopen(req, timeout=30) as response:
+            return json.loads(response.read().decode("utf-8"))
+
+    def _mock_fallback_response(self) -> str:
+        """Fallback response when cloud inference fails."""
+        print("[INFO] Using mock fallback response due to cloud error.")
+        return (
+            "Thank you for your message. I have received your inquiry and "
+            "will get back to you shortly. (Automated Response)"
+        )
+
 if __name__ == "__main__":
-    print("Initializing ECH0 LLM Engine...")
-    engine = ECH0LLMEngine()
-
-    # Test generation (mock)
-    test_msg = "Hi, do you offer Python development services?"
-    test_sender = "Client123"
-
-    print(f"\nTest Message: {test_msg}")
-    response = engine.generate_response(test_msg, test_sender)
-    print(f"Response: {response}")
+    # Simple test
+    # To test remote, set env vars: ECH0_LLM_PROVIDER, ECH0_LLM_ENDPOINT, ECH0_LLM_API_KEY
+    provider = os.getenv("ECH0_LLM_PROVIDER", "huggingface")
+    engine = ECH0LLMEngine(provider=provider)
+    print(f"\nTest Response:\n{engine.generate_response('Hello, are you online?')}")

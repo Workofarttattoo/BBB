@@ -10,7 +10,13 @@ try:
     import stripe
     STRIPE_AVAILABLE = True
 except ImportError:
-    stripe = None
+    class MockStripe:
+        api_key = ""
+        class checkout:
+            class Session:
+                @staticmethod
+                def create(*args, **kwargs): return type('Session', (), {'url': 'http://mock.url'})()
+    stripe = MockStripe
     STRIPE_AVAILABLE = False
 
 from ..ech0_service import ECH0Service

@@ -29,16 +29,23 @@ def serialize(obj: Any) -> Any:
 
 
 def launch_gui() -> None:
-    """Launch the Business Builder GUI in default browser."""
-    gui_path = Path(__file__).parent / "business_builder_gui.html"
-
-    if not gui_path.exists():
-        print(f"[error] GUI file not found at {gui_path}")
+    """Launch the Business Builder GUI using FastAPI server."""
+    try:
+        import uvicorn
+        from .gui_server import app
+    except ImportError:
+        print("[error] Failed to import uvicorn or gui_server. Please install dependencies.")
+        print("Try: pip install uvicorn fastapi pydantic")
         return
 
-    webbrowser.open(f"file://{gui_path}")
-    print(f"[info] Business Builder GUI launched: {gui_path}")
-    print("[info] The GUI is running in your browser.")
+    print("[info] Starting Business Builder Server...")
+    print("[info] Opening http://localhost:8000 in your browser.")
+
+    # Open browser
+    webbrowser.open("http://localhost:8000")
+
+    # Run the server
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
 def main() -> None:
