@@ -6,21 +6,28 @@ import sys
 from unittest.mock import MagicMock, patch
 import pytest
 
-# Mock missing dependencies
-mock_fastapi = MagicMock()
-class MockHTTPException(Exception):
-    def __init__(self, status_code, detail=None):
-        self.status_code = status_code
-        self.detail = detail
-mock_fastapi.HTTPException = MockHTTPException
-mock_fastapi.status = MagicMock()
-mock_fastapi.status.HTTP_400_BAD_REQUEST = 400
-sys.modules['fastapi'] = mock_fastapi
+# Conditionally mock missing dependencies
+try:
+    import fastapi
+except ImportError:
+    mock_fastapi = MagicMock()
+    class MockHTTPException(Exception):
+        def __init__(self, status_code, detail=None):
+            self.status_code = status_code
+            self.detail = detail
+    mock_fastapi.HTTPException = MockHTTPException
+    mock_fastapi.status = MagicMock()
+    mock_fastapi.status.HTTP_400_BAD_REQUEST = 400
+    sys.modules['fastapi'] = mock_fastapi
 
-mock_sqlalchemy = MagicMock()
-mock_sqlalchemy.orm = MagicMock()
-sys.modules['sqlalchemy'] = mock_sqlalchemy
-sys.modules['sqlalchemy.orm'] = mock_sqlalchemy.orm
+try:
+    import sqlalchemy
+    import sqlalchemy.orm
+except ImportError:
+    mock_sqlalchemy = MagicMock()
+    mock_sqlalchemy.orm = MagicMock()
+    sys.modules['sqlalchemy'] = mock_sqlalchemy
+    sys.modules['sqlalchemy.orm'] = mock_sqlalchemy.orm
 
 from pathlib import Path
 
@@ -28,6 +35,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from blank_business_builder.payments import StripeService
+
+try:
+    from fastapi import HTTPException
+except ImportError:
+    HTTPException = sys.modules['fastapi'].HTTPException
 
 class TestStripeService:
     @pytest.fixture
@@ -59,7 +71,7 @@ class TestStripeService:
         """Test error handling when creating a customer."""
         mock_stripe.Customer.create.side_effect = mock_stripe.error.StripeError("API Error")
 
-        with pytest.raises(MockHTTPException) as exc_info:
+        with pytest.raises(HTTPException) as exc_info:
             StripeService.create_customer("test@example.com")
 
         assert exc_info.value.status_code == 400
@@ -89,7 +101,7 @@ class TestStripeService:
         """Test error handling when creating a subscription."""
         mock_stripe.Subscription.create.side_effect = mock_stripe.error.StripeError("API Error")
 
-        with pytest.raises(MockHTTPException) as exc_info:
+        with pytest.raises(HTTPException) as exc_info:
             StripeService.create_subscription("cus_123", "price_123")
 
         assert exc_info.value.status_code == 400
@@ -194,7 +206,7 @@ class TestStripeService:
         """Test error handling for invalid signature."""
         mock_stripe.Webhook.construct_event.side_effect = mock_stripe.error.SignatureVerificationError("Invalid sig")
 
-        with pytest.raises(MockHTTPException) as exc_info:
+        with pytest.raises(HTTPException) as exc_info:
             StripeService.verify_webhook_signature(b"payload", "bad_sig")
 
         assert exc_info.value.status_code == 400
@@ -204,7 +216,7 @@ class TestStripeService:
         """Test error handling for invalid payload."""
         mock_stripe.Webhook.construct_event.side_effect = ValueError("Invalid payload")
 
-        with pytest.raises(MockHTTPException) as exc_info:
+        with pytest.raises(HTTPException) as exc_info:
             StripeService.verify_webhook_signature(b"bad_payload", "sig")
 
         assert exc_info.value.status_code == 400
