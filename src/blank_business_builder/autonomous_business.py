@@ -28,6 +28,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Dict, List, Optional, Callable, Set
 import logging
+import random
 
 from .features.market_research import MarketResearch
 from .features.email_service import EmailService
@@ -37,6 +38,7 @@ from .prompt_registry import PromptRegistry
 from .semantic_framework import semantic, on, send, every
 from .ech0_service import ECH0Service
 from .hive_mind_coordinator import HiveMindCoordinator, AgentType
+from .business_data import default_ideas
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -59,6 +61,18 @@ class AgentRole(Enum):
     OSINT_SPECIALIST = "osint_specialist"  # Competitor/Market OSINT
     CREATIVE_DIRECTOR = "creative_director"  # Creative Meta Agent (Design, A/V, Music)
     ORCHESTRATOR = "orchestrator"  # Coordinates all agents
+
+    # --- Specialized Roles for 2025 Models ---
+    CRYPTO_MINER = "crypto_miner"
+    NFT_TRADER = "nft_trader"
+    SAAS_BUILDER = "saas_builder"
+    ARBITRAGE_BOT = "arbitrage_bot"
+    CONTENT_CREATOR = "content_creator"
+    DROPSHIPPER = "dropshipper"
+    TAX_PREPARER = "tax_preparer"
+    SURVEY_BOT = "survey_bot"
+    TESTER_BOT = "tester_bot"
+    QUANTUM_TRADER = "quantum_trader"
 
 
 class TaskStatus(Enum):
@@ -173,6 +187,11 @@ class Level6BusinessAgent:
                 AgentRole.META_MANAGER: AgentType.LEVEL9_OPTIMIZATION,
                 AgentRole.EXECUTIVE: AgentType.ECH0_OVERSEER,
                 AgentRole.CREATIVE_DIRECTOR: AgentType.PRODUCT,
+                # New mappings
+                AgentRole.CRYPTO_MINER: AgentType.PRODUCT,
+                AgentRole.NFT_TRADER: AgentType.ACQUISITION,
+                AgentRole.SAAS_BUILDER: AgentType.PRODUCT,
+                AgentRole.QUANTUM_TRADER: AgentType.LEVEL9_OPTIMIZATION,
             }
             self.hive_mind.register_agent(
                 self.agent_id,
@@ -269,6 +288,23 @@ class Level6BusinessAgent:
             return await self._plan_osint(task)
         elif self.role == AgentRole.CREATIVE_DIRECTOR:
             return await self._plan_creative_director(task)
+        # --- Specialized 2025 Roles ---
+        elif self.role == AgentRole.CRYPTO_MINER:
+            return await self._plan_crypto_mining(task)
+        elif self.role == AgentRole.NFT_TRADER:
+            return await self._plan_nft_trading(task)
+        elif self.role == AgentRole.SAAS_BUILDER:
+            return await self._plan_saas_building(task)
+        elif self.role == AgentRole.ARBITRAGE_BOT:
+            return await self._plan_arbitrage(task)
+        elif self.role == AgentRole.CONTENT_CREATOR:
+            return await self._plan_content_creation(task)
+        elif self.role == AgentRole.DROPSHIPPER:
+            return await self._plan_dropshipping(task)
+        elif self.role == AgentRole.QUANTUM_TRADER:
+            return await self._plan_quantum_trading(task)
+        elif self.role == AgentRole.SURVEY_BOT:
+            return await self._plan_survey_task(task)
         else:
             return {"action": "generic_execution", "confidence": 0.7}
 
@@ -514,6 +550,131 @@ class Level6BusinessAgent:
             "confidence": 0.94,
         }
 
+    # --- New Specialized Planning Methods ---
+
+    async def _plan_crypto_mining(self, task: AutonomousTask) -> Dict:
+        """Crypto Miner: Optimizes hashrate and switches coins."""
+        coins = ["RAVEN", "ERGO", "KASPA", "FLUX"]
+        selected_coin = random.choice(coins)
+        return {
+            "action": "optimize_mining",
+            "steps": [
+                f"Analyze current difficulty for {selected_coin}",
+                "Switch mining pool to Hiveon",
+                "Adjust overclock settings for max efficiency",
+                "Monitor GPU temps",
+                "Auto-exchange payouts to USDT"
+            ],
+            "estimated_time": 10,
+            "confidence": 0.99
+        }
+
+    async def _plan_nft_trading(self, task: AutonomousTask) -> Dict:
+        """NFT Trader: Buys low, sells high using trend analysis."""
+        return {
+            "action": "nft_sniping",
+            "steps": [
+                "Scan OpenSea for underpriced listings",
+                "Analyze rarity vs price floor",
+                "Execute flash loan purchase",
+                "List for 20% markup",
+                "Promote listing on Twitter"
+            ],
+            "estimated_time": 15,
+            "confidence": 0.85
+        }
+
+    async def _plan_saas_building(self, task: AutonomousTask) -> Dict:
+        """SaaS Builder: Deploys micro-apps."""
+        return {
+            "action": "deploy_micro_saas",
+            "steps": [
+                "Identify keyword gap on AppSumo",
+                "Generate boilerplate code via GPT-4",
+                "Deploy to Vercel",
+                "Configure Stripe Connect",
+                "Submit to directories"
+            ],
+            "estimated_time": 120,
+            "confidence": 0.90
+        }
+
+    async def _plan_arbitrage(self, task: AutonomousTask) -> Dict:
+        """Arbitrage Bot: Scans retail sites for flips."""
+        return {
+            "action": "retail_arbitrage",
+            "steps": [
+                "Scan Walmart/Target clearance sections",
+                "Compare with Amazon Buy Box prices",
+                "Calculate FBA fees and profit margin",
+                "Auto-purchase profitable SKU",
+                "Schedule UPS pickup"
+            ],
+            "estimated_time": 30,
+            "confidence": 0.92
+        }
+
+    async def _plan_content_creation(self, task: AutonomousTask) -> Dict:
+        """Content Creator: High-volume media generation."""
+        return {
+            "action": "generate_viral_content",
+            "steps": [
+                "Scrape trending TikTok sounds",
+                "Generate script using 'Hook, Story, Offer' framework",
+                "Create AI voiceover",
+                "Assemble stock footage",
+                "Auto-caption and publish"
+            ],
+            "estimated_time": 60,
+            "confidence": 0.95
+        }
+
+    async def _plan_dropshipping(self, task: AutonomousTask) -> Dict:
+        """Dropshipper: Product research and fulfillment."""
+        return {
+            "action": "dropship_operations",
+            "steps": [
+                "Analyze AliExpress trend data",
+                "Update Shopify store inventory",
+                "Process pending orders via DSers",
+                "Send shipping updates to customers",
+                "Launch retargeting ads"
+            ],
+            "estimated_time": 45,
+            "confidence": 0.88
+        }
+
+    async def _plan_quantum_trading(self, task: AutonomousTask) -> Dict:
+        """Quantum Trader: Probabilistic market moves."""
+        return {
+            "action": "quantum_market_analysis",
+            "steps": [
+                "Run quantum monte carlo simulation",
+                "Identify non-linear correlations",
+                "Execute high-frequency trade",
+                "Rebalance portfolio risk",
+                "Log trade outcome"
+            ],
+            "estimated_time": 5,
+            "confidence": 0.97
+        }
+
+    async def _plan_survey_task(self, task: AutonomousTask) -> Dict:
+        """Survey Bot: Mass survey completion."""
+        return {
+            "action": "complete_surveys",
+            "steps": [
+                "Log in to SurveyJunkie account #42",
+                "Filter for high-payout surveys",
+                "Fill demographic data consistently",
+                "Complete survey",
+                "Cash out points"
+            ],
+            "estimated_time": 10,
+            "confidence": 0.99
+        }
+
+
     async def _act(self, action_plan: Dict) -> Dict:
         """Execute decision with confidence tracking."""
         logger.info(f"[{self.agent_id}] Executing: {action_plan['action']}")
@@ -735,12 +896,57 @@ class AutonomousBusinessOrchestrator:
         self.ceo = ChiefEnhancementOfficer(self)
         self.hive_mind = HiveMindCoordinator()
 
+        # Identify required roles for the selected business concept
+        self.required_roles = self._identify_required_roles(business_concept)
+
+    def _identify_required_roles(self, business_concept: str) -> List[AgentRole]:
+        """Identify which roles are needed for this business."""
+        ideas = default_ideas()
+        matching_idea = next((i for i in ideas if i.name == business_concept), None)
+
+        required = []
+
+        if matching_idea and matching_idea.required_roles:
+            # Map string roles to Enum
+            for role_str in matching_idea.required_roles:
+                try:
+                    required.append(AgentRole(role_str))
+                except ValueError:
+                    logger.warning(f"Unknown role in business config: {role_str}")
+
+        # Always include minimal core team if nothing specific found (legacy fallback)
+        if not required:
+            required = [
+                AgentRole.RESEARCHER,
+                AgentRole.MARKETER,
+                AgentRole.SALES,
+                AgentRole.FULFILLMENT,
+                AgentRole.SUPPORT,
+                AgentRole.FINANCE,
+                AgentRole.HR,
+                AgentRole.META_MANAGER,
+                AgentRole.EXECUTIVE,
+                AgentRole.DEEP_RESEARCHER,
+                AgentRole.OSINT_SPECIALIST,
+                AgentRole.CREATIVE_DIRECTOR
+            ]
+        else:
+             # Ensure Management/Executive/HR roles are always present for governance
+            if AgentRole.EXECUTIVE not in required:
+                required.append(AgentRole.EXECUTIVE)
+            if AgentRole.HR not in required:
+                required.append(AgentRole.HR)
+            if AgentRole.META_MANAGER not in required:
+                required.append(AgentRole.META_MANAGER)
+
+        return required
+
     async def deploy_agents(self) -> None:
-        """Deploy Level 6 agents for all business roles."""
+        """Deploy Level 6 agents for all required roles."""
         logger.info(f"Deploying autonomous agents for: {self.business_concept}")
 
-        # Create agent for each role
-        for role in AgentRole:
+        # Create agent for each required role
+        for role in self.required_roles:
             agent_id = f"{role.value}_agent_{int(time.time())}"
             agent = Level6BusinessAgent(
                 agent_id=agent_id,
@@ -786,127 +992,171 @@ class AutonomousBusinessOrchestrator:
     async def _generate_initial_tasks(self) -> None:
         """Generate initial task plan for business launch."""
 
-        # Research tasks
-        self.task_queue.append(
-            AutonomousTask(
-                task_id="research_001",
-                role=AgentRole.RESEARCHER,
-                description="Conduct comprehensive market analysis and identify target customers",
-                priority=10,
+        # Core Management Tasks (Always present)
+        if AgentRole.EXECUTIVE in self.required_roles:
+            self.task_queue.append(
+                AutonomousTask(
+                    task_id="exec_001",
+                    role=AgentRole.EXECUTIVE,
+                    description="Define strategic roadmap for Q1",
+                    priority=10,
+                )
             )
-        )
 
-        # Marketing tasks
-        self.task_queue.append(
-            AutonomousTask(
-                task_id="marketing_001",
-                role=AgentRole.MARKETER,
-                description="Create content marketing strategy and launch campaigns",
-                priority=9,
-                dependencies=["research_001"],
+        if AgentRole.HR in self.required_roles:
+            self.task_queue.append(
+                AutonomousTask(
+                    task_id="hr_001",
+                    role=AgentRole.HR,
+                    description="Allocate initial budget and resource tokens to agents",
+                    priority=10,
+                )
             )
-        )
 
-        # Sales tasks
-        self.task_queue.append(
-            AutonomousTask(
-                task_id="sales_001",
-                role=AgentRole.SALES,
-                description="Generate leads and initiate outreach campaigns",
-                priority=8,
-                dependencies=["marketing_001"],
+        # Specialized Tasks
+        if AgentRole.CRYPTO_MINER in self.required_roles:
+             self.task_queue.append(
+                AutonomousTask(
+                    task_id="mining_001",
+                    role=AgentRole.CRYPTO_MINER,
+                    description="Initialize mining rig optimization and pool selection",
+                    priority=10,
+                )
             )
-        )
 
-        # Fulfillment setup
-        self.task_queue.append(
-            AutonomousTask(
-                task_id="fulfillment_001",
-                role=AgentRole.FULFILLMENT,
-                description="Set up service delivery infrastructure",
-                priority=7,
+        if AgentRole.NFT_TRADER in self.required_roles:
+             self.task_queue.append(
+                AutonomousTask(
+                    task_id="nft_001",
+                    role=AgentRole.NFT_TRADER,
+                    description="Identify undervalued collections for sniping",
+                    priority=9,
+                )
             )
-        )
 
-        # Support setup
-        self.task_queue.append(
-            AutonomousTask(
-                task_id="support_001",
-                role=AgentRole.SUPPORT,
-                description="Deploy customer support automation",
-                priority=6,
+        if AgentRole.SAAS_BUILDER in self.required_roles:
+             self.task_queue.append(
+                AutonomousTask(
+                    task_id="saas_001",
+                    role=AgentRole.SAAS_BUILDER,
+                    description="Identify micro-SaaS opportunity and generate MVP boilerplate",
+                    priority=9,
+                )
             )
-        )
 
-        # Finance setup
-        self.task_queue.append(
-            AutonomousTask(
-                task_id="finance_001",
-                role=AgentRole.FINANCE,
-                description="Set up payment processing and revenue tracking",
-                priority=10,
+        if AgentRole.ARBITRAGE_BOT in self.required_roles:
+             self.task_queue.append(
+                AutonomousTask(
+                    task_id="arb_001",
+                    role=AgentRole.ARBITRAGE_BOT,
+                    description="Scan retail APIs for price discrepancies",
+                    priority=9,
+                )
             )
-        )
 
-        # HR / Finance Resource setup
-        self.task_queue.append(
-            AutonomousTask(
-                task_id="hr_001",
-                role=AgentRole.HR,
-                description="Allocate initial budget and resource tokens to agents",
-                priority=10,
+        # Legacy/Generic Tasks (Only if role exists)
+        if AgentRole.RESEARCHER in self.required_roles:
+            self.task_queue.append(
+                AutonomousTask(
+                    task_id="research_001",
+                    role=AgentRole.RESEARCHER,
+                    description="Conduct comprehensive market analysis and identify target customers",
+                    priority=10,
+                )
             )
-        )
 
-        # Meta Manager setup
-        self.task_queue.append(
-            AutonomousTask(
-                task_id="meta_001",
-                role=AgentRole.META_MANAGER,
-                description="Initialize agent supervision protocols",
-                priority=9,
+        if AgentRole.MARKETER in self.required_roles:
+            self.task_queue.append(
+                AutonomousTask(
+                    task_id="marketing_001",
+                    role=AgentRole.MARKETER,
+                    description="Create content marketing strategy and launch campaigns",
+                    priority=9,
+                    dependencies=["research_001"] if AgentRole.RESEARCHER in self.required_roles else [],
+                )
             )
-        )
 
-        # Executive setup
-        self.task_queue.append(
-            AutonomousTask(
-                task_id="exec_001",
-                role=AgentRole.EXECUTIVE,
-                description="Define strategic roadmap for Q1",
-                priority=10,
+        if AgentRole.SALES in self.required_roles:
+            self.task_queue.append(
+                AutonomousTask(
+                    task_id="sales_001",
+                    role=AgentRole.SALES,
+                    description="Generate leads and initiate outreach campaigns",
+                    priority=8,
+                    dependencies=["marketing_001"] if AgentRole.MARKETER in self.required_roles else [],
+                )
             )
-        )
 
-        # Deep Research setup
-        self.task_queue.append(
-            AutonomousTask(
-                task_id="deep_res_001",
-                role=AgentRole.DEEP_RESEARCHER,
-                description="Conduct initial deep dive into market fundamentals",
-                priority=8,
+        if AgentRole.FULFILLMENT in self.required_roles:
+            self.task_queue.append(
+                AutonomousTask(
+                    task_id="fulfillment_001",
+                    role=AgentRole.FULFILLMENT,
+                    description="Set up service delivery infrastructure",
+                    priority=7,
+                )
             )
-        )
 
-        # OSINT setup
-        self.task_queue.append(
-            AutonomousTask(
-                task_id="osint_001",
-                role=AgentRole.OSINT_SPECIALIST,
-                description="Map initial competitor landscape via OSINT",
-                priority=8,
+        if AgentRole.SUPPORT in self.required_roles:
+            self.task_queue.append(
+                AutonomousTask(
+                    task_id="support_001",
+                    role=AgentRole.SUPPORT,
+                    description="Deploy customer support automation",
+                    priority=6,
+                )
             )
-        )
 
-        # Creative Director setup
-        self.task_queue.append(
-            AutonomousTask(
-                task_id="creative_001",
-                role=AgentRole.CREATIVE_DIRECTOR,
-                description="Establish brand identity and asset generation pipeline",
-                priority=9,
+        if AgentRole.FINANCE in self.required_roles:
+            self.task_queue.append(
+                AutonomousTask(
+                    task_id="finance_001",
+                    role=AgentRole.FINANCE,
+                    description="Set up payment processing and revenue tracking",
+                    priority=10,
+                )
             )
-        )
+
+        if AgentRole.META_MANAGER in self.required_roles:
+            self.task_queue.append(
+                AutonomousTask(
+                    task_id="meta_001",
+                    role=AgentRole.META_MANAGER,
+                    description="Initialize agent supervision protocols",
+                    priority=9,
+                )
+            )
+
+        if AgentRole.DEEP_RESEARCHER in self.required_roles:
+             self.task_queue.append(
+                AutonomousTask(
+                    task_id="deep_res_001",
+                    role=AgentRole.DEEP_RESEARCHER,
+                    description="Conduct initial deep dive into market fundamentals",
+                    priority=8,
+                )
+            )
+
+        if AgentRole.OSINT_SPECIALIST in self.required_roles:
+             self.task_queue.append(
+                AutonomousTask(
+                    task_id="osint_001",
+                    role=AgentRole.OSINT_SPECIALIST,
+                    description="Map initial competitor landscape via OSINT",
+                    priority=8,
+                )
+            )
+
+        if AgentRole.CREATIVE_DIRECTOR in self.required_roles:
+             self.task_queue.append(
+                AutonomousTask(
+                    task_id="creative_001",
+                    role=AgentRole.CREATIVE_DIRECTOR,
+                    description="Establish brand identity and asset generation pipeline",
+                    priority=9,
+                )
+            )
+
 
     async def run_autonomous_loop(self, duration_hours: float = 24.0) -> None:
         """
@@ -1003,11 +1253,21 @@ class AutonomousBusinessOrchestrator:
             if result.get("success"):
                 # Different roles contribute different revenue
                 agent = self.agents[result["agent_id"]]
+                revenue = 0.0
                 if agent.role == AgentRole.SALES:
                     revenue = 500.0  # Average deal size
+                elif agent.role == AgentRole.CRYPTO_MINER:
+                    revenue = 25.0   # Daily mining yield simulated
+                elif agent.role == AgentRole.NFT_TRADER:
+                    revenue = 200.0  # Trade flip
+                elif agent.role == AgentRole.SAAS_BUILDER:
+                    revenue = 50.0   # Subscription signup
+
+                if revenue > 0:
                     self.metrics.total_revenue += revenue
                     self.metrics.monthly_revenue += revenue
                     agent.performance.revenue_generated += revenue
+
                 elif agent.role == AgentRole.MARKETER:
                     self.metrics.leads_generated += 10  # 10 leads per campaign
 
@@ -1023,25 +1283,41 @@ class AutonomousBusinessOrchestrator:
         """Generate new tasks based on outcomes (adaptive strategy)."""
         # If sales are strong, generate more marketing tasks
         if self.metrics.monthly_revenue > 5000:
-            self.task_queue.append(
-                AutonomousTask(
-                    task_id=f"marketing_{len(self.task_queue)}",
-                    role=AgentRole.MARKETER,
-                    description="Scale successful marketing campaigns",
-                    priority=9,
+            # Only if marketer exists
+            if AgentRole.MARKETER in self.required_roles:
+                self.task_queue.append(
+                    AutonomousTask(
+                        task_id=f"marketing_{len(self.task_queue)}",
+                        role=AgentRole.MARKETER,
+                        description="Scale successful marketing campaigns",
+                        priority=9,
+                    )
                 )
-            )
 
         # If conversion rate is low, generate research task
         if self.metrics.conversion_rate < 0.05:
-            self.task_queue.append(
-                AutonomousTask(
-                    task_id=f"research_{len(self.task_queue)}",
-                    role=AgentRole.RESEARCHER,
-                    description="Analyze low conversion and recommend improvements",
-                    priority=10,
+            if AgentRole.RESEARCHER in self.required_roles:
+                self.task_queue.append(
+                    AutonomousTask(
+                        task_id=f"research_{len(self.task_queue)}",
+                        role=AgentRole.RESEARCHER,
+                        description="Analyze low conversion and recommend improvements",
+                        priority=10,
+                    )
                 )
-            )
+
+        # Crypto logic: If mining successful, optimize
+        for result in results:
+             agent = self.agents.get(result.get("agent_id"))
+             if agent and agent.role == AgentRole.CRYPTO_MINER and result.get("success"):
+                  self.task_queue.append(
+                    AutonomousTask(
+                        task_id=f"mining_{len(self.task_queue)}",
+                        role=AgentRole.CRYPTO_MINER,
+                        description="Check for more profitable coins to switch to",
+                        priority=8,
+                    )
+                )
 
     async def _report_progress(self) -> None:
         """Report current business status."""

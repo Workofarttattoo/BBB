@@ -6,9 +6,10 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Iterable
+from dataclasses import dataclass, field
+from typing import Iterable, List
 
+from .business_models_2025 import get_all_business_models
 
 @dataclass(frozen=True)
 class BusinessIdea:
@@ -22,6 +23,9 @@ class BusinessIdea:
     expected_monthly_expenses: float
     time_commitment_hours_per_week: int
     description: str
+    automation_level: float = 0.0
+    difficulty: str = "Medium"
+    required_roles: List[str] = field(default_factory=list)
 
     @property
     def monthly_profit(self) -> float:
@@ -31,7 +35,25 @@ class BusinessIdea:
 def default_ideas() -> Iterable[BusinessIdea]:
     """Provide a set of diversified business concepts for evaluation."""
 
-    return [
+    # Load 2025 Models
+    new_models = [
+        BusinessIdea(
+            name=m.name,
+            industry=m.industry,
+            ramp_up_months=m.ramp_up_months,
+            startup_cost=m.startup_cost,
+            expected_monthly_revenue=m.expected_monthly_revenue,
+            expected_monthly_expenses=m.expected_monthly_expenses,
+            time_commitment_hours_per_week=m.time_commitment_hours_per_week,
+            description=m.description,
+            automation_level=m.automation_level,
+            difficulty=m.difficulty,
+            required_roles=m.required_roles
+        ) for m in get_all_business_models()
+    ]
+
+    # Legacy Models (Preserved for compatibility)
+    legacy_models = [
         # EDUCATION & TRAINING (Low-Medium Budget)
         BusinessIdea(
             name="Financial Literacy Micro-Courses",
@@ -384,3 +406,5 @@ def default_ideas() -> Iterable[BusinessIdea]:
             description="Help teams adopt async workflows, Zoom hygiene, and distributed collaboration tools.",
         ),
     ]
+
+    return new_models + legacy_models
