@@ -147,7 +147,7 @@ class ECH0LLMEngine:
         data = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(url, data=data, headers=headers)
 
-        with urllib.request.urlopen(req, timeout=30) as response:
+        with urllib.request.urlopen(req, timeout=180) as response:
             return json.loads(response.read().decode("utf-8"))
 
     def _mock_fallback_response(self) -> str:

@@ -561,11 +561,16 @@ class TwitterService:
         self.bearer_token = os.getenv("TWITTER_BEARER_TOKEN", "")
         
         if TWEEPY_AVAILABLE and self.consumer_key and self.consumer_secret:
-            # v2 Client for modern features
+            # v2 Client for modern features — requires User Context for posting
+            self.access_token = os.getenv("TWITTER_ACCESS_TOKEN", "")
+            self.access_token_secret = os.getenv("TWITTER_ACCESS_TOKEN_SECRET", "")
+            
             self.client = tweepy.Client(
                 bearer_token=self.bearer_token,
                 consumer_key=self.consumer_key,
-                consumer_secret=self.consumer_secret
+                consumer_secret=self.consumer_secret,
+                access_token=self.access_token,
+                access_token_secret=self.access_token_secret
             )
         else:
             self.client = None

@@ -871,7 +871,7 @@ class CRMAutomation:
             prompt += "3. The 'outreach_email' MUST be tailored to that specific field. Use field-specific jargon and technical enticements.\n"
             prompt += "4. NEVER use mass-CC style language. Every email must feel 1-to-1 even if templates are reused for the same field.\n"
             prompt += "5. Forbidden: Anyone at 'feldmanattorneys.com'.\n"
-            prompt += "6. SECURITY REDLINE: NEVER disclose specific Voltages (e.g. 60V), Pulse Durations (ms), Temperatures, or Precursors. Use terms like 'Optimized Pulse Profile' or 'Proprietary Waveform'.\n"
+            prompt += "6. SECURITY REDLINE: NEVER disclose the use of E-waste, precursors, or specific synthesis temperatures/parameters. Talk about results (10x conductivity), never methods.\n"
             prompt += "7. FJH PRIORITY: Always prioritize contacting Universal Matter, MTM Critical Metals, and Ford Research regarding FJH Efficiency Upgrades.\n\n"
             prompt += "Return EXACTLY 5 NEW prospects in VALID JSON format (list of objects). Each object must have: 'name', 'email', 'company', 'industry', 'field_of_interest', 'reason', and 'outreach_email'. No other text."
             
@@ -977,7 +977,6 @@ class DailyReporting:
 
         report = f"""
 ECH0 DAILY SUMMARY - {datetime.now().strftime('%Y-%m-%d %H:%M')}
-To: Joshua Hendricks Cole
 
 Activities completed in the last 24 hours:
 
