@@ -17,6 +17,7 @@ import asyncio
 import logging
 import numpy as np
 import hashlib
+from concurrent.futures import ThreadPoolExecutor
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -189,11 +190,12 @@ class ChromaDBStore(VectorStore):
         # Determine which collections to search
         domains_to_search = [domain] if domain else list(ExpertDomain)
 
-        for search_domain in domains_to_search:
+        def search_collection(search_domain):
             collection = self.collections.get(search_domain)
             if not collection:
-                continue
+                return []
 
+            local_results = []
             try:
                 search_results = collection.query(
                     query_texts=[query],
@@ -215,9 +217,22 @@ class ChromaDBStore(VectorStore):
                             domain=search_domain,
                             metadata=metadata
                         )
-                        results.append((doc, similarity))
+                        local_results.append((doc, similarity))
             except Exception as e:
                 logger.error(f"Search failed for domain {search_domain.value}: {e}")
+            return local_results
+
+        # If searching multiple domains (global search), parallelize using threads
+        # ChromaDB operations are IO-bound (database access), so threads work well.
+        if len(domains_to_search) > 1:
+            with ThreadPoolExecutor(max_workers=min(len(domains_to_search), 10)) as executor:
+                futures = executor.map(search_collection, domains_to_search)
+                for res in futures:
+                    results.extend(res)
+        else:
+            # Serial execution for single domain
+            for search_domain in domains_to_search:
+                results.extend(search_collection(search_domain))
 
         # Sort by similarity and return top_k
         results.sort(key=lambda x: x[1], reverse=True)

@@ -27,6 +27,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Dict, List, Optional, Callable, Set
+from collections import deque
 import logging
 import random
 
@@ -880,6 +881,7 @@ class AutonomousBusinessOrchestrator:
         self.founder_name = founder_name
         self.agents: Dict[str, Level6BusinessAgent] = {}
         self.task_queue: List[AutonomousTask] = []
+        self.pending_tasks: deque[AutonomousTask] = deque()
         self.completed_task_ids: Set[str] = set()
         self.metrics = BusinessMetrics()
         self.running = False
@@ -898,6 +900,11 @@ class AutonomousBusinessOrchestrator:
 
         # Identify required roles for the selected business concept
         self.required_roles = self._identify_required_roles(business_concept)
+
+    def add_task(self, task: AutonomousTask) -> None:
+        """Add a new task to the queue."""
+        self.task_queue.append(task)
+        self.pending_tasks.append(task)
 
     def _identify_required_roles(self, business_concept: str) -> List[AgentRole]:
         """Identify which roles are needed for this business."""
@@ -994,7 +1001,7 @@ class AutonomousBusinessOrchestrator:
 
         # Core Management Tasks (Always present)
         if AgentRole.EXECUTIVE in self.required_roles:
-            self.task_queue.append(
+            self.add_task(
                 AutonomousTask(
                     task_id="exec_001",
                     role=AgentRole.EXECUTIVE,
@@ -1004,7 +1011,7 @@ class AutonomousBusinessOrchestrator:
             )
 
         if AgentRole.HR in self.required_roles:
-            self.task_queue.append(
+            self.add_task(
                 AutonomousTask(
                     task_id="hr_001",
                     role=AgentRole.HR,
@@ -1015,7 +1022,7 @@ class AutonomousBusinessOrchestrator:
 
         # Specialized Tasks
         if AgentRole.CRYPTO_MINER in self.required_roles:
-             self.task_queue.append(
+             self.add_task(
                 AutonomousTask(
                     task_id="mining_001",
                     role=AgentRole.CRYPTO_MINER,
@@ -1025,7 +1032,7 @@ class AutonomousBusinessOrchestrator:
             )
 
         if AgentRole.NFT_TRADER in self.required_roles:
-             self.task_queue.append(
+             self.add_task(
                 AutonomousTask(
                     task_id="nft_001",
                     role=AgentRole.NFT_TRADER,
@@ -1035,7 +1042,7 @@ class AutonomousBusinessOrchestrator:
             )
 
         if AgentRole.SAAS_BUILDER in self.required_roles:
-             self.task_queue.append(
+             self.add_task(
                 AutonomousTask(
                     task_id="saas_001",
                     role=AgentRole.SAAS_BUILDER,
@@ -1045,7 +1052,7 @@ class AutonomousBusinessOrchestrator:
             )
 
         if AgentRole.ARBITRAGE_BOT in self.required_roles:
-             self.task_queue.append(
+             self.add_task(
                 AutonomousTask(
                     task_id="arb_001",
                     role=AgentRole.ARBITRAGE_BOT,
@@ -1056,7 +1063,7 @@ class AutonomousBusinessOrchestrator:
 
         # Legacy/Generic Tasks (Only if role exists)
         if AgentRole.RESEARCHER in self.required_roles:
-            self.task_queue.append(
+            self.add_task(
                 AutonomousTask(
                     task_id="research_001",
                     role=AgentRole.RESEARCHER,
@@ -1066,7 +1073,7 @@ class AutonomousBusinessOrchestrator:
             )
 
         if AgentRole.MARKETER in self.required_roles:
-            self.task_queue.append(
+            self.add_task(
                 AutonomousTask(
                     task_id="marketing_001",
                     role=AgentRole.MARKETER,
@@ -1077,7 +1084,7 @@ class AutonomousBusinessOrchestrator:
             )
 
         if AgentRole.SALES in self.required_roles:
-            self.task_queue.append(
+            self.add_task(
                 AutonomousTask(
                     task_id="sales_001",
                     role=AgentRole.SALES,
@@ -1088,7 +1095,7 @@ class AutonomousBusinessOrchestrator:
             )
 
         if AgentRole.FULFILLMENT in self.required_roles:
-            self.task_queue.append(
+            self.add_task(
                 AutonomousTask(
                     task_id="fulfillment_001",
                     role=AgentRole.FULFILLMENT,
@@ -1098,7 +1105,7 @@ class AutonomousBusinessOrchestrator:
             )
 
         if AgentRole.SUPPORT in self.required_roles:
-            self.task_queue.append(
+            self.add_task(
                 AutonomousTask(
                     task_id="support_001",
                     role=AgentRole.SUPPORT,
@@ -1108,7 +1115,7 @@ class AutonomousBusinessOrchestrator:
             )
 
         if AgentRole.FINANCE in self.required_roles:
-            self.task_queue.append(
+            self.add_task(
                 AutonomousTask(
                     task_id="finance_001",
                     role=AgentRole.FINANCE,
@@ -1118,7 +1125,7 @@ class AutonomousBusinessOrchestrator:
             )
 
         if AgentRole.META_MANAGER in self.required_roles:
-            self.task_queue.append(
+            self.add_task(
                 AutonomousTask(
                     task_id="meta_001",
                     role=AgentRole.META_MANAGER,
@@ -1128,7 +1135,7 @@ class AutonomousBusinessOrchestrator:
             )
 
         if AgentRole.DEEP_RESEARCHER in self.required_roles:
-             self.task_queue.append(
+             self.add_task(
                 AutonomousTask(
                     task_id="deep_res_001",
                     role=AgentRole.DEEP_RESEARCHER,
@@ -1138,7 +1145,7 @@ class AutonomousBusinessOrchestrator:
             )
 
         if AgentRole.OSINT_SPECIALIST in self.required_roles:
-             self.task_queue.append(
+             self.add_task(
                 AutonomousTask(
                     task_id="osint_001",
                     role=AgentRole.OSINT_SPECIALIST,
@@ -1148,7 +1155,7 @@ class AutonomousBusinessOrchestrator:
             )
 
         if AgentRole.CREATIVE_DIRECTOR in self.required_roles:
-             self.task_queue.append(
+             self.add_task(
                 AutonomousTask(
                     task_id="creative_001",
                     role=AgentRole.CREATIVE_DIRECTOR,
@@ -1195,18 +1202,34 @@ class AutonomousBusinessOrchestrator:
 
     async def _assign_tasks(self) -> None:
         """Assign pending tasks to appropriate agents."""
-        # Use existing set of completed task IDs for O(1) lookup
+        # Optimization: Iterate only over pending tasks using a rotating deque
+        # Logic: processing tasks from pending_tasks, keeping only those still needing assignment
 
-        for task in self.task_queue:
-            if task.status != TaskStatus.PENDING:
+        remaining_tasks = deque()
+
+        while self.pending_tasks:
+            task = self.pending_tasks.popleft()
+
+            # Skip if already handled (e.g. somehow completed externally)
+            if task.status not in [TaskStatus.PENDING, TaskStatus.BLOCKED]:
                 continue
 
             # Check dependencies
+            is_blocked = False
             if task.dependencies:
                 deps_complete = all(dep_id in self.completed_task_ids for dep_id in task.dependencies)
                 if not deps_complete:
                     task.status = TaskStatus.BLOCKED
-                    continue
+                    is_blocked = True
+
+            if is_blocked:
+                # Keep in queue for later retry
+                remaining_tasks.append(task)
+                continue
+
+            # Dependencies met. If it was blocked, it's now unblocked.
+            if task.status == TaskStatus.BLOCKED:
+                task.status = TaskStatus.PENDING
 
             # Find agent with matching role
             agent = next(
@@ -1216,6 +1239,12 @@ class AutonomousBusinessOrchestrator:
             if agent:
                 task.assigned_to = agent.agent_id
                 task.status = TaskStatus.IN_PROGRESS
+                # Task assigned, do NOT add back to pending queue
+            else:
+                # No agent available yet, keep in queue
+                remaining_tasks.append(task)
+
+        self.pending_tasks = remaining_tasks
 
     async def _execute_tasks_parallel(self) -> List[Dict]:
         """Execute all in-progress tasks in parallel."""
@@ -1285,7 +1314,7 @@ class AutonomousBusinessOrchestrator:
         if self.metrics.monthly_revenue > 5000:
             # Only if marketer exists
             if AgentRole.MARKETER in self.required_roles:
-                self.task_queue.append(
+                self.add_task(
                     AutonomousTask(
                         task_id=f"marketing_{len(self.task_queue)}",
                         role=AgentRole.MARKETER,
@@ -1297,7 +1326,7 @@ class AutonomousBusinessOrchestrator:
         # If conversion rate is low, generate research task
         if self.metrics.conversion_rate < 0.05:
             if AgentRole.RESEARCHER in self.required_roles:
-                self.task_queue.append(
+                self.add_task(
                     AutonomousTask(
                         task_id=f"research_{len(self.task_queue)}",
                         role=AgentRole.RESEARCHER,
@@ -1310,7 +1339,7 @@ class AutonomousBusinessOrchestrator:
         for result in results:
              agent = self.agents.get(result.get("agent_id"))
              if agent and agent.role == AgentRole.CRYPTO_MINER and result.get("success"):
-                  self.task_queue.append(
+                  self.add_task(
                     AutonomousTask(
                         task_id=f"mining_{len(self.task_queue)}",
                         role=AgentRole.CRYPTO_MINER,

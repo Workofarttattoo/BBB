@@ -31,17 +31,20 @@ class TestAutonomousOrchestrator(unittest.IsolatedAsyncioTestCase):
 
         # Task 1: Research (Completed)
         task1 = AutonomousTask(task_id="t1", role=AgentRole.RESEARCHER, description="Research", status=TaskStatus.COMPLETED)
-        orchestrator.task_queue.append(task1)
+        # We manually add to task_queue to avoid pending_tasks logic if we want to simulate already completed
+        # But add_task adds to pending_tasks. If status is COMPLETED, _assign_tasks logic should handle removing it.
+        # Let's use add_task for consistency, but note that add_task adds to pending.
+        orchestrator.add_task(task1)
         # Ensure consistency: if completed, it should be in the set
         orchestrator.completed_task_ids.add("t1")
 
         # Task 2: Marketing (Depends on t1)
         task2 = AutonomousTask(task_id="t2", role=AgentRole.MARKETER, description="Marketing", dependencies=["t1"])
-        orchestrator.task_queue.append(task2)
+        orchestrator.add_task(task2)
 
         # Task 3: Sales (Depends on t2 - not complete)
         task3 = AutonomousTask(task_id="t3", role=AgentRole.SALES, description="Sales", dependencies=["t2"])
-        orchestrator.task_queue.append(task3)
+        orchestrator.add_task(task3)
 
         # Run assignment
         await orchestrator._assign_tasks()
@@ -75,7 +78,7 @@ class TestAutonomousOrchestrator(unittest.IsolatedAsyncioTestCase):
 
         # Add Task 1 (Pending)
         task1 = AutonomousTask(task_id="t1", role=AgentRole.RESEARCHER, description="T1")
-        orchestrator.task_queue.append(task1)
+        orchestrator.add_task(task1)
 
         # 1. Assign (should pick up T1)
         await orchestrator._assign_tasks()
@@ -88,9 +91,41 @@ class TestAutonomousOrchestrator(unittest.IsolatedAsyncioTestCase):
 
         # Add Task 2 (Depends on T1)
         task2 = AutonomousTask(task_id="t2", role=AgentRole.RESEARCHER, description="T2", dependencies=["t1"])
-        orchestrator.task_queue.append(task2)
+        orchestrator.add_task(task2)
 
         # 3. Assign (should pick up T2 because T1 is in completed_task_ids)
+        await orchestrator._assign_tasks()
+        self.assertEqual(task2.status, TaskStatus.IN_PROGRESS)
+
+    async def test_resume_blocked_task(self):
+        """Test that a BLOCKED task is retried and assigned once dependencies are met."""
+        orchestrator = AutonomousBusinessOrchestrator("Test", "Founder")
+
+        agent1 = MagicMock()
+        agent1.role = AgentRole.RESEARCHER
+        agent1.active = True
+        agent1.agent_id = "agent1"
+        orchestrator.agents["agent1"] = agent1
+
+        # Task 1: Research (Will complete later)
+        task1 = AutonomousTask(task_id="t1", role=AgentRole.RESEARCHER, description="T1")
+        orchestrator.add_task(task1)
+
+        # Task 2: Research (Depends on T1)
+        task2 = AutonomousTask(task_id="t2", role=AgentRole.RESEARCHER, description="T2", dependencies=["t1"])
+        orchestrator.add_task(task2)
+
+        # 1. Assign - T1 goes IN_PROGRESS, T2 goes BLOCKED
+        await orchestrator._assign_tasks()
+        self.assertEqual(task1.status, TaskStatus.IN_PROGRESS)
+        self.assertEqual(task2.status, TaskStatus.BLOCKED)
+
+        # 2. Complete T1
+        # Manually mark T1 as completed to simulate execution finishing
+        task1.status = TaskStatus.COMPLETED
+        orchestrator.completed_task_ids.add("t1")
+
+        # 3. Assign again - T2 should be picked up (unblocked)
         await orchestrator._assign_tasks()
         self.assertEqual(task2.status, TaskStatus.IN_PROGRESS)
 

@@ -10,6 +10,12 @@ from typing import List, Optional, Any
 import json
 import uuid
 
+# Dummy implementations for compatibility
+def semantic(*args, **kwargs): pass
+def on(*args, **kwargs): pass
+def send(*args, **kwargs): pass
+def every(*args, **kwargs): pass
+
 @dataclass
 class SemanticObject:
     """Base class for all semantic business objects."""
