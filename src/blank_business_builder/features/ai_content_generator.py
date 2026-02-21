@@ -28,6 +28,8 @@ except ImportError:
 from ..integrations import IntegrationFactory
 from ..ech0_service import ECH0Service
 
+logger = logging.getLogger(__name__)
+
 
 class ContentType(Enum):
     """Content types supported."""
