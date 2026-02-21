@@ -29,6 +29,8 @@
   "author": "dot-do",
   "license": "MIT",
   "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^2.1.1",
     "zod": "catalog:"
   },
   "devDependencies": {

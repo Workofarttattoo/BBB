@@ -3,13 +3,23 @@
  */
 
 import { z } from 'zod'
+import Ajv from 'ajv'
+import addFormats from 'ajv-formats'
 import type { Schema } from './types'
+
+// Initialize Ajv singleton
+const ajv = new Ajv({
+  allErrors: true,
+  strict: false,
+  useDefaults: true,
+})
+addFormats(ajv)
 
 /**
  * Check if schema is Zod schema
  */
 function isZodSchema(schema: Schema): schema is z.ZodType {
-  return typeof schema === 'object' && '_def' in schema
+  return typeof schema === 'object' && schema !== null && '_def' in schema
 }
 
 /**
@@ -20,8 +30,12 @@ export function validateInput<T>(schema: Schema<T>, input: unknown): T {
     return schema.parse(input)
   }
 
-  // JSON Schema validation (basic)
-  // TODO: Use a JSON Schema validator library
+  // JSON Schema validation
+  const validate = ajv.compile(schema as object)
+  if (!validate(input)) {
+    throw new Error(`Input validation failed: ${ajv.errorsText(validate.errors)}`)
+  }
+
   return input as T
 }
 
@@ -33,7 +47,11 @@ export function validateOutput<T>(schema: Schema<T>, output: unknown): T {
     return schema.parse(output)
   }
 
-  // JSON Schema validation (basic)
-  // TODO: Use a JSON Schema validator library
+  // JSON Schema validation
+  const validate = ajv.compile(schema as object)
+  if (!validate(output)) {
+    throw new Error(`Output validation failed: ${ajv.errorsText(validate.errors)}`)
+  }
+
   return output as T
 }
