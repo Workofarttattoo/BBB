@@ -4,6 +4,8 @@ Loads environment variables from .env file.
 """
 
 import os
+import secrets
+import warnings
 from pathlib import Path
 
 # Try to load .env file
@@ -26,6 +28,29 @@ except ImportError:
                         os.environ.setdefault(key.strip(), value)
         except Exception as e:
             print(f"Warning: Could not parse .env file: {e}")
+
+def _get_secure_secret_key():
+    """Retrieve secret key from environment or generate a random one."""
+    secret_key = os.getenv("JWT_SECRET_KEY") or os.getenv("SECRET_KEY")
+    if secret_key:
+        return secret_key
+
+    # If no secret key is provided
+    env = os.getenv("ENVIRONMENT", "production").lower()
+    if env == "production":
+        raise RuntimeError(
+            "SECURITY ERROR: JWT_SECRET_KEY or SECRET_KEY environment variable must be set in production. "
+            "Deploying with a default or random key is insecure."
+        )
+
+    # In development/test, generate a random key
+    warnings.warn(
+        "JWT_SECRET_KEY not set. Generating a random one for development. "
+        "Note: Tokens will be invalidated on server restart.",
+        UserWarning
+    )
+    return secrets.token_urlsafe(32)
+
 
 class Config:
     # API Keys & Integrations
@@ -55,9 +80,10 @@ class Config:
     DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./business_builder.db")
 
     # Security
-    SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-please-change-in-production")
-    ALGORITHM = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
+    SECRET_KEY = _get_secure_secret_key()
+    ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+    ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
+    REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 30))
 
     # Ollama / Echo
     LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama")
