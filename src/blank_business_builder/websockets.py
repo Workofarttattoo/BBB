@@ -138,6 +138,12 @@ def _get_business_metrics_sync(business_id: str, db: Session) -> dict:
 
 async def get_agent_activity(business_id: str, db: Session) -> dict:
     """Get real-time agent activity."""
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, _get_agent_activity_sync, business_id, db)
+
+
+def _get_agent_activity_sync(business_id: str, db: Session) -> dict:
+    """Synchronous implementation of get_agent_activity."""
     # Get active agents (tasks in progress)
     active_tasks = db.query(AgentTask).filter(
         AgentTask.business_id == business_id,
@@ -252,10 +258,14 @@ async def websocket_endpoint(
         return
 
     # Verify business ownership
-    business = db.query(Business).filter(
-        Business.id == business_id,
-        Business.user_id == user_id
-    ).first()
+    loop = asyncio.get_running_loop()
+    business = await loop.run_in_executor(
+        None,
+        lambda: db.query(Business).filter(
+            Business.id == business_id,
+            Business.user_id == user_id
+        ).first()
+    )
 
     if not business:
         await websocket.close(code=1008, reason="Business not found or unauthorized")
