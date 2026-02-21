@@ -883,16 +883,18 @@ class AutonomousBusinessOrchestrator:
         self.task_queue: List[AutonomousTask] = []
         self.pending_tasks: deque[AutonomousTask] = deque()
         self.completed_task_ids: Set[str] = set()
+        self.task_transition_counts: Dict[str, int] = {}
+        self.task_execution_attempts: Dict[str, int] = {}
         self.metrics = BusinessMetrics()
         self.running = False
         self.market_research = MarketResearch(api_key=market_research_api_key)
         self.email_service = EmailService(api_key=sendgrid_api_key)
         self.payment_processor = PaymentProcessor(api_key=stripe_api_key)
         self.social_media = SocialMedia(
-            consumer_key=twitter_consumer_key,
-            consumer_secret=twitter_consumer_secret,
-            access_token=twitter_access_token,
-            access_token_secret=twitter_access_token_secret,
+            consumer_key=twitter_consumer_key or "",
+            consumer_secret=twitter_consumer_secret or "",
+            access_token=twitter_access_token or "",
+            access_token_secret=twitter_access_token_secret or "",
         )
         self.prompt_registry = PromptRegistry()
         self.ceo = ChiefEnhancementOfficer(self)
@@ -1248,30 +1250,76 @@ class AutonomousBusinessOrchestrator:
 
     async def _execute_tasks_parallel(self) -> List[Dict]:
         """Execute all in-progress tasks in parallel."""
+        # Requeue stale in-progress tasks before execution to avoid deadlocks.
+        self._reconcile_orphaned_in_progress_tasks()
         in_progress = [t for t in self.task_queue if t.status == TaskStatus.IN_PROGRESS]
 
         if not in_progress:
             return []
 
         # Execute tasks concurrently
-        tasks = []
+        task_coroutines: List[Any] = []
+        executable_tasks: List[AutonomousTask] = []
         for task in in_progress:
-            agent = self.agents[task.assigned_to]
-            tasks.append(agent.execute_task(task))
+            agent = self.agents.get(task.assigned_to) if task.assigned_to else None
+            if not agent or not agent.active:
+                self._set_task_status(
+                    task,
+                    TaskStatus.PENDING,
+                    result={
+                        "success": False,
+                        "error": "Assigned agent missing or inactive; task requeued.",
+                        "task_id": task.task_id,
+                    },
+                    clear_assignment=True,
+                )
+                continue
+            self.task_execution_attempts[task.task_id] = (
+                self.task_execution_attempts.get(task.task_id, 0) + 1
+            )
+            executable_tasks.append(task)
+            task_coroutines.append(agent.execute_task(task))
 
-        results = await asyncio.gather(*tasks)
+        if not executable_tasks:
+            return []
+
+        results = await asyncio.gather(*task_coroutines, return_exceptions=True)
 
         # Update task status
-        for task, result in zip(in_progress, results):
-            if result["success"]:
-                task.status = TaskStatus.COMPLETED
-                task.completed_at = datetime.now()
-                task.result = result
-                self.completed_task_ids.add(task.task_id)
-            else:
-                task.status = TaskStatus.FAILED
+        normalized_results: List[Dict] = []
+        for task, result in zip(executable_tasks, results):
+            if isinstance(result, Exception):
+                failed_result = {
+                    "success": False,
+                    "agent_id": task.assigned_to,
+                    "task_id": task.task_id,
+                    "error": str(result),
+                }
+                self._set_task_status(task, TaskStatus.FAILED, result=failed_result)
+                normalized_results.append(failed_result)
+                continue
 
-        return results
+            if isinstance(result, dict) and result.get("success"):
+                self._set_task_status(task, TaskStatus.COMPLETED, result=result)
+                normalized_results.append(result)
+            else:
+                failed_result = (
+                    result
+                    if isinstance(result, dict)
+                    else {
+                        "success": False,
+                        "agent_id": task.assigned_to,
+                        "task_id": task.task_id,
+                        "error": "Task execution returned invalid result type.",
+                    }
+                )
+                failed_result.setdefault("success", False)
+                failed_result.setdefault("agent_id", task.assigned_to)
+                failed_result.setdefault("task_id", task.task_id)
+                self._set_task_status(task, TaskStatus.FAILED, result=failed_result)
+                normalized_results.append(failed_result)
+
+        return normalized_results
 
     async def _update_metrics(self, results: List[Dict]) -> None:
         """Update business metrics based on task results."""
@@ -1281,7 +1329,10 @@ class AutonomousBusinessOrchestrator:
             # Simulate revenue generation (would use real data)
             if result.get("success"):
                 # Different roles contribute different revenue
-                agent = self.agents[result["agent_id"]]
+                agent_id = result.get("agent_id")
+                agent = self.agents.get(agent_id) if agent_id else None
+                if not agent:
+                    continue
                 revenue = 0.0
                 if agent.role == AgentRole.SALES:
                     revenue = 500.0  # Average deal size
@@ -1390,6 +1441,8 @@ class AutonomousBusinessOrchestrator:
                     "tasks_pending": len(
                         [t for t in self.task_queue if t.status == TaskStatus.PENDING]
                     ),
+                    "tasks_by_status": self.get_task_status_counts(),
+                    "task_transition_counts": dict(self.task_transition_counts),
                     "success_rate": sum(
                         1 for t in self.task_queue if t.status == TaskStatus.COMPLETED
                     )

@@ -11,9 +11,22 @@ sys.path.append(os.getcwd())
 from src.blank_business_builder.autonomous_business import AutonomousBusinessOrchestrator, AutonomousTask, AgentRole, TaskStatus
 
 class TestAutonomousOrchestrator(unittest.IsolatedAsyncioTestCase):
+    def _build_orchestrator(self) -> AutonomousBusinessOrchestrator:
+        return AutonomousBusinessOrchestrator(
+            "Test",
+            "Founder",
+            market_research_api_key="test",
+            sendgrid_api_key="test",
+            stripe_api_key="test",
+            twitter_consumer_key="test",
+            twitter_consumer_secret="test",
+            twitter_access_token="test",
+            twitter_access_token_secret="test",
+        )
+
     async def test_assign_tasks_dependencies_manual(self):
         """Test dependency logic by manually setting state (mocking existing tasks)."""
-        orchestrator = AutonomousBusinessOrchestrator("Test", "Founder")
+        orchestrator = self._build_orchestrator()
 
         # Create agents
         agent1 = MagicMock()
@@ -58,7 +71,7 @@ class TestAutonomousOrchestrator(unittest.IsolatedAsyncioTestCase):
 
     async def test_lifecycle_and_state_maintenance(self):
         """Test that the orchestrator actually maintains state as tasks complete."""
-        orchestrator = AutonomousBusinessOrchestrator("Test", "Founder")
+        orchestrator = self._build_orchestrator()
 
         # Mock agent to succeed
         agent = MagicMock()
