@@ -19,7 +19,7 @@ import numpy as np
 import hashlib
 from concurrent.futures import ThreadPoolExecutor
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
@@ -84,6 +84,7 @@ class ExpertQuery:
     max_results: int = 5
     confidence_threshold: float = 0.7
     use_ensemble: bool = False
+    precomputed_docs: Optional[List[Any]] = None
 
 
 @dataclass
@@ -371,7 +372,10 @@ class StandardDomainExpert(DomainExpert):
     async def answer_query(self, query: ExpertQuery) -> ExpertResponse:
         """Answer query using domain expertise."""
         # Retrieve relevant documents
-        context_docs = await self.retrieve_context(query.query, query.max_results)
+        if query.precomputed_docs is not None:
+            context_docs = query.precomputed_docs
+        else:
+            context_docs = await self.retrieve_context(query.query, query.max_results)
 
         # Synthesize answer (would use LLM in production)
         sources = [
@@ -670,18 +674,48 @@ class MultiDomainExpertSystem:
             return results[0][0].domain
         return None
 
+    async def _identify_best_domain_with_docs(self, query: str, top_k: int = 5) -> Tuple[Optional[ExpertDomain], List[Any]]:
+        """Identify the most relevant domain and return found docs."""
+        # Use run_in_executor to avoid blocking the event loop with synchronous vector search
+        loop = asyncio.get_running_loop()
+        results = await loop.run_in_executor(
+            None,
+            self.vector_store.search,
+            query,
+            top_k,
+            None,  # domain
+        )
+        if results:
+            return results[0][0].domain, results
+        return None, []
+
     async def _auto_select_expert(self, query: ExpertQuery) -> ExpertResponse:
         """Automatically select best expert for query."""
 
-        # Optimization: Try to identify domain first
-        best_domain = await self.identify_best_domain_async(query.query)
+        # Optimization: Try to identify domain first and get docs in one go
+        # Search for more docs than needed to ensure we cover enough of the best domain
+        best_domain, all_docs = await self._identify_best_domain_with_docs(
+            query.query,
+            top_k=query.max_results * 4
+        )
 
         if best_domain:
             expert = self.experts.get(best_domain)
             if expert:
-                # If we found a specific domain match via vector search, query just that expert.
-                # This reduces N searches to 1 global search + 1 specific search.
-                return await expert.answer_query(query)
+                # Filter docs for this expert
+                relevant_docs = [
+                    d for d in all_docs
+                    if d[0].domain == best_domain
+                ]
+
+                # Create a new query with precomputed docs
+                # Slice to requested max_results
+                new_query = replace(
+                    query,
+                    precomputed_docs=relevant_docs[:query.max_results]
+                )
+
+                return await expert.answer_query(new_query)
 
         # Fallback to querying all experts if no clear domain match
         # (or if identified domain expert is missing, which shouldn't happen)
