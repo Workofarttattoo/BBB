@@ -31,7 +31,8 @@ class MockVectorStore(VectorStore):
             KnowledgeDocument(
                 doc_id="test_doc",
                 content="test content",
-                domain=domain or ExpertDomain.GENERAL,
+                # Use CHEMISTRY to ensure we hit a valid expert in the test
+                domain=domain or ExpertDomain.CHEMISTRY,
                 metadata={}
             ),
             0.9
