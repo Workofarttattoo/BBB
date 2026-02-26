@@ -60,18 +60,6 @@ except ImportError:
     LLM_AVAILABLE = False
     print("[WARN] ECH0 LLM Engine not available")
 
-# Selenium imports for other web automation
-try:
-    from selenium import webdriver
-    from selenium.webdriver.common.by import By
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
-    from selenium.webdriver.chrome.options import Options
-    SELENIUM_AVAILABLE = True
-except ImportError:
-    SELENIUM_AVAILABLE = False
-    print("[WARN] Selenium not available. Install: pip install selenium")
-
 
 class ECH0AutonomousCore:
     """
