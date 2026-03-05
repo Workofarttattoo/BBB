@@ -127,7 +127,7 @@ class ECH0FullAutonomy:
                 return False
 
             # Get profiles (assuming first one matches platform for simplicity)
-            profiles = self.social_service.get_profiles()
+            profiles = await self.social_service.get_profiles()
             target_profile = None
             for p in profiles:
                 if platform.lower() in p.get('service', '').lower():
@@ -138,7 +138,7 @@ class ECH0FullAutonomy:
                 print(f"⚠️  No Buffer profile found for {platform}")
                 return False
 
-            result = self.social_service.create_post_direct(
+            result = await self.social_service.create_post_direct(
                 profile_id=target_profile['id'],
                 text=content
             )

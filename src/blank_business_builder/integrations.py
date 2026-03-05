@@ -4,7 +4,13 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 """
 import os
 import json
+import asyncio
 from typing import List, Dict, Optional
+
+try:
+    import httpx
+except ImportError:
+    httpx = None
 
 try:
     import openai  # type: ignore
@@ -600,19 +606,31 @@ class BufferService:
         self.access_token = os.getenv("BUFFER_ACCESS_TOKEN", "")
         self.api_base = "https://api.bufferapp.com/1"
 
-    def get_profiles(self) -> List[Dict]:
+    async def get_profiles(self) -> List[Dict]:
         """Get user's Buffer profiles."""
         if not self.access_token:
             # If not configured, simulation
             return [{"id": "sim_profile_1", "service": "twitter", "formatted_username": "@SimulatedUser"}]
 
         try:
-            response = requests.get(
-                f"{self.api_base}/profiles.json",
-                params={"access_token": self.access_token}
-            )
-            response.raise_for_status()
-            return response.json()
+            if httpx:
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(
+                        f"{self.api_base}/profiles.json",
+                        params={"access_token": self.access_token}
+                    )
+                    response.raise_for_status()
+                    return response.json()
+            else:
+                # Fallback to requests in a thread to keep it non-blocking
+                def _fetch():
+                    response = requests.get(
+                        f"{self.api_base}/profiles.json",
+                        params={"access_token": self.access_token}
+                    )
+                    response.raise_for_status()
+                    return response.json()
+                return await asyncio.to_thread(_fetch)
 
         except Exception as e:
             raise HTTPException(
@@ -620,7 +638,7 @@ class BufferService:
                 detail=f"Buffer API error: {str(e)}"
             )
 
-    def create_post(
+    async def create_post(
         self,
         profile_id: str,
         text: str,
@@ -639,9 +657,9 @@ class BufferService:
             task_queue.add_task("create_post", payload)
             return {"success": True, "message": "Post queued for creation"}
         else:
-            return self.create_post_direct(profile_id, text, scheduled_at, media)
+            return await self.create_post_direct(profile_id, text, scheduled_at, media)
 
-    def create_post_direct(
+    async def create_post_direct(
         self,
         profile_id: str,
         text: str,
@@ -667,17 +685,28 @@ class BufferService:
             if media:
                 data["media"] = media
 
-            response = requests.post(
-                f"{self.api_base}/updates/create.json",
-                data=data
-            )
-            response.raise_for_status()
-            return response.json()
+            if httpx:
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        f"{self.api_base}/updates/create.json",
+                        data=data
+                    )
+                    response.raise_for_status()
+                    return response.json()
+            else:
+                def _post():
+                    response = requests.post(
+                        f"{self.api_base}/updates/create.json",
+                        data=data
+                    )
+                    response.raise_for_status()
+                    return response.json()
+                return await asyncio.to_thread(_post)
 
         except Exception as e:
             raise e
 
-    def schedule_post(
+    async def schedule_post(
         self,
         profile_id: str,
         text: str,
@@ -686,7 +715,7 @@ class BufferService:
     ) -> Dict:
         """Schedule a post for future publishing."""
         media = {"link": media_url} if media_url else None
-        return self.create_post(profile_id, text, scheduled_timestamp, media)
+        return await self.create_post(profile_id, text, scheduled_timestamp, media)
 
 
 class IntegrationFactory:
@@ -731,9 +760,9 @@ def _email_handler(payload):
     service = IntegrationFactory.get_sendgrid_service()
     service.send_email_direct(**payload)
 
-def _buffer_handler(payload):
+async def _buffer_handler(payload):
     service = IntegrationFactory.get_buffer_service()
-    service.create_post_direct(**payload)
+    await service.create_post_direct(**payload)
 
 task_queue.register_handler("send_email", _email_handler)
 task_queue.register_handler("create_post", _buffer_handler)
