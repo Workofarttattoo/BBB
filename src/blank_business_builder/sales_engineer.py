@@ -74,7 +74,7 @@ class SalesEngineer:
         if self.core.llm_engine:
             try:
                 email_body = self.core.llm_engine.generate_response(prompt)
-            except:
+            except Exception:
                 pass
         
         # Create a Sale object to track this opportunity
