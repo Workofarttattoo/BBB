@@ -171,7 +171,7 @@ class Level6BusinessAgent:
         self.on = on
         self.send = send
         self.every = every
-        
+
         # Register with HiveMind
         if self.hive_mind:
             # Map role to hive AgentType where possible, else default to ANALYTICS/SUPPORT
@@ -779,16 +779,16 @@ class ChiefEnhancementOfficer:
 
     async def _check_bottlenecks(self):
         """Analyze task queues for blocked tasks."""
-        num_blocked = self.orchestrator.task_status_counts.get(TaskStatus.BLOCKED.value, 0)
-        num_pending = self.orchestrator.task_status_counts.get(TaskStatus.PENDING.value, 0)
+        blocked_tasks = [t for t in self.orchestrator.task_queue if t.status == TaskStatus.BLOCKED]
+        pending_tasks = [t for t in self.orchestrator.task_queue if t.status == TaskStatus.PENDING]
 
-        if num_blocked > 2:
+        if len(blocked_tasks) > 2:
             logger.warning(
-                f"[CEO Daemon] Detected {num_blocked} blocked tasks. Analyzing root cause..."
+                f"[CEO Daemon] Detected {len(blocked_tasks)} blocked tasks. Analyzing root cause..."
             )
             # In a real system, this would trigger a re-planning or resource reallocation
 
-        if num_pending > 10:
+        if len(pending_tasks) > 10:
             logger.warning(
                 f"[CEO Daemon] High backlog detected ({len(pending_tasks)} tasks). Suggesting scale-up."
             )
