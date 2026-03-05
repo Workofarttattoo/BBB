@@ -465,7 +465,7 @@ class SendGridService:
             try:
                 self.send_email(email, subject, html_content, from_name)
                 success_count += 1
-            except:
+            except Exception:
                 failure_count += 1
 
         return {"success": success_count, "failed": failure_count}

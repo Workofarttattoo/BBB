@@ -47,7 +47,7 @@ class QuantumOptimizer:
             try:
                 self.vqe = QuantumVQEForecaster()
                 self.quantum_engine = QuantumStateEngine(num_qubits=8)
-            except:
+            except Exception:
                 self.quantum_available = False
 
     def optimize_crypto_mining(self, mining_params: Dict[str, Any]) -> Dict[str, Any]:
