@@ -67,16 +67,11 @@ def create_mock_session():
 
     mock_metrics = MagicMock(spec=MetricsHistory)
 
-    def side_effect(model):
-        if model == Business:
-            return MockQuery(delay=0.1, result=mock_business)
-        elif model == AgentTask:
-            return MockQuery(delay=0.1, result=mock_task)
-        elif model == MetricsHistory:
-            return MockQuery(delay=0.1, result=mock_metrics)
-        return MockQuery()
+    def query_mock(*models):
+        # We don't care about the args for the mock, just return a query object
+        return MockQuery(delay=0.1, result=mock_business if models and models[0] == Business else (mock_task if models and models[0] == AgentTask else (mock_metrics if models and models[0] == MetricsHistory else (1,1,1,1))))
 
-    session.query.side_effect = side_effect
+    session.query = MagicMock(side_effect=query_mock)
     return session
 
 async def heartbeat(interval=0.01):
