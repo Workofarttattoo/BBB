@@ -67,14 +67,21 @@ def create_mock_session():
 
     mock_metrics = MagicMock(spec=MetricsHistory)
 
-    def side_effect(model):
-        if model == Business:
+    def side_effect(*models):
+        # Handle func.count(), func.sum() etc.
+        if not models:
+            return MockQuery(delay=0.1)
+
+        model = models[0]
+        if "Business" in str(model):
             return MockQuery(delay=0.1, result=mock_business)
-        elif model == AgentTask:
+        elif "AgentTask" in str(model):
             return MockQuery(delay=0.1, result=mock_task)
-        elif model == MetricsHistory:
+        elif "MetricsHistory" in str(model):
             return MockQuery(delay=0.1, result=mock_metrics)
-        return MockQuery()
+
+        # For the aggregation query
+        return MockQuery(delay=0.1, result=(10, 5, 3, 2))
 
     session.query.side_effect = side_effect
     return session
