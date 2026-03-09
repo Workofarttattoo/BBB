@@ -23,6 +23,9 @@ class MockQuery:
     def order_by(self, *args, **kwargs):
         return self
 
+    def group_by(self, *args, **kwargs):
+        return self
+
     def limit(self, *args, **kwargs):
         return self
 
@@ -32,6 +35,8 @@ class MockQuery:
 
     def all(self):
         time.sleep(self.delay)  # Blocking sleep
+        if isinstance(self.result, list):
+             return self.result
         return [self.result] if self.result else []
 
     def count(self):
@@ -67,12 +72,17 @@ def create_mock_session():
 
     mock_metrics = MagicMock(spec=MetricsHistory)
 
-    def side_effect(model):
-        if model == Business:
+    def side_effect(*models):
+        model_str = str(models[0]) if models else ""
+        if "Business" in model_str:
             return MockQuery(delay=0.1, result=mock_business)
-        elif model == AgentTask:
+        elif "AgentTask" in model_str or "count" in model_str:
+            # We are doing multiple queries in one with count/sum/case, handle it
+            if len(models) > 1:
+               # Group by query returns list of tuples (status, count)
+               return MockQuery(delay=0.1, result=[("completed", 5), ("pending", 3), ("failed", 2)])
             return MockQuery(delay=0.1, result=mock_task)
-        elif model == MetricsHistory:
+        elif "MetricsHistory" in model_str:
             return MockQuery(delay=0.1, result=mock_metrics)
         return MockQuery()
 
@@ -126,6 +136,8 @@ async def main():
         result = await get_business_metrics("test-id", session)
     except Exception as e:
         print(f"Error calling get_business_metrics: {e}")
+        import traceback
+        traceback.print_exc()
         monitor_task.cancel()
         return
 
