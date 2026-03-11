@@ -78,18 +78,18 @@ def _get_business_metrics_sync(business_id: str, db: Session) -> dict:
     if not business:
         return {"error": "Business not found"}
 
-    # Get task statistics
+    # Get task statistics using optimized GROUP BY to prevent event loop blocking
     task_stats = db.query(
-        func.count(AgentTask.id),
-        func.sum(case((AgentTask.status == "completed", 1), else_=0)),
-        func.sum(case((AgentTask.status == "pending", 1), else_=0)),
-        func.sum(case((AgentTask.status == "failed", 1), else_=0))
-    ).filter(AgentTask.business_id == business_id).first()
+        AgentTask.status, func.count(AgentTask.id)
+    ).filter(AgentTask.business_id == business_id).group_by(AgentTask.status).all()
 
-    total_tasks = task_stats[0] or 0
-    completed_tasks = task_stats[1] or 0
-    pending_tasks = task_stats[2] or 0
-    failed_tasks = task_stats[3] or 0
+    # Process grouped results into dictionary
+    task_counts = {status: count for status, count in task_stats}
+
+    total_tasks = sum(task_counts.values())
+    completed_tasks = task_counts.get("completed", 0)
+    pending_tasks = task_counts.get("pending", 0)
+    failed_tasks = task_counts.get("failed", 0)
 
     # Get recent tasks
     recent_tasks = db.query(AgentTask).filter(
