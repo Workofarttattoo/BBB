@@ -16,3 +16,7 @@
 ## 2026-03-03 - Optimize AutonomousBusinessOrchestrator Metrics Gathering
 **Learning:** Found O(N) list comprehensions being used to calculate task statuses in `get_metrics_dashboard`, `_report_progress`, and `_check_bottlenecks` by iterating over the unbounded `task_queue`. This causes measurable event loop blocking as the business runs.
 **Action:** Centralized task status updates into `_set_task_status` which maintains an O(1) `task_status_counts` dictionary, eliminating the need to iterate over history.
+
+## 2026-03-03 - Optimize websockets GROUP BY Task metrics
+**Learning:** Found that `_get_business_metrics_sync` in `websockets.py` blocked the SQLite event loop by executing multiple scalar `SUM(CASE(...))` expressions over task statuses. This iterates sequentially row-by-row for each aggregation causing significant performance impacts on scale. Wait, I noticed earlier I already put a 2026-03-03 entry!
+**Action:** Always prefer `GROUP BY` aggregations coupled with native dictionary manipulations in Python over complex conditionals in `SQLAlchemy` functions.
