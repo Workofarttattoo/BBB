@@ -16,3 +16,9 @@
 ## 2026-03-03 - Optimize AutonomousBusinessOrchestrator Metrics Gathering
 **Learning:** Found O(N) list comprehensions being used to calculate task statuses in `get_metrics_dashboard`, `_report_progress`, and `_check_bottlenecks` by iterating over the unbounded `task_queue`. This causes measurable event loop blocking as the business runs.
 **Action:** Centralized task status updates into `_set_task_status` which maintains an O(1) `task_status_counts` dictionary, eliminating the need to iterate over history.
+## 2025-05-27 - Smart Lead Nurturing Engagement Optimization
+**Learning:** Found multiple O(N) generator expressions iterating over the same list () consecutively in . While Python generators are concise, doing this 4 times for a potentially long list of events creates a measurable performance drag.
+**Action:** Replace multiple generator loops over the same data structure with a single pass that updates all relevant counters, reducing complexity from O(4N) to O(N).
+## 2025-05-27 - Smart Lead Nurturing Engagement Optimization
+**Learning:** Found multiple O(N) generator expressions iterating over the same list (interactions) consecutively in _calculate_engagement_score. While Python generators are concise, doing this 4 times for a potentially long list of events creates a measurable performance drag.
+**Action:** Replace multiple generator loops over the same data structure with a single pass that updates all relevant counters, reducing complexity from O(4N) to O(N).
