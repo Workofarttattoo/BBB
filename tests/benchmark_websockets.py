@@ -26,6 +26,9 @@ class MockQuery:
     def limit(self, *args, **kwargs):
         return self
 
+    def group_by(self, *args, **kwargs):
+        return self
+
     def first(self):
         time.sleep(self.delay)  # Blocking sleep
         return self.result
@@ -67,12 +70,26 @@ def create_mock_session():
 
     mock_metrics = MagicMock(spec=MetricsHistory)
 
-    def side_effect(model):
-        if model == Business:
+    def side_effect(*models):
+        model = models[0] if models else None
+
+        # When passing AgentTask.status and func.count(AgentTask.id),
+        # it might be easier to match on string representations
+        model_str = str(model)
+
+        if "Business" in model_str:
             return MockQuery(delay=0.1, result=mock_business)
-        elif model == AgentTask:
-            return MockQuery(delay=0.1, result=mock_task)
-        elif model == MetricsHistory:
+        elif "AgentTask" in model_str:
+            # Check if this is the group_by query for statuses or the recent tasks query
+            if len(models) > 1:
+                # This is the group_by query which returns tuples like (status, count)
+                mq = MockQuery(delay=0.1, result=mock_task)
+                mq.all = lambda: [("completed", 5), ("pending", 2), ("failed", 1)]
+                return mq
+            else:
+                # This is the recent_tasks query
+                return MockQuery(delay=0.1, result=mock_task)
+        elif "MetricsHistory" in model_str:
             return MockQuery(delay=0.1, result=mock_metrics)
         return MockQuery()
 
