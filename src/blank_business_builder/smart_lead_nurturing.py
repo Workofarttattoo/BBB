@@ -89,10 +89,22 @@ class SmartLeadScorer:
         if not interactions:
             return 0.0
 
-        email_opens = sum(1 for i in interactions if i.get('type') == 'email_open')
-        email_clicks = sum(1 for i in interactions if i.get('type') == 'email_click')
-        page_views = sum(1 for i in interactions if i.get('type') == 'page_view')
-        demo_requests = sum(1 for i in interactions if i.get('type') == 'demo_request')
+        # Optimization: Use a single pass over interactions to tally events (O(N) instead of O(4N))
+        email_opens = 0
+        email_clicks = 0
+        page_views = 0
+        demo_requests = 0
+
+        for i in interactions:
+            event_type = i.get('type')
+            if event_type == 'email_open':
+                email_opens += 1
+            elif event_type == 'email_click':
+                email_clicks += 1
+            elif event_type == 'page_view':
+                page_views += 1
+            elif event_type == 'demo_request':
+                demo_requests += 1
 
         # Weighted scoring
         score = (
