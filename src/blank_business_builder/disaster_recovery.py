@@ -679,26 +679,35 @@ class DisasterRecoveryOrchestrator:
 
     async def get_recovery_metrics(self) -> Dict:
         """Get disaster recovery metrics and status."""
-        # Backup metrics
+        # Performance optimization: Compute backup metrics in a single pass O(N)
         total_backups = len(self.backup_engine.backup_history)
-        recent_backups = [
-            b for b in self.backup_engine.backup_history
-            if (datetime.utcnow() - b.timestamp).days <= 7
-        ]
+        recent_backups_count = 0
+        total_backup_size = 0
+        total_compression = 0.0
+        encrypted_backups_count = 0
 
-        total_backup_size = sum(b.size_bytes for b in self.backup_engine.backup_history)
-        avg_compression = (
-            sum(b.compression_ratio for b in self.backup_engine.backup_history) / total_backups
-            if total_backups > 0 else 0.0
-        )
+        now = datetime.utcnow()
+        for b in self.backup_engine.backup_history:
+            if (now - b.timestamp).days <= 7:
+                recent_backups_count += 1
+            total_backup_size += b.size_bytes
+            total_compression += b.compression_ratio
+            if b.encryption_enabled:
+                encrypted_backups_count += 1
 
-        # Failover metrics
+        avg_compression = total_compression / total_backups if total_backups > 0 else 0.0
+
+        # Performance optimization: Compute failover metrics in a single pass O(N)
         total_failovers = len(self.failover.failover_history)
-        successful_failovers = sum(1 for f in self.failover.failover_history if f.success)
-        avg_failover_time = (
-            sum(f.duration_seconds for f in self.failover.failover_history) / total_failovers
-            if total_failovers > 0 else 0.0
-        )
+        successful_failovers = 0
+        total_failover_time = 0.0
+
+        for f in self.failover.failover_history:
+            if f.success:
+                successful_failovers += 1
+            total_failover_time += f.duration_seconds
+
+        avg_failover_time = total_failover_time / total_failovers if total_failovers > 0 else 0.0
 
         # Health status
         healthy_instances = sum(
@@ -709,10 +718,10 @@ class DisasterRecoveryOrchestrator:
         return {
             "backup_metrics": {
                 "total_backups": total_backups,
-                "recent_backups_7d": len(recent_backups),
+                "recent_backups_7d": recent_backups_count,
                 "total_size_bytes": total_backup_size,
                 "average_compression_ratio": avg_compression,
-                "encrypted_backups": sum(1 for b in self.backup_engine.backup_history if b.encryption_enabled)
+                "encrypted_backups": encrypted_backups_count
             },
             "failover_metrics": {
                 "total_failovers": total_failovers,
