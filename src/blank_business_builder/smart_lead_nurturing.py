@@ -89,10 +89,23 @@ class SmartLeadScorer:
         if not interactions:
             return 0.0
 
-        email_opens = sum(1 for i in interactions if i.get('type') == 'email_open')
-        email_clicks = sum(1 for i in interactions if i.get('type') == 'email_click')
-        page_views = sum(1 for i in interactions if i.get('type') == 'page_view')
-        demo_requests = sum(1 for i in interactions if i.get('type') == 'demo_request')
+        # Optimization: Combine multi-generator list passes into a single O(N) loop
+        # Expected performance impact: Reduces list iterations from 4 to 1
+        email_opens = 0
+        email_clicks = 0
+        page_views = 0
+        demo_requests = 0
+
+        for i in interactions:
+            i_type = i.get('type')
+            if i_type == 'email_open':
+                email_opens += 1
+            elif i_type == 'email_click':
+                email_clicks += 1
+            elif i_type == 'page_view':
+                page_views += 1
+            elif i_type == 'demo_request':
+                demo_requests += 1
 
         # Weighted scoring
         score = (
@@ -218,8 +231,17 @@ class LeadNurturingEngine:
 
     def _determine_stage(self, score: float, interactions: List[Dict]) -> str:
         """Determine lead stage based on score and behavior."""
-        demo_requested = any(i.get('type') == 'demo_request' for i in interactions)
-        trial_started = any(i.get('type') == 'trial_signup' for i in interactions)
+        # Optimization: Combine iterations and short-circuit early
+        # Expected performance impact: Reduces O(2N) scans to an early-exit O(N) scan
+        demo_requested = False
+        trial_started = False
+        for i in interactions:
+            i_type = i.get('type')
+            if i_type == 'trial_signup':
+                trial_started = True
+                break  # Highest stage reached, no need to check further
+            elif i_type == 'demo_request':
+                demo_requested = True
 
         if trial_started:
             return "hot"
