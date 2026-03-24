@@ -200,7 +200,7 @@ class TestMultiChannelCampaignOrchestrator:
         assert Channel.EMAIL in content
         assert content[Channel.EMAIL].channel == Channel.EMAIL
         assert content[Channel.EMAIL].subject is not None
-        assert "Test Business" in content[Channel.EMAIL].body
+        assert "Test Business" in content[Channel.EMAIL].subject
 
     def test_generate_content_linkedin(self):
         """Test generating LinkedIn content."""
