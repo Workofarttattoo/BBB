@@ -399,11 +399,21 @@ class MultiChannelCampaignOrchestrator:
             return {}
 
         # Aggregate metrics across all channels
-        total_impressions = sum(m.impressions for m in campaign.metrics.values())
-        total_clicks = sum(m.clicks for m in campaign.metrics.values())
-        total_conversions = sum(m.conversions for m in campaign.metrics.values())
-        total_spend = sum(m.spend for m in campaign.metrics.values())
-        total_revenue = sum(m.revenue for m in campaign.metrics.values())
+        # BOLT OPTIMIZATION: Replaced 5 separate O(N) list comprehensions/sum generators
+        # with a single O(N) loop that calculates all five metrics simultaneously,
+        # preventing redundant dictionary iterations.
+        total_impressions = 0
+        total_clicks = 0
+        total_conversions = 0
+        total_spend = 0.0
+        total_revenue = 0.0
+
+        for m in campaign.metrics.values():
+            total_impressions += m.impressions
+            total_clicks += m.clicks
+            total_conversions += m.conversions
+            total_spend += m.spend
+            total_revenue += m.revenue
 
         analytics = {
             'campaign_id': campaign.id,
