@@ -250,8 +250,13 @@ class MagicRDLab:
         active_sessions = [s for s in customer_sessions if s.status == "active"]
         completed_sessions = [s for s in customer_sessions if s.status == "completed"]
 
-        total_hours = sum(PACKAGE_PRICING[s.package]["hours"] for s in customer_sessions)
-        total_computations = sum(len(s.results) for s in customer_sessions)
+        # ⚡ Bolt Optimization: Calculate totals in a single O(N) pass
+        # instead of multiple generator expressions to improve dashboard load time
+        total_hours = 0
+        total_computations = 0
+        for s in customer_sessions:
+            total_hours += PACKAGE_PRICING[s.package]["hours"]
+            total_computations += len(s.results)
 
         return {
             "customer_id": customer.customer_id,

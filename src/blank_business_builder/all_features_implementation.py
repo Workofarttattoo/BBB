@@ -758,12 +758,23 @@ class SentimentAnalyzer:
     async def analyze_feedback(self, text: str) -> Dict:
         """Analyze sentiment of customer feedback."""
         # Simplified sentiment analysis
-        positive_words = ["great", "excellent", "amazing", "love", "fantastic"]
-        negative_words = ["bad", "terrible", "awful", "hate", "poor"]
+        # ⚡ Bolt Optimization: Use O(1) set lookups to tally words
+        positive_words = {"great", "excellent", "amazing", "love", "fantastic"}
+        negative_words = {"bad", "terrible", "awful", "hate", "poor"}
 
-        text_lower = text.lower()
-        positive_count = sum(1 for word in positive_words if word in text_lower)
-        negative_count = sum(1 for word in negative_words if word in text_lower)
+        positive_count = 0
+        negative_count = 0
+
+        # Split text into words once, O(N)
+        # Note: clean punctuation from words so direct matches work
+        import string
+        translator = str.maketrans('', '', string.punctuation)
+        for word in text.lower().split():
+            clean_word = word.translate(translator)
+            if clean_word in positive_words:
+                positive_count += 1
+            elif clean_word in negative_words:
+                negative_count += 1
 
         if positive_count > negative_count:
             sentiment = "positive"
