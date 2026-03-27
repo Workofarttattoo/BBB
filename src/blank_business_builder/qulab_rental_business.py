@@ -412,6 +412,14 @@ class QuLabRentalBusiness:
         completed_jobs = [j for j in customer_jobs if j.status == "completed"]
         failed_jobs = [j for j in customer_jobs if j.status == "failed"]
 
+        # ⚡ Bolt Optimization: Replace separate sum() generator expressions
+        # with a single loop to calculate totals for usage breakdown
+        total_qubits = 0
+        total_simulation_minutes = 0.0
+        for j in completed_jobs:
+            total_qubits += j.num_qubits
+            total_simulation_minutes += j.simulation_minutes
+
         return {
             "customer_id": customer_id,
             "company_name": customer.company_name,
@@ -428,8 +436,8 @@ class QuLabRentalBusiness:
                 "total_spent": float(customer.total_spent)
             },
             "usage_breakdown": {
-                "avg_qubits_per_job": sum(j.num_qubits for j in completed_jobs) / max(1, len(completed_jobs)),
-                "total_simulation_minutes": sum(j.simulation_minutes for j in completed_jobs),
+                "avg_qubits_per_job": total_qubits / max(1, len(completed_jobs)),
+                "total_simulation_minutes": total_simulation_minutes,
                 "most_used_priority": Counter(
                     j.priority.value for j in customer_jobs
                 ).most_common(1)[0][0] if customer_jobs else "none"
