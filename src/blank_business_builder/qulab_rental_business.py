@@ -412,6 +412,13 @@ class QuLabRentalBusiness:
         completed_jobs = [j for j in customer_jobs if j.status == "completed"]
         failed_jobs = [j for j in customer_jobs if j.status == "failed"]
 
+        # Bolt: O(N) loop to compute avg qubits and total minutes to avoid redundant list traversals
+        total_qubits = 0
+        total_simulation_minutes = 0.0
+        for j in completed_jobs:
+            total_qubits += j.num_qubits
+            total_simulation_minutes += j.simulation_minutes
+
         return {
             "customer_id": customer_id,
             "company_name": customer.company_name,
@@ -428,8 +435,8 @@ class QuLabRentalBusiness:
                 "total_spent": float(customer.total_spent)
             },
             "usage_breakdown": {
-                "avg_qubits_per_job": sum(j.num_qubits for j in completed_jobs) / max(1, len(completed_jobs)),
-                "total_simulation_minutes": sum(j.simulation_minutes for j in completed_jobs),
+                "avg_qubits_per_job": total_qubits / max(1, len(completed_jobs)),
+                "total_simulation_minutes": total_simulation_minutes,
                 "most_used_priority": Counter(
                     j.priority.value for j in customer_jobs
                 ).most_common(1)[0][0] if customer_jobs else "none"
@@ -496,15 +503,26 @@ class QuLabRentalBusiness:
 
     def get_business_metrics(self) -> Dict[str, Any]:
         """Get overall business metrics."""
+        # Bolt: O(N) loop to compute active customers and tier distribution concurrently
+        active_customers = 0
+        tier_distribution = {tier.value: 0 for tier in SubscriptionTier}
+        for customer in self.customers.values():
+            if customer.subscription_status == "active":
+                active_customers += 1
+            tier_distribution[customer.tier.value] += 1
+
+        # Bolt: O(N) loop to compute completed jobs
+        completed_jobs = 0
+        for job in self.jobs:
+            if job.status == "completed":
+                completed_jobs += 1
+
         return {
             "total_customers": len(self.customers),
-            "active_customers": len([c for c in self.customers.values() if c.subscription_status == "active"]),
-            "tier_distribution": {
-                tier.value: len([c for c in self.customers.values() if c.tier == tier])
-                for tier in SubscriptionTier
-            },
+            "active_customers": active_customers,
+            "tier_distribution": tier_distribution,
             "total_jobs": len(self.jobs),
-            "completed_jobs": len([j for j in self.jobs if j.status == "completed"]),
+            "completed_jobs": completed_jobs,
             "total_qubit_hours": self.total_qubit_hours,
             "total_revenue": float(self.revenue),
             "avg_revenue_per_customer": float(self.revenue / max(1, len(self.customers))),
