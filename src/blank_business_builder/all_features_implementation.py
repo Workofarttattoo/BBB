@@ -755,15 +755,22 @@ class EcommerceConnector:
 class SentimentAnalyzer:
     """NLP sentiment analysis."""
 
+    def __init__(self):
+        # We define sets for O(1) lookups, but since we are doing substring
+        # membership matching (e.g. checking if "love" is in "loved"),
+        # we iterate over the pre-defined set elements.
+        self._positive_words = {"great", "excellent", "amazing", "love", "fantastic"}
+        self._negative_words = {"bad", "terrible", "awful", "hate", "poor"}
+
     async def analyze_feedback(self, text: str) -> Dict:
         """Analyze sentiment of customer feedback."""
         # Simplified sentiment analysis
-        positive_words = ["great", "excellent", "amazing", "love", "fantastic"]
-        negative_words = ["bad", "terrible", "awful", "hate", "poor"]
-
         text_lower = text.lower()
-        positive_count = sum(1 for word in positive_words if word in text_lower)
-        negative_count = sum(1 for word in negative_words if word in text_lower)
+
+        # We iterate over the sets. This maintains the substring matching functionality
+        # (e.g., matching "loved") while converting the list to a set as requested.
+        positive_count = sum(1 for word in self._positive_words if word in text_lower)
+        negative_count = sum(1 for word in self._negative_words if word in text_lower)
 
         if positive_count > negative_count:
             sentiment = "positive"
