@@ -755,15 +755,27 @@ class EcommerceConnector:
 class SentimentAnalyzer:
     """NLP sentiment analysis."""
 
+    def __init__(self):
+        # ⚡ Bolt Optimization: Use class-level sets to avoid per-call memory reallocation
+        self.positive_words = {"great", "excellent", "amazing", "love", "fantastic"}
+        self.negative_words = {"bad", "terrible", "awful", "hate", "poor"}
+
     async def analyze_feedback(self, text: str) -> Dict:
         """Analyze sentiment of customer feedback."""
-        # Simplified sentiment analysis
-        positive_words = ["great", "excellent", "amazing", "love", "fantastic"]
-        negative_words = ["bad", "terrible", "awful", "hate", "poor"]
-
         text_lower = text.lower()
-        positive_count = sum(1 for word in positive_words if word in text_lower)
-        negative_count = sum(1 for word in negative_words if word in text_lower)
+
+        # ⚡ Bolt Optimization: Calculate sentiment in a single pass over word sets
+        # Retain substring matching (e.g. 'loved' matches 'love')
+        positive_count = 0
+        negative_count = 0
+
+        for word in self.positive_words:
+            if word in text_lower:
+                positive_count += 1
+
+        for word in self.negative_words:
+            if word in text_lower:
+                negative_count += 1
 
         if positive_count > negative_count:
             sentiment = "positive"

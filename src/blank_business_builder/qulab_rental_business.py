@@ -496,15 +496,25 @@ class QuLabRentalBusiness:
 
     def get_business_metrics(self) -> Dict[str, Any]:
         """Get overall business metrics."""
+        # ⚡ Bolt Optimization: Calculate active customers and tier distribution in a single pass
+        active_customers = 0
+        tier_distribution = {tier.value: 0 for tier in SubscriptionTier}
+
+        for c in self.customers.values():
+            if c.subscription_status == "active":
+                active_customers += 1
+            if c.tier and c.tier.value in tier_distribution:
+                tier_distribution[c.tier.value] += 1
+
+        # ⚡ Bolt Optimization: Calculate completed jobs efficiently without list comprehension allocation
+        completed_jobs = sum(1 for j in self.jobs if j.status == "completed")
+
         return {
             "total_customers": len(self.customers),
-            "active_customers": len([c for c in self.customers.values() if c.subscription_status == "active"]),
-            "tier_distribution": {
-                tier.value: len([c for c in self.customers.values() if c.tier == tier])
-                for tier in SubscriptionTier
-            },
+            "active_customers": active_customers,
+            "tier_distribution": tier_distribution,
             "total_jobs": len(self.jobs),
-            "completed_jobs": len([j for j in self.jobs if j.status == "completed"]),
+            "completed_jobs": completed_jobs,
             "total_qubit_hours": self.total_qubit_hours,
             "total_revenue": float(self.revenue),
             "avg_revenue_per_customer": float(self.revenue / max(1, len(self.customers))),
