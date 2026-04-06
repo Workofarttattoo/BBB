@@ -69,3 +69,8 @@ ech0_state_*.json
 venv/
 .venv/
 env/
+.coverage
+test_coverage.json
+test_dashboard.html
+backups/
+test_backups/
