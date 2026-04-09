@@ -16,3 +16,7 @@
 ## 2026-03-03 - Optimize AutonomousBusinessOrchestrator Metrics Gathering
 **Learning:** Found O(N) list comprehensions being used to calculate task statuses in `get_metrics_dashboard`, `_report_progress`, and `_check_bottlenecks` by iterating over the unbounded `task_queue`. This causes measurable event loop blocking as the business runs.
 **Action:** Centralized task status updates into `_set_task_status` which maintains an O(1) `task_status_counts` dictionary, eliminating the need to iterate over history.
+
+## 2026-03-03 - Optimize Multiple Iterations
+**Learning:** Found multiple instances where we iterated over a list many times utilizing list comprehension logic, e.g. active_sessions and completed_sessions iteration from sessions list. These generated O(K * N) operations, leading to higher time complexity and unnecessary overhead memory allocations.
+**Action:** Consolidate multi-pass list comprehensions or filter operations across the same list into a single explicit loop that simultaneously calculates all required aggregates and metrics.
