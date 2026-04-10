@@ -89,21 +89,22 @@ class SmartLeadScorer:
         if not interactions:
             return 0.0
 
-        # Bolt Optimization: Single O(N) iteration instead of multiple sum() generators
+        # ⚡ Bolt Optimization: Replaced 4 O(N) generator expressions with a single O(N) loop.
+        # This reduces list traversals from 4N to N and reduces .get('type') dictionary lookups by 75%.
         email_opens = 0
         email_clicks = 0
         page_views = 0
         demo_requests = 0
 
         for i in interactions:
-            interaction_type = i.get('type')
-            if interaction_type == 'email_open':
+            itype = i.get('type')
+            if itype == 'email_open':
                 email_opens += 1
-            elif interaction_type == 'email_click':
+            elif itype == 'email_click':
                 email_clicks += 1
-            elif interaction_type == 'page_view':
+            elif itype == 'page_view':
                 page_views += 1
-            elif interaction_type == 'demo_request':
+            elif itype == 'demo_request':
                 demo_requests += 1
 
         # Weighted scoring
@@ -230,17 +231,8 @@ class LeadNurturingEngine:
 
     def _determine_stage(self, score: float, interactions: List[Dict]) -> str:
         """Determine lead stage based on score and behavior."""
-        # Bolt Optimization: Single O(N) loop that short-circuits early for highest priority
-        demo_requested = False
-        trial_started = False
-
-        for i in interactions:
-            interaction_type = i.get('type')
-            if interaction_type == 'trial_signup':
-                trial_started = True
-                break  # Highest priority condition met, short-circuit
-            elif interaction_type == 'demo_request':
-                demo_requested = True
+        demo_requested = any(i.get('type') == 'demo_request' for i in interactions)
+        trial_started = any(i.get('type') == 'trial_signup' for i in interactions)
 
         if trial_started:
             return "hot"
