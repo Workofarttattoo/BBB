@@ -679,41 +679,39 @@ class DisasterRecoveryOrchestrator:
 
     async def get_recovery_metrics(self) -> Dict:
         """Get disaster recovery metrics and status."""
-
-        # Performance optimization:
-        # Calculate multiple aggregate metrics in a single O(N) loop to avoid
-        # redundant passes over the historical arrays. Cache `now` to avoid
-        # calling datetime.utcnow() in every iteration.
-        now = datetime.utcnow()
-
-        # Backup metrics
+        # ⚡ Bolt Optimization: Combine backup metrics calculation into a single O(N) loop
         total_backups = len(self.backup_engine.backup_history)
-        recent_backups_count = 0
         total_backup_size = 0
         total_compression = 0.0
         encrypted_backups = 0
+        recent_backups_count = 0
+        now = datetime.utcnow()
 
         for b in self.backup_engine.backup_history:
-            if (now - b.timestamp).days <= 7:
-                recent_backups_count += 1
             total_backup_size += b.size_bytes
             total_compression += b.compression_ratio
             if b.encryption_enabled:
                 encrypted_backups += 1
+            if (now - b.timestamp).days <= 7:
+                recent_backups_count += 1
 
-        avg_compression = total_compression / total_backups if total_backups > 0 else 0.0
+        avg_compression = (
+            total_compression / total_backups if total_backups > 0 else 0.0
+        )
 
-        # Failover metrics
+        # ⚡ Bolt Optimization: Combine failover metrics calculation into a single O(N) loop
         total_failovers = len(self.failover.failover_history)
         successful_failovers = 0
-        total_failover_time = 0.0
+        total_duration = 0.0
 
         for f in self.failover.failover_history:
             if f.success:
                 successful_failovers += 1
-            total_failover_time += f.duration_seconds
+            total_duration += f.duration_seconds
 
-        avg_failover_time = total_failover_time / total_failovers if total_failovers > 0 else 0.0
+        avg_failover_time = (
+            total_duration / total_failovers if total_failovers > 0 else 0.0
+        )
 
         # Health status
         healthy_instances = sum(

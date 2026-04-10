@@ -409,20 +409,8 @@ class QuLabRentalBusiness:
         plan = PRICING_PLANS[customer.tier]
         customer_jobs = [j for j in self.jobs if j.customer_id == customer_id]
 
-        # ⚡ Bolt Optimization: Replace multiple O(N) list comprehensions/generator expressions
-        # with a single O(N) pass to gather completed/failed counts, total qubits, and simulation minutes.
-        completed_jobs_count = 0
-        failed_jobs_count = 0
-        total_qubits_completed = 0
-        total_simulation_minutes = 0.0
-
-        for j in customer_jobs:
-            if j.status == "completed":
-                completed_jobs_count += 1
-                total_qubits_completed += j.num_qubits
-                total_simulation_minutes += j.simulation_minutes
-            elif j.status == "failed":
-                failed_jobs_count += 1
+        completed_jobs = [j for j in customer_jobs if j.status == "completed"]
+        failed_jobs = [j for j in customer_jobs if j.status == "failed"]
 
         return {
             "customer_id": customer_id,
@@ -435,13 +423,13 @@ class QuLabRentalBusiness:
                 "included_hours": plan.included_hours,
                 "overage_hours": max(0, customer.qubit_hours_used - plan.included_hours),
                 "jobs_submitted": customer.jobs_submitted,
-                "jobs_completed": completed_jobs_count,
-                "jobs_failed": failed_jobs_count,
+                "jobs_completed": len(completed_jobs),
+                "jobs_failed": len(failed_jobs),
                 "total_spent": float(customer.total_spent)
             },
             "usage_breakdown": {
-                "avg_qubits_per_job": total_qubits_completed / max(1, completed_jobs_count),
-                "total_simulation_minutes": total_simulation_minutes,
+                "avg_qubits_per_job": sum(j.num_qubits for j in completed_jobs) / max(1, len(completed_jobs)),
+                "total_simulation_minutes": sum(j.simulation_minutes for j in completed_jobs),
                 "most_used_priority": Counter(
                     j.priority.value for j in customer_jobs
                 ).most_common(1)[0][0] if customer_jobs else "none"
@@ -508,21 +496,18 @@ class QuLabRentalBusiness:
 
     def get_business_metrics(self) -> Dict[str, Any]:
         """Get overall business metrics."""
-        # ⚡ Bolt Optimization: Replace multiple O(N) passes for active customers and tier distribution
-        # with a single O(N) pass to gather all metrics simultaneously.
+        # ⚡ Bolt Optimization: Calculate active customers and tier distribution in a single pass
         active_customers = 0
         tier_distribution = {tier.value: 0 for tier in SubscriptionTier}
 
         for c in self.customers.values():
             if c.subscription_status == "active":
                 active_customers += 1
-            tier_distribution[c.tier.value] += 1
+            if c.tier and c.tier.value in tier_distribution:
+                tier_distribution[c.tier.value] += 1
 
-        # ⚡ Bolt Optimization: Single O(N) pass for completed jobs count instead of list comprehension
-        completed_jobs = 0
-        for j in self.jobs:
-            if j.status == "completed":
-                completed_jobs += 1
+        # ⚡ Bolt Optimization: Calculate completed jobs efficiently without list comprehension allocation
+        completed_jobs = sum(1 for j in self.jobs if j.status == "completed")
 
         return {
             "total_customers": len(self.customers),
