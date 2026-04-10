@@ -147,6 +147,12 @@ def _get_business_metrics_sync(business_id: str, db: Session) -> dict:
 
 async def get_agent_activity(business_id: str, db: Session) -> dict:
     """Get real-time agent activity."""
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, _get_agent_activity_sync, business_id, db)
+
+
+def _get_agent_activity_sync(business_id: str, db: Session) -> dict:
+    """Synchronous implementation of get_agent_activity."""
     # Get active agents (tasks in progress)
     active_tasks = db.query(AgentTask).filter(
         AgentTask.business_id == business_id,
