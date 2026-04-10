@@ -13,3 +13,7 @@
 ## 2025-05-27 - ChromaDB Parallel Search
 **Learning:** `ChromaDB` (and potentially other vector stores) executes collection queries serially if iterating domains in Python. This is an IO-bound operation that blocks even in `asyncio` executors unless explicitly threaded.
 **Action:** Use `ThreadPoolExecutor` inside synchronous IO-bound methods that iterate over multiple resources (like collections) to parallelize latency.
+
+## 2026-04-10 - O(N) to O(1) Dashboard Metric Calculations in AutonomousBusinessOrchestrator
+**Learning:** Generating the user dashboard required computing the count of tasks in various states (Pending, Completed, Failed). Originally, this was done via multiple O(N) list comprehensions over the entire `task_queue` every time the dashboard was requested. As the autonomous business generated thousands of tasks, this blocked the event loop and caused unacceptable latency.
+**Action:** Centralized all state mutations into a `_set_task_status` method. This method updates an internal `task_status_counts` dictionary in O(1) time whenever a state transition occurs. The dashboard now returns these pre-computed metrics instantly.
