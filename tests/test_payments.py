@@ -221,3 +221,36 @@ class TestStripeService:
 
         assert exc_info.value.status_code == 400
         assert "Invalid payload" in exc_info.value.detail
+
+    @patch("src.blank_business_builder.database.PaymentTransaction")
+    def test_handle_payment_succeeded(self, mock_transaction):
+        from src.blank_business_builder.payments import StripeService, PaymentEventHandler
+        from src.blank_business_builder.database import User
+        mock_db = MagicMock()
+        mock_user = User(id="user_id", stripe_customer_id="cust_123")
+        mock_db.query().filter().first.return_value = mock_user
+
+        event_data = {
+            "object": {
+                "id": "pi_123",
+                "customer": "cust_123",
+                "amount": 1000,
+                "currency": "usd",
+                "description": "Test Payment",
+                "metadata": {"key": "value"}
+            }
+        }
+
+        PaymentEventHandler.handle_payment_succeeded(event_data, mock_db)
+
+        mock_transaction.assert_called_once_with(
+            user_id="user_id",
+            stripe_payment_intent_id="pi_123",
+            amount=10.0,
+            currency="USD",
+            status="succeeded",
+            description="Test Payment",
+            transaction_metadata={"key": "value"}
+        )
+        mock_db.add.assert_called_once()
+        mock_db.commit.assert_called_once()
