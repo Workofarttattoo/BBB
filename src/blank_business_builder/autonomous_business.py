@@ -1248,6 +1248,46 @@ class AutonomousBusinessOrchestrator:
 
         self.pending_tasks = remaining_tasks
 
+
+    def _reconcile_orphaned_in_progress_tasks(self):
+        # Time-based timeout for orphaned tasks
+        # Or simple agent liveness check
+        for task in self.task_queue:
+            if task.status == TaskStatus.IN_PROGRESS:
+                agent = self.agents.get(task.assigned_to) if task.assigned_to else None
+                if not agent or not agent.active:
+                    self._set_task_status(
+                        task,
+                        TaskStatus.PENDING,
+                        result={"error": "Agent disconnected or deactivated."},
+                        clear_assignment=True,
+                    )
+                    self.pending_tasks.append(task)
+
+
+    def _set_task_status(self, task: AutonomousTask, status: TaskStatus, result: Optional[Dict] = None, clear_assignment: bool = False):
+        old_status = task.status
+        task.status = status
+        if result:
+            task.result = result
+        if clear_assignment:
+            task.assigned_to = None
+
+        if status == TaskStatus.COMPLETED:
+            task.completed_at = datetime.now()
+            self.completed_task_ids.add(task.task_id)
+
+        # Track transition
+        transition = f"{old_status.value}->{status.value}"
+        self.task_transition_counts[transition] = self.task_transition_counts.get(transition, 0) + 1
+
+
+    def get_task_status_counts(self) -> Dict[str, int]:
+        counts = {status.value: 0 for status in TaskStatus}
+        for task in self.task_queue:
+            counts[task.status.value] += 1
+        return counts
+
     async def _execute_tasks_parallel(self) -> List[Dict]:
         """Execute all in-progress tasks in parallel."""
         # Requeue stale in-progress tasks before execution to avoid deadlocks.
