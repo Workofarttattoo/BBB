@@ -67,29 +67,27 @@ manager = ConnectionManager()
 
 async def get_business_metrics(business_id: str, db: Session) -> dict:
     """Get real-time business metrics."""
-    loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, _get_business_metrics_sync, business_id, db)
-
-
-def _get_business_metrics_sync(business_id: str, db: Session) -> dict:
-    """Synchronous implementation of get_business_metrics."""
+    # Note: We intentionally avoid `loop.run_in_executor` because passing SQLAlchemy
+    # Session objects to background threads causes critical thread-safety crashes
+    # with SQLite in this architecture. To compensate and avoid event loop blocking,
+    # the queries below are heavily optimized.
     business = db.query(Business).filter(Business.id == business_id).first()
 
     if not business:
         return {"error": "Business not found"}
 
-    # Get task statistics
-    task_stats = db.query(
-        func.count(AgentTask.id),
-        func.sum(case((AgentTask.status == "completed", 1), else_=0)),
-        func.sum(case((AgentTask.status == "pending", 1), else_=0)),
-        func.sum(case((AgentTask.status == "failed", 1), else_=0))
-    ).filter(AgentTask.business_id == business_id).first()
+    # Get task statistics using an optimized GROUP BY aggregation
+    status_counts = db.query(
+        AgentTask.status,
+        func.count(AgentTask.id)
+    ).filter(AgentTask.business_id == business_id).group_by(AgentTask.status).all()
 
-    total_tasks = task_stats[0] or 0
-    completed_tasks = task_stats[1] or 0
-    pending_tasks = task_stats[2] or 0
-    failed_tasks = task_stats[3] or 0
+    stats_dict = {status: count for status, count in status_counts}
+
+    total_tasks = sum(stats_dict.values())
+    completed_tasks = stats_dict.get("completed", 0)
+    pending_tasks = stats_dict.get("pending", 0)
+    failed_tasks = stats_dict.get("failed", 0)
 
     # Get recent tasks
     recent_tasks = db.query(AgentTask).filter(
@@ -138,27 +136,33 @@ def _get_business_metrics_sync(business_id: str, db: Session) -> dict:
 
 async def get_agent_activity(business_id: str, db: Session) -> dict:
     """Get real-time agent activity."""
-    # Get active agents (tasks in progress)
-    active_tasks = db.query(AgentTask).filter(
+    # Get active agents (tasks in progress) - optimized by selecting specific fields
+    # to avoid loading full SQLAlchemy objects on the main thread
+    active_tasks = db.query(
+        AgentTask.agent_role,
+        AgentTask.task_type,
+        AgentTask.description,
+        AgentTask.started_at
+    ).filter(
         AgentTask.business_id == business_id,
         AgentTask.status == "in_progress"
     ).all()
 
     agents = {}
-    for task in active_tasks:
-        if task.agent_role not in agents:
-            agents[task.agent_role] = {
-                "role": task.agent_role,
+    for role, task_type, description, started_at in active_tasks:
+        if role not in agents:
+            agents[role] = {
+                "role": role,
                 "active_tasks": 0,
                 "current_task": None
             }
 
-        agents[task.agent_role]["active_tasks"] += 1
-        if not agents[task.agent_role]["current_task"]:
-            agents[task.agent_role]["current_task"] = {
-                "task_type": task.task_type,
-                "description": task.description,
-                "started_at": task.started_at.isoformat() if task.started_at else None
+        agents[role]["active_tasks"] += 1
+        if not agents[role]["current_task"]:
+            agents[role]["current_task"] = {
+                "task_type": task_type,
+                "description": description,
+                "started_at": started_at.isoformat() if started_at else None
             }
 
     return {

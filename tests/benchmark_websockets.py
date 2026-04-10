@@ -30,8 +30,13 @@ class MockQuery:
         time.sleep(self.delay)  # Blocking sleep
         return self.result
 
+    def group_by(self, *args, **kwargs):
+        return self
+
     def all(self):
         time.sleep(self.delay)  # Blocking sleep
+        if isinstance(self.result, list):
+            return self.result
         return [self.result] if self.result else []
 
     def count(self):
@@ -67,12 +72,23 @@ def create_mock_session():
 
     mock_metrics = MagicMock(spec=MetricsHistory)
 
-    def side_effect(model):
-        if model == Business:
+    def side_effect(*args):
+        # Handle multiple arguments for aggregated queries
+        if len(args) == 2 and hasattr(args[1], 'name') and args[1].name == 'count':
+            # This is likely the task_stats query: db.query(AgentTask.status, func.count(...))
+            # Return a mock query that returns a list of tuples when all() is called
+            return MockQuery(delay=0.1, result=[("completed", 5), ("pending", 3), ("failed", 2)])
+        elif len(args) == 4 and hasattr(args[0], 'key') and args[0].key == 'agent_role':
+            # This is the get_agent_activity query
+            return MockQuery(delay=0.1, result=[("sales", "outreach", "Sales pitch", MagicMock(isoformat=lambda: "2023-01-01T00:30:00"))])
+
+        model = args[0]
+        model_str = str(model)
+        if "Business" in model_str:
             return MockQuery(delay=0.1, result=mock_business)
-        elif model == AgentTask:
+        elif "AgentTask" in model_str:
             return MockQuery(delay=0.1, result=mock_task)
-        elif model == MetricsHistory:
+        elif "MetricsHistory" in model_str:
             return MockQuery(delay=0.1, result=mock_metrics)
         return MockQuery()
 
