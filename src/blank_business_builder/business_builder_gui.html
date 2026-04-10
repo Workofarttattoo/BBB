@@ -541,14 +541,17 @@
             <div class="step-content" id="step-5">
                 <div class="card">
                     <h2>🎯 Select Your Business</h2>
-                    <p>Based on our analysis, these are the top automated businesses for you.</p>
+                    <p>Based on our analysis, these are the top automated businesses for you. <strong>Click any business card to select it</strong>, or use the button on each card to select and continue immediately.</p>
                     <br>
                     <div id="recommendations-list">
                         <!-- Populated by JS -->
-                        <p style="text-align: center;">Loading recommendations...</p>
+                        <div style="text-align: center; padding: 2rem;">
+                            <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⏳</div>
+                            <p>Analyzing business models...</p>
+                        </div>
                     </div>
                     <input type="hidden" id="selectedBusiness">
-                    <button type="button" class="btn" id="btn-select" disabled onclick="nextStep(6)">Confirm Selection →</button>
+                    <button type="button" class="btn" id="btn-select" disabled onclick="nextStep(6)" style="margin-top: 1rem; font-size: 1.1rem; padding: 1rem;">✅ Confirm Selection & Continue →</button>
                 </div>
             </div>
 
@@ -804,21 +807,33 @@
                     </div>`;
                 return;
             }
-            container.innerHTML = ideas.map(idea => {
+            container.innerHTML = ideas.map((idea, idx) => {
                 // Escape name for safe use in onclick attribute
                 const safeName = idea.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const isTop = idx === 0;
                 return `
-                <div class="business-option" onclick="selectBusiness(this, '${safeName}')">
+                <div class="business-option${isTop ? ' selected' : ''}" id="biz-${idx}" onclick="selectBusiness(this, '${safeName}')">
+                    ${isTop ? '<span style="background:var(--primary);color:#000;padding:2px 10px;border-radius:4px;font-size:0.75rem;font-weight:bold;float:right;">★ TOP PICK</span>' : ''}
                     <h3 style="color: var(--primary)">${idea.name}</h3>
                     <p style="font-size: 0.9rem; color: var(--text-dim);">${idea.industry}</p>
                     <p style="margin: 0.5rem 0;">${idea.description}</p>
-                    <div style="display: flex; gap: 1rem; font-size: 0.85rem; color: var(--text-dim);">
+                    <div style="display: flex; gap: 1rem; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 0.75rem;">
                         <span>💰 Rev: $${idea.expected_monthly_revenue}/mo</span>
                         <span>🚀 Cost: $${idea.startup_cost}</span>
                         <span>⏱ ${idea.time_commitment_hours_per_week}h/week</span>
                     </div>
+                    <button type="button" class="btn" style="width:100%;padding:0.6rem;font-size:0.9rem;" onclick="event.stopPropagation(); selectAndContinue(this.parentElement, '${safeName}')">
+                        Select ${idea.name} →
+                    </button>
                 </div>`;
             }).join('');
+
+            // Auto-select top recommendation so button is never stuck disabled
+            if (ideas.length > 0) {
+                const safeName = ideas[0].name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                document.getElementById('selectedBusiness').value = ideas[0].name;
+                document.getElementById('btn-select').disabled = false;
+            }
         }
 
         function selectBusiness(el, name) {
@@ -826,6 +841,11 @@
             el.classList.add('selected');
             document.getElementById('selectedBusiness').value = name;
             document.getElementById('btn-select').disabled = false;
+        }
+
+        function selectAndContinue(el, name) {
+            selectBusiness(el, name);
+            nextStep(6);
         }
 
         // Step 6: Licensing
