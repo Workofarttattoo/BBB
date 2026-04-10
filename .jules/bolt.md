@@ -17,6 +17,6 @@
 **Learning:** Found O(N) list comprehensions being used to calculate task statuses in `get_metrics_dashboard`, `_report_progress`, and `_check_bottlenecks` by iterating over the unbounded `task_queue`. This causes measurable event loop blocking as the business runs.
 **Action:** Centralized task status updates into `_set_task_status` which maintains an O(1) `task_status_counts` dictionary, eliminating the need to iterate over history.
 
-## 2024-03-24 - [Optimize Campaign Analytics Calculation]
-**Learning:** `campaign.metrics.values()` iteration in `get_campaign_analytics` performs identical computations separately 5 times.
-**Action:** Replace multiple O(N) `sum` generator expressions over a dictionary with a single `for` loop aggregating all metrics in one iteration. This follows the codebase pattern of combining O(N) loops.
+## 2025-05-27 - Optimize DisasterRecoveryOrchestrator Metrics Gathering
+**Learning:** Computing multiple aggregate statistics over the same sequence (e.g., in `get_recovery_metrics` for `backup_history` and `failover_history`) using separate generator expressions or list comprehensions causes redundant O(N) traversals. Furthermore, repeatedly calling functions like `datetime.utcnow()` inside these loops adds measurable overhead.
+**Action:** Combine multi-generator list passes into a single O(N) `for` loop iteration when computing aggregate statistics over the same sequence. Always extract and cache repeated function calls (like `datetime.utcnow()`) outside the loop to minimize redundant computations.
