@@ -28,6 +28,7 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 import httpx
+from sqlalchemy import func, case
 
 from blank_business_builder.database import get_db, Business, User, MetricsHistory
 from blank_business_builder.config import settings
@@ -271,12 +272,17 @@ async def get_deployment_status(deployment_id: str) -> DeploymentStatus:
 @app.get("/businesses/stats")
 async def get_business_stats(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Get overall business statistics from DB."""
-    total = db.query(Business).count()
-    active = db.query(Business).filter(Business.status == "active").count()
-    revenue_generating = db.query(Business).filter(Business.total_revenue > 0).count()
-    total_revenue = db.query(Business).with_entities(Business.total_revenue).all()
+    result = db.query(
+        func.count(Business.id).label("total"),
+        func.sum(case((Business.status == "active", 1), else_=0)).label("active"),
+        func.sum(case((Business.total_revenue > 0, 1), else_=0)).label("revenue_generating"),
+        func.sum(Business.total_revenue).label("total_revenue")
+    ).first()
 
-    total_rev_sum = sum([r[0] for r in total_revenue if r[0]])
+    total = result.total or 0
+    active = result.active or 0
+    revenue_generating = result.revenue_generating or 0
+    total_rev_sum = result.total_revenue or 0.0
 
     return {
         "total_businesses": total,
