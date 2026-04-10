@@ -293,7 +293,7 @@ class GradualScalingOrchestrator:
                 return response.status_code == 200
 
         except Exception as e:
-            print(f"   ⚠️  Single business deployment simulation: {business_model.name}")
+            print(f"   ⚠️  Single business deployment simulation: {business_model.name} - {e}")
             # For demo purposes, simulate success
             return True
 
@@ -334,7 +334,8 @@ class GradualScalingOrchestrator:
                 response = await client.get(f"{self.monitoring_api_url}/metrics/financial")
                 if response.status_code == 200:
                     metrics['financial'] = response.json()
-        except:
+        except Exception as e:
+            print(f"   ⚠️  Failed to fetch financial metrics, using fallback: {e}")
             # Use fallback calculation
             metrics['financial'] = self._calculate_financial_metrics()
 
@@ -344,7 +345,8 @@ class GradualScalingOrchestrator:
                 response = await client.get(f"{self.monitoring_api_url}/metrics/operational")
                 if response.status_code == 200:
                     metrics['operational'] = response.json()
-        except:
+        except Exception as e:
+            print(f"   ⚠️  Failed to fetch operational metrics, using fallback: {e}")
             metrics['operational'] = self._calculate_operational_metrics()
 
         # Calculate risk metrics
