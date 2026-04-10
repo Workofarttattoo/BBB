@@ -242,35 +242,26 @@ class MagicRDLab:
 
     def get_customer_dashboard(self, customer_id: str) -> Dict[str, Any]:
         """Get customer dashboard with all sessions and stats."""
-        # ⚡ Bolt Optimization: Replace multiple O(N) list comprehensions with a single O(N) concurrent pass
         customer = self.customers.get(customer_id)
         if not customer:
             raise ValueError(f"Customer {customer_id} not found")
 
-        customer_sessions_count = 0
-        active_sessions_count = 0
-        completed_sessions_count = 0
+        # ⚡ Bolt Optimization: Replace multiple list comprehensions with single O(N) concurrent pass
+        total_sessions = 0
+        active_sessions = []
+        completed_sessions = 0
         total_hours = 0
         total_computations = 0
-        active_sessions_details = []
 
-        now = datetime.now()
         for s in self.sessions:
             if s.customer_email == customer.email:
-                customer_sessions_count += 1
+                total_sessions += 1
                 total_hours += PACKAGE_PRICING[s.package]["hours"]
                 total_computations += len(s.results)
-
                 if s.status == "active":
-                    active_sessions_count += 1
-                    active_sessions_details.append({
-                        "session_id": s.session_id,
-                        "package": s.package.value,
-                        "expires_in_hours": round((s.expires_at - now).total_seconds() / 3600, 1),
-                        "project": s.project_description
-                    })
+                    active_sessions.append(s)
                 elif s.status == "completed":
-                    completed_sessions_count += 1
+                    completed_sessions += 1
 
         return {
             "customer_id": customer.customer_id,
@@ -281,16 +272,24 @@ class MagicRDLab:
             "member_since": customer.created_at.isoformat(),
             "total_spent": float(customer.total_spent),
             "sessions": {
-                "total": customer_sessions_count,
-                "active": active_sessions_count,
-                "completed": completed_sessions_count
+                "total": total_sessions,
+                "active": len(active_sessions),
+                "completed": completed_sessions
             },
             "usage": {
                 "total_hours_purchased": total_hours,
                 "total_computations": total_computations,
-                "avg_computations_per_session": total_computations / max(1, customer_sessions_count)
+                "avg_computations_per_session": total_computations / max(1, total_sessions)
             },
-            "active_sessions": active_sessions_details
+            "active_sessions": [
+                {
+                    "session_id": s.session_id,
+                    "package": s.package.value,
+                    "expires_in_hours": round((s.expires_at - datetime.now()).total_seconds() / 3600, 1),
+                    "project": s.project_description
+                }
+                for s in active_sessions
+            ]
         }
 
     def get_pricing_info(self) -> Dict[str, Any]:
@@ -353,28 +352,26 @@ class MagicRDLab:
 
     def get_business_metrics(self) -> Dict[str, Any]:
         """Get business performance metrics."""
-        # ⚡ Bolt Optimization: Replace multiple list comprehensions with a single O(N) concurrent pass
-        active_sessions_count = 0
-        completed_sessions_count = 0
-        total_computations = 0
+        # ⚡ Bolt Optimization: Replace multiple list comprehensions with single O(N) concurrent pass
+        active_sessions = 0
+        completed_sessions = 0
         package_dist = {package.value: 0 for package in RentalPackage}
+        total_computations = 0
 
         for s in self.sessions:
             if s.status == "active":
-                active_sessions_count += 1
+                active_sessions += 1
             elif s.status == "completed":
-                completed_sessions_count += 1
-
+                completed_sessions += 1
+            package_dist[s.package.value] += 1
             total_computations += len(s.results)
-            if s.package:
-                package_dist[s.package.value] = package_dist.get(s.package.value, 0) + 1
 
         return {
             "total_revenue": float(self.revenue),
             "total_customers": len(self.customers),
             "total_sessions": len(self.sessions),
-            "active_sessions": active_sessions_count,
-            "completed_sessions": completed_sessions_count,
+            "active_sessions": active_sessions,
+            "completed_sessions": completed_sessions,
             "package_distribution": package_dist,
             "avg_revenue_per_customer": float(self.revenue / max(1, len(self.customers))),
             "total_computations": total_computations
