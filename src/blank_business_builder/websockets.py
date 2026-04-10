@@ -11,6 +11,13 @@ from datetime import datetime
 import asyncio
 import json
 
+import time
+
+# Metrics cache: business_id -> {"data": metrics_dict, "expires_at": timestamp}
+_metrics_cache = {}
+CACHE_TTL = 5.0  # 5 seconds TTL
+
+
 from .database import get_db, Business, AgentTask, MetricsHistory
 from .auth import AuthService
 
@@ -73,6 +80,16 @@ async def get_business_metrics(business_id: str, db: Session) -> dict:
 
 def _get_business_metrics_sync(business_id: str, db: Session) -> dict:
     """Synchronous implementation of get_business_metrics."""
+
+    # ⚡ Bolt Optimization: Check in-memory cache to reduce DB load
+    now = time.time()
+    cached = _metrics_cache.get(business_id)
+    if cached and now < cached["expires_at"]:
+        # Update timestamp to reflect current access time (even if data is cached)
+        cached_data = cached["data"].copy()
+        cached_data["timestamp"] = datetime.utcnow().isoformat()
+        return cached_data
+
     business = db.query(Business).filter(Business.id == business_id).first()
 
     if not business:
@@ -112,7 +129,7 @@ def _get_business_metrics_sync(business_id: str, db: Session) -> dict:
 
     business_name = business.business_name or (business.business_concept or "Business")
 
-    return {
+    result = {
         "business_id": str(business.id),
         "business_name": business_name[:50],
         "status": business.status,
@@ -143,6 +160,14 @@ def _get_business_metrics_sync(business_id: str, db: Session) -> dict:
         ],
         "timestamp": datetime.utcnow().isoformat()
     }
+
+    # Update cache
+    _metrics_cache[business_id] = {
+        "data": result,
+        "expires_at": time.time() + CACHE_TTL
+    }
+
+    return result
 
 
 async def get_agent_activity(business_id: str, db: Session) -> dict:
