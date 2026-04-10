@@ -407,3 +407,102 @@ class TestLicensingFlows:
         status_data = status_response.json()
         assert status_data["subscription_tier"] == "pro"
         assert status_data["license_status"] == "licensed"
+import unittest
+from unittest.mock import patch, MagicMock
+from fastapi import HTTPException, status
+from src.blank_business_builder.auth import Auth0Service
+
+import unittest
+from unittest.mock import patch, MagicMock
+from fastapi import HTTPException, status
+from src.blank_business_builder.auth import Auth0Service
+
+import unittest
+from unittest.mock import patch, MagicMock
+from fastapi import HTTPException, status
+from src.blank_business_builder.auth import Auth0Service
+
+class TestAuth0Service(unittest.TestCase):
+    def setUp(self):
+        self.env_patcher = patch('os.getenv')
+        self.mock_getenv = self.env_patcher.start()
+
+    def tearDown(self):
+        self.env_patcher.stop()
+
+    def test_verify_auth0_token_not_configured(self):
+        self.mock_getenv.return_value = ""
+        service = Auth0Service()
+
+        with self.assertRaises(HTTPException) as context:
+            service.verify_auth0_token("some_token")
+
+        self.assertEqual(context.exception.status_code, status.HTTP_501_NOT_IMPLEMENTED)
+        self.assertEqual(context.exception.detail, "Auth0 not configured")
+
+    @patch('requests.get')
+    @patch('jose.jwt.get_unverified_header')
+    @patch('jose.jwt.decode')
+    def test_verify_auth0_token_success(self, mock_jwt_decode, mock_get_unverified_header, mock_requests_get):
+        self.mock_getenv.side_effect = lambda k, d="": "test_val" if k in ["AUTH0_DOMAIN", "AUTH0_CLIENT_ID"] else d
+        service = Auth0Service()
+
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "keys": [{
+                "kid": "test_kid",
+                "kty": "RSA",
+                "use": "sig",
+                "n": "test_n",
+                "e": "test_e"
+            }]
+        }
+        mock_requests_get.return_value = mock_response
+
+        mock_get_unverified_header.return_value = {"kid": "test_kid"}
+        mock_jwt_decode.return_value = {"sub": "test_user"}
+
+        result = service.verify_auth0_token("valid_token")
+        self.assertEqual(result, {"sub": "test_user"})
+
+    @patch('requests.get')
+    @patch('jose.jwt.get_unverified_header')
+    def test_verify_auth0_token_key_not_found(self, mock_get_unverified_header, mock_requests_get):
+        self.mock_getenv.side_effect = lambda k, d="": "test_val" if k in ["AUTH0_DOMAIN", "AUTH0_CLIENT_ID"] else d
+        service = Auth0Service()
+
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "keys": [{
+                "kid": "different_kid",
+                "kty": "RSA",
+                "use": "sig",
+                "n": "test_n",
+                "e": "test_e"
+            }]
+        }
+        mock_requests_get.return_value = mock_response
+
+        mock_get_unverified_header.return_value = {"kid": "test_kid"}
+
+        with self.assertRaises(HTTPException) as context:
+            service.verify_auth0_token("some_token")
+
+        self.assertEqual(context.exception.status_code, status.HTTP_401_UNAUTHORIZED)
+        # Auth0Service catches its own HTTPException and wraps it:
+        # detail=f"Auth0 verification failed: {str(e)}"
+        # Because we raise 401 with "Unable to find appropriate key", the str(e) yields "401: Unable to find appropriate key"
+        self.assertEqual(context.exception.detail, "Auth0 verification failed: 401: Unable to find appropriate key")
+
+    @patch('requests.get')
+    def test_verify_auth0_token_exception(self, mock_requests_get):
+        self.mock_getenv.side_effect = lambda k, d="": "test_val" if k in ["AUTH0_DOMAIN", "AUTH0_CLIENT_ID"] else d
+        service = Auth0Service()
+
+        mock_requests_get.side_effect = Exception("Network error")
+
+        with self.assertRaises(HTTPException) as context:
+            service.verify_auth0_token("some_token")
+
+        self.assertEqual(context.exception.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertTrue(context.exception.detail.startswith("Auth0 verification failed: Network error"))
