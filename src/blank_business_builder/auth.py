@@ -179,7 +179,11 @@ class Auth0Service:  # pragma: no cover - exercised via integration tests in dep
         self.audience = os.getenv("AUTH0_AUDIENCE", "")
         self.enabled = bool(self.domain and self.client_id)
 
-    def verify_auth0_token(self, token: str) -> dict:
+    _jwks_cache = None
+    _jwks_cache_time = 0
+    _CACHE_TTL = 3600  # 1 hour
+
+    async def verify_auth0_token(self, token: str) -> dict:
         """Verify Auth0 JWT token."""
         if not self.enabled:
             raise HTTPException(
@@ -188,14 +192,21 @@ class Auth0Service:  # pragma: no cover - exercised via integration tests in dep
             )
 
         try:
-            # In production, use python-jose to verify Auth0 tokens properly
-            # This is a simplified version
-            import requests
+            import httpx
+            import time
             from jose import jwt as jose_jwt
 
-            # Get Auth0 public keys
-            jwks_url = f'https://{self.domain}/.well-known/jwks.json'
-            jwks = requests.get(jwks_url).json()
+            # Get Auth0 public keys (with caching)
+            current_time = time.time()
+            if self.__class__._jwks_cache is None or (current_time - self.__class__._jwks_cache_time) > self.__class__._CACHE_TTL:
+                jwks_url = f'https://{self.domain}/.well-known/jwks.json'
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(jwks_url)
+                    response.raise_for_status()
+                    self.__class__._jwks_cache = response.json()
+                    self.__class__._jwks_cache_time = current_time
+
+            jwks = self.__class__._jwks_cache
 
             # Verify token
             unverified_header = jose_jwt.get_unverified_header(token)
