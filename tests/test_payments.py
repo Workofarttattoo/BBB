@@ -221,3 +221,161 @@ class TestStripeService:
 
         assert exc_info.value.status_code == 400
         assert "Invalid payload" in exc_info.value.detail
+
+
+
+class TestPaymentEventHandler:
+    """Tests for PaymentEventHandler webhook processing."""
+
+    @pytest.fixture
+    def mock_db(self):
+        """Mock SQLAlchemy database session."""
+        db = MagicMock()
+        return db
+
+    @pytest.fixture
+    def mock_database_models(self):
+        """Mock the database module to avoid import issues with SQLAlchemy."""
+        mock_db_module = MagicMock()
+
+        class MockUser:
+            stripe_customer_id = 'mocked_id'
+            def __init__(self, **kwargs):
+                self.__dict__.update(kwargs)
+                if not hasattr(self, "id"):
+                    self.id = 1
+
+        class MockPaymentTransaction:
+            def __init__(self, **kwargs):
+                self.__dict__.update(kwargs)
+
+        mock_db_module.User = MockUser
+        mock_db_module.PaymentTransaction = MockPaymentTransaction
+
+        with patch.dict('sys.modules', {'blank_business_builder.database': mock_db_module}):
+            yield mock_db_module
+
+    def test_handle_payment_succeeded_missing_customer(self, mock_db, mock_database_models):
+        """Test returning early if customer_id is missing."""
+        from blank_business_builder.payments import PaymentEventHandler
+
+        event_data = {
+            "object": {
+                "id": "pi_123",
+                "amount": 1000,
+                "currency": "usd"
+            }
+        }
+
+        PaymentEventHandler.handle_payment_succeeded(event_data, mock_db)
+
+        mock_db.query.assert_not_called()
+        mock_db.add.assert_not_called()
+        mock_db.commit.assert_not_called()
+
+    def test_handle_payment_succeeded_user_not_found(self, mock_db, mock_database_models):
+        """Test returning early if user is not found."""
+        from blank_business_builder.payments import PaymentEventHandler
+
+        event_data = {
+            "object": {
+                "id": "pi_123",
+                "customer": "cus_missing",
+                "amount": 1000,
+                "currency": "usd"
+            }
+        }
+
+        # Mock user not found
+        mock_query = MagicMock()
+        mock_db.query.return_value = mock_query
+        mock_filter = MagicMock()
+        mock_query.filter.return_value = mock_filter
+        mock_filter.first.return_value = None
+
+        PaymentEventHandler.handle_payment_succeeded(event_data, mock_db)
+
+        mock_db.query.assert_called_once()
+        mock_db.add.assert_not_called()
+        mock_db.commit.assert_not_called()
+
+    def test_handle_payment_succeeded_success(self, mock_db, mock_database_models):
+        """Test creating a successful payment transaction."""
+        from blank_business_builder.payments import PaymentEventHandler
+
+        event_data = {
+            "object": {
+                "id": "pi_123",
+                "customer": "cus_123",
+                "amount": 1500,  # 15.00
+                "currency": "usd",
+                "description": "Test payment",
+                "metadata": {"source": "web"}
+            }
+        }
+
+        # Mock user found
+        mock_user = mock_database_models.User()
+
+        mock_query = MagicMock()
+        mock_db.query.return_value = mock_query
+        mock_filter = MagicMock()
+        mock_query.filter.return_value = mock_filter
+        mock_filter.first.return_value = mock_user
+
+        PaymentEventHandler.handle_payment_succeeded(event_data, mock_db)
+
+        mock_db.query.assert_called_once()
+
+        # Verify transaction
+        mock_db.add.assert_called_once()
+        transaction = mock_db.add.call_args[0][0]
+        assert transaction.__class__.__name__ == "MockPaymentTransaction"
+        assert transaction.user_id == 1
+        assert transaction.stripe_payment_intent_id == "pi_123"
+        assert transaction.amount == 15.0
+        assert transaction.currency == "USD"
+        assert transaction.status == "succeeded"
+        assert transaction.description == "Test payment"
+        assert transaction.metadata == {"source": "web"}
+
+        mock_db.commit.assert_called_once()
+
+    def test_handle_payment_succeeded_success_missing_optional_fields(self, mock_db, mock_database_models):
+        """Test creating a successful payment transaction without description and metadata."""
+        from blank_business_builder.payments import PaymentEventHandler
+
+        event_data = {
+            "object": {
+                "id": "pi_123",
+                "customer": "cus_123",
+                "amount": 2000,
+                "currency": "eur"
+                # description and metadata are missing
+            }
+        }
+
+        # Mock user found
+        mock_user = mock_database_models.User()
+
+        mock_query = MagicMock()
+        mock_db.query.return_value = mock_query
+        mock_filter = MagicMock()
+        mock_query.filter.return_value = mock_filter
+        mock_filter.first.return_value = mock_user
+
+        PaymentEventHandler.handle_payment_succeeded(event_data, mock_db)
+
+        # Verify transaction
+        mock_db.add.assert_called_once()
+        transaction = mock_db.add.call_args[0][0]
+        assert transaction.__class__.__name__ == "MockPaymentTransaction"
+        assert transaction.user_id == 1
+        assert transaction.stripe_payment_intent_id == "pi_123"
+        assert transaction.amount == 20.0
+        assert transaction.currency == "EUR"
+        assert transaction.status == "succeeded"
+        assert transaction.description == "Payment"  # Default value
+        assert transaction.metadata == {}  # Default value
+
+        mock_db.commit.assert_called_once()

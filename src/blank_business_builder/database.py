@@ -4,9 +4,9 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 """
 
 from sqlalchemy import create_engine, Column, String, Integer, Numeric, DateTime, ForeignKey, Text, Boolean, JSON
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
-from sqlalchemy.types import TypeDecorator
+from sqlalchemy import TypeDecorator
 from sqlalchemy.dialects.postgresql import UUID, JSONB, INET
 import uuid
 from datetime import datetime
