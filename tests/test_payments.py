@@ -221,3 +221,128 @@ class TestStripeService:
 
         assert exc_info.value.status_code == 400
         assert "Invalid payload" in exc_info.value.detail
+
+
+class TestPaymentEventHandler:
+    @pytest.fixture
+    def mock_db(self):
+        """Mock SQLAlchemy Session."""
+        return MagicMock()
+
+    @pytest.fixture
+    def mock_models(self):
+        """Mock User and Subscription models to avoid database imports."""
+        mock_user = MagicMock()
+        mock_sub = MagicMock()
+        mock_user.__name__ = "User"
+        mock_sub.__name__ = "Subscription"
+
+        # Patch the models in the module namespace so `from .database import User, Subscription`
+        # gets our mocks, or we can patch sys.modules
+
+        with patch.dict('sys.modules', {'blank_business_builder.database': MagicMock(User=mock_user, Subscription=mock_sub)}):
+            yield {"User": mock_user, "Subscription": mock_sub}
+
+    def test_handle_subscription_deleted_happy_path(self, mock_db, mock_models):
+        from blank_business_builder.payments import PaymentEventHandler
+
+        # Setup test data
+        event_data = {
+            "object": {
+                "id": "sub_123"
+            }
+        }
+
+        # Mock Subscription query
+        mock_sub_query = MagicMock()
+        mock_db_subscription = MagicMock()
+        mock_db_subscription.user_id = 1
+        mock_sub_query.filter.return_value.first.return_value = mock_db_subscription
+
+        # Mock User query
+        mock_user_query = MagicMock()
+        mock_user = MagicMock()
+        mock_user_query.filter.return_value.first.return_value = mock_user
+
+        # Configure db.query side_effects to return appropriate queries
+        def query_side_effect(model):
+            if model == mock_models["Subscription"]:
+                return mock_sub_query
+            elif model == mock_models["User"]:
+                return mock_user_query
+            return MagicMock()
+
+        mock_db.query.side_effect = query_side_effect
+
+        # Call the method
+        PaymentEventHandler.handle_subscription_deleted(event_data, mock_db)
+
+        # Verify subscription was updated
+        assert mock_db_subscription.status == "canceled"
+
+        # Verify user was downgraded
+        assert mock_user.subscription_tier == "free"
+        assert mock_user.license_status == "trial"
+        # Since trial_expires_at is dynamic, we just check it was set
+        assert mock_user.trial_expires_at is not None
+
+        # Verify db.commit was called
+        mock_db.commit.assert_called_once()
+
+    def test_handle_subscription_deleted_subscription_not_found(self, mock_db, mock_models):
+        from blank_business_builder.payments import PaymentEventHandler
+
+        event_data = {
+            "object": {
+                "id": "sub_not_found"
+            }
+        }
+
+        mock_sub_query = MagicMock()
+        mock_sub_query.filter.return_value.first.return_value = None
+
+        def query_side_effect(model):
+            if model == mock_models["Subscription"]:
+                return mock_sub_query
+            return MagicMock()
+
+        mock_db.query.side_effect = query_side_effect
+
+        PaymentEventHandler.handle_subscription_deleted(event_data, mock_db)
+
+        # Verify db.commit was not called since no subscription was found
+        mock_db.commit.assert_not_called()
+
+    def test_handle_subscription_deleted_user_not_found(self, mock_db, mock_models):
+        from blank_business_builder.payments import PaymentEventHandler
+
+        event_data = {
+            "object": {
+                "id": "sub_123"
+            }
+        }
+
+        mock_sub_query = MagicMock()
+        mock_db_subscription = MagicMock()
+        mock_db_subscription.user_id = 1
+        mock_sub_query.filter.return_value.first.return_value = mock_db_subscription
+
+        mock_user_query = MagicMock()
+        mock_user_query.filter.return_value.first.return_value = None
+
+        def query_side_effect(model):
+            if model == mock_models["Subscription"]:
+                return mock_sub_query
+            elif model == mock_models["User"]:
+                return mock_user_query
+            return MagicMock()
+
+        mock_db.query.side_effect = query_side_effect
+
+        PaymentEventHandler.handle_subscription_deleted(event_data, mock_db)
+
+        # Verify subscription was updated
+        assert mock_db_subscription.status == "canceled"
+
+        # Verify db.commit was called even if user was not found
+        mock_db.commit.assert_called_once()
