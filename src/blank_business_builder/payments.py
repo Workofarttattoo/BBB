@@ -375,7 +375,7 @@ class PaymentEventHandler:
             currency=payment_intent["currency"].upper(),
             status="succeeded",
             description=payment_intent.get("description", "Payment"),
-            metadata=payment_intent.get("metadata", {})
+            transaction_metadata=payment_intent.get("metadata", {})
         )
         db.add(transaction)
         db.commit()
@@ -404,7 +404,7 @@ class PaymentEventHandler:
             currency=payment_intent["currency"].upper(),
             status="failed",
             description=payment_intent.get("description", "Payment"),
-            metadata=payment_intent.get("metadata", {})
+            transaction_metadata=payment_intent.get("metadata", {})
         )
         db.add(transaction)
         db.commit()
