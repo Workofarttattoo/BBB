@@ -12,7 +12,7 @@ from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text, 
 from .database import get_db, User, Base
 from .auth import get_current_user
 
-router = APIRouter(prefix="/api/licensing", tags=["Licensing"])
+router = APIRouter(prefix="/api/v1/licensing", tags=["Licensing"])
 
 
 # Database Models

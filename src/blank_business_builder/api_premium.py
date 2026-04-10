@@ -67,7 +67,7 @@ class QuantumOptimizeResponse(BaseModel):
 
 
 # --- API Router Setup ---
-router = APIRouter(prefix="/api/premium", tags=["Premium Workflows"])
+router = APIRouter(prefix="/api/v1/premium", tags=["Premium Workflows"])
 
 # 1. Ghost Writing Agent
 @router.post("/ghostwriting/order", response_model=GhostWritingOrderResponse)

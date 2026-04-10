@@ -119,7 +119,7 @@ def test_get_license_status_revenue_aggregation():
     db.add_all([r1, r2, r3])
     db.commit()
 
-    response = client.get("/api/licensing/status")
+    response = client.get("/api/v1/licensing/status")
     assert response.status_code == 200
     data = response.json()
 
@@ -143,7 +143,7 @@ def test_get_license_status_empty_reports():
     db = TestingSessionLocal()
     create_active_agreement(db)
 
-    response = client.get("/api/licensing/status")
+    response = client.get("/api/v1/licensing/status")
     assert response.status_code == 200
     data = response.json()
 
@@ -174,7 +174,7 @@ def test_accept_revenue_share_success():
         "confirmation": "I AGREE to 50% revenue share terms"
     }
 
-    response = client.post("/api/licensing/accept-revenue-share", json=payload)
+    response = client.post("/api/v1/licensing/accept-revenue-share", json=payload)
     assert response.status_code == 200
     data = response.json()
     assert data["success"] is True
@@ -193,7 +193,7 @@ def test_accept_revenue_share_invalid_confirmation():
     payload = {
         "confirmation": "I kinda agree"
     }
-    response = client.post("/api/licensing/accept-revenue-share", json=payload)
+    response = client.post("/api/v1/licensing/accept-revenue-share", json=payload)
     assert response.status_code == 400
     assert "Invalid confirmation" in response.json()["detail"]
 
@@ -205,7 +205,7 @@ def test_accept_revenue_share_duplicate():
     payload = {
         "confirmation": "I AGREE to 50% revenue share terms"
     }
-    response = client.post("/api/licensing/accept-revenue-share", json=payload)
+    response = client.post("/api/v1/licensing/accept-revenue-share", json=payload)
     assert response.status_code == 400
     assert "already have an active" in response.json()["detail"]
 
@@ -228,7 +228,7 @@ def test_submit_revenue_report_success():
         "notes": "Good month"
     }
 
-    response = client.post("/api/licensing/submit-revenue-report", json=payload)
+    response = client.post("/api/v1/licensing/submit-revenue-report", json=payload)
     assert response.status_code == 200
     data = response.json()
     assert data["success"] is True
@@ -248,10 +248,10 @@ def test_submit_revenue_report_duplicate():
         "report_month": "2023-05",
         "product_sales": 100.0
     }
-    client.post("/api/licensing/submit-revenue-report", json=payload)
+    client.post("/api/v1/licensing/submit-revenue-report", json=payload)
 
     # Submit again
-    response = client.post("/api/licensing/submit-revenue-report", json=payload)
+    response = client.post("/api/v1/licensing/submit-revenue-report", json=payload)
     assert response.status_code == 400
     assert "already submitted" in response.json()["detail"]
 
@@ -266,7 +266,7 @@ def test_submit_revenue_report_forbidden():
         "report_month": "2023-06",
         "product_sales": 100.0
     }
-    response = client.post("/api/licensing/submit-revenue-report", json=payload)
+    response = client.post("/api/v1/licensing/submit-revenue-report", json=payload)
     assert response.status_code == 403
     assert "only for revenue share" in response.json()["detail"]
 
@@ -279,7 +279,7 @@ def test_get_revenue_reports():
     db.add_all([r1, r2])
     db.commit()
 
-    response = client.get("/api/licensing/revenue-reports")
+    response = client.get("/api/v1/licensing/revenue-reports")
     assert response.status_code == 200
     data = response.json()
     assert len(data["reports"]) == 2
@@ -302,7 +302,7 @@ def test_purchase_license_pricing():
     # Support: 0
     # Total: 2999 + 990 + 745 = 4734
 
-    response = client.post("/api/licensing/purchase-license", json=payload)
+    response = client.post("/api/v1/licensing/purchase-license", json=payload)
     assert response.status_code == 200
     data = response.json()
     assert data["amount"] == 4734.0
@@ -321,7 +321,7 @@ def test_purchase_license_pricing():
     # Support: 1999
     # Total: 29999 + 29900 + 24950 + 1999 = 86848
 
-    response = client.post("/api/licensing/purchase-license", json=payload2)
+    response = client.post("/api/v1/licensing/purchase-license", json=payload2)
     assert response.status_code == 200
     data = response.json()
     assert data["amount"] == 86848.0
@@ -335,7 +335,7 @@ def test_terminate_agreement():
     db.add(r1)
     db.commit()
 
-    response = client.post("/api/licensing/terminate-agreement?reason=Going%20out%20of%20business")
+    response = client.post("/api/v1/licensing/terminate-agreement?reason=Going%20out%20of%20business")
     assert response.status_code == 200
     data = response.json()
     assert data["success"] is True
@@ -355,7 +355,7 @@ def test_get_agreement_document():
     db = TestingSessionLocal()
     create_active_agreement(db)
 
-    response = client.get("/api/licensing/agreement-document")
+    response = client.get("/api/v1/licensing/agreement-document")
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "active"
@@ -366,5 +366,5 @@ def test_get_agreement_document_not_found():
     db.query(LicenseAgreement).delete()
     db.commit()
 
-    response = client.get("/api/licensing/agreement-document")
+    response = client.get("/api/v1/licensing/agreement-document")
     assert response.status_code == 404

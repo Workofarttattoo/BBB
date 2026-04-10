@@ -101,7 +101,7 @@ class WhiteLabelConfigResponse(BaseModel):
 
 
 # --- API Router Setup ---
-router = APIRouter(prefix="/api/features", tags=["Features"])
+router = APIRouter(prefix="/api/v1/features", tags=["Features"])
 
 # 1. AI Content Generator
 @router.post("/content/generate", response_model=ContentGenerateResponse)

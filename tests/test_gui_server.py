@@ -45,7 +45,7 @@ def test_onboarding_flow():
         "startup_budget": 5000.0,
         "risk_posture": "bold"
     }
-    response = client.post("/api/onboarding", json=profile)
+    response = client.post("/api/v1/onboarding", json=profile)
     assert response.status_code == 200
     assert response.json()["status"] == "success"
 
@@ -59,9 +59,9 @@ def test_recommendations():
         "startup_budget": 10000.0,
         "risk_posture": "balanced"
     }
-    client.post("/api/onboarding", json=profile)
+    client.post("/api/v1/onboarding", json=profile)
 
-    response = client.get("/api/recommendations")
+    response = client.get("/api/v1/recommendations")
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
@@ -72,17 +72,17 @@ def test_recommendations():
 
 def test_license_bypass():
     code = "F00lpr00f596!"
-    response = client.post("/api/admin-bypass", json={"code": code})
+    response = client.post("/api/v1/admin-bypass", json={"code": code})
     assert response.status_code == 200
     assert response.json()["status"] == "success"
 
     # Verify dashboard reflects this
-    dash = client.get("/api/dashboard").json()
+    dash = client.get("/api/v1/dashboard").json()
     assert dash["license"]["tier"] == "paid"
     assert dash["license"]["bypass_used"] is True
 
 def test_invalid_bypass():
-    response = client.post("/api/admin-bypass", json={"code": "WRONG_CODE"})
+    response = client.post("/api/v1/admin-bypass", json={"code": "WRONG_CODE"})
     assert response.status_code == 403
 
 def test_license_partner_tier():
@@ -90,7 +90,7 @@ def test_license_partner_tier():
     fiduciary.state["license"]["tier"] = "free"
     fiduciary.state["license"]["active"] = False
 
-    response = client.post("/api/license", json={"tier": "partner"})
+    response = client.post("/api/v1/license", json={"tier": "partner"})
     assert response.status_code == 200
     data = response.json()
     assert data["tier"] == "partner"
@@ -100,7 +100,7 @@ def test_dashboard_unlicensed():
     # Reset state
     fiduciary.state["license"]["active"] = False
 
-    response = client.get("/api/dashboard")
+    response = client.get("/api/v1/dashboard")
     assert response.status_code == 200
     data = response.json()
     assert data["active"] is False

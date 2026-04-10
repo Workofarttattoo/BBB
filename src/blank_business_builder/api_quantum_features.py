@@ -22,7 +22,7 @@ from .all_features_implementation import (
 )
 
 # Create router
-router = APIRouter(prefix="/api/quantum", tags=["Quantum Features"])
+router = APIRouter(prefix="/api/v1/quantum", tags=["Quantum Features"])
 
 
 # ============================================================================
