@@ -65,3 +65,19 @@ class Config:
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "echo")
 
 settings = Config()
+
+
+def validate_production_config():
+    """Validate critical settings are not using defaults in production."""
+    import os
+    if os.getenv("ENVIRONMENT", "development") == "production":
+        issues = []
+        if settings.SECRET_KEY in ("your-secret-key-please-change-in-production", ""):
+            issues.append("SECRET_KEY must be set to a secure random value")
+        if not settings.DATABASE_URL or settings.DATABASE_URL.startswith("sqlite"):
+            issues.append("DATABASE_URL must be a PostgreSQL connection string in production")
+        if issues:
+            raise RuntimeError(
+                "Production configuration errors:\n" +
+                "\n".join(f"  - {i}" for i in issues)
+            )

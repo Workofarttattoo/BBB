@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.production.example
 *.pem
 *.key
 
@@ -75,3 +76,9 @@ test_dashboard.html
 backups/
 test_backups/
 .env.production
+
+# Additional artifacts (must not be tracked)
+*.backup
+bbb_parliament_validation_report.json
+autonomous_system.pids
+.snapshots/
