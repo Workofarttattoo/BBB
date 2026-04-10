@@ -5,29 +5,30 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 This module provides autonomous business operations using Level-6-Agent AI.
 Handles 95%+ of business operations with minimal human intervention.
 """
+
 import asyncio
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 from datetime import datetime, timedelta
 from enum import Enum
-import json
 from dataclasses import dataclass
 from sqlalchemy.orm import Session
 
 from .database import User, Business, MarketingCampaign, Subscription
 from .integrations import IntegrationFactory
-from .payments import StripeService
 
 
 class AutonomyLevel(Enum):
     """Level-6-Agent autonomy levels."""
-    LIMITED = "limited"        # Starter License - 80% automation
-    FULL = "full"             # Professional License - 95% automation
-    MAXIMUM = "maximum"       # Enterprise License - 98% automation
+
+    LIMITED = "limited"  # Starter License - 80% automation
+    FULL = "full"  # Professional License - 95% automation
+    MAXIMUM = "maximum"  # Enterprise License - 98% automation
 
 
 @dataclass
 class AgentDecision:
     """Represents an autonomous decision made by Level-6-Agent."""
+
     decision_type: str
     action: str
     confidence: float
@@ -98,7 +99,7 @@ class Level6Agent:
         decisions = []
 
         # Get all active users
-        users = db.query(User).filter(User.is_active == True).all()
+        users = db.query(User).filter(User.is_active.is_(True)).all()
 
         for user in users:
             # Check if user needs onboarding
@@ -135,15 +136,13 @@ class Level6Agent:
                 "Welcome to Better Business Builder",
                 "How to create your first business plan",
                 "AI-powered content generation features",
-                "Getting started checklist"
-            ]
+                "Getting started checklist",
+            ],
         )
 
         # Send onboarding email
         self.sendgrid.send_email(
-            to_email=user.email,
-            subject=email_data["subject"],
-            html_content=email_data["body"]
+            to_email=user.email, subject=email_data["subject"], html_content=email_data["body"]
         )
 
         return AgentDecision(
@@ -153,7 +152,7 @@ class Level6Agent:
             reasoning=f"New user {user.email} needs onboarding to increase activation rate",
             data={"user_id": str(user.id), "email_sent": True},
             timestamp=datetime.utcnow(),
-            requires_approval=False
+            requires_approval=False,
         )
 
     def _should_suggest_upgrade(self, user: User, db: Session) -> bool:
@@ -177,14 +176,12 @@ class Level6Agent:
                 "You're using BBB successfully!",
                 "Unlock 3 businesses with Professional",
                 "50x more AI requests per month",
-                "Limited-time upgrade offer"
-            ]
+                "Limited-time upgrade offer",
+            ],
         )
 
         self.sendgrid.send_email(
-            to_email=user.email,
-            subject=email_data["subject"],
-            html_content=email_data["body"]
+            to_email=user.email, subject=email_data["subject"], html_content=email_data["body"]
         )
 
         return AgentDecision(
@@ -194,7 +191,7 @@ class Level6Agent:
             reasoning=f"User {user.email} hitting free tier limits, high conversion probability",
             data={"user_id": str(user.id), "current_tier": user.subscription_tier},
             timestamp=datetime.utcnow(),
-            requires_approval=False
+            requires_approval=False,
         )
 
     def _is_disengaged(self, user: User, db: Session) -> bool:
@@ -215,14 +212,12 @@ class Level6Agent:
                 "We miss you!",
                 "New AI features launched",
                 "Your business plans are waiting",
-                "Special comeback offer"
-            ]
+                "Special comeback offer",
+            ],
         )
 
         self.sendgrid.send_email(
-            to_email=user.email,
-            subject=email_data["subject"],
-            html_content=email_data["body"]
+            to_email=user.email, subject=email_data["subject"], html_content=email_data["body"]
         )
 
         return AgentDecision(
@@ -230,9 +225,12 @@ class Level6Agent:
             action="send_reengagement_email",
             confidence=0.72,
             reasoning=f"User {user.email} inactive for 14+ days, prevent churn",
-            data={"user_id": str(user.id), "days_inactive": (datetime.utcnow() - user.last_login).days},
+            data={
+                "user_id": str(user.id),
+                "days_inactive": (datetime.utcnow() - user.last_login).days,
+            },
             timestamp=datetime.utcnow(),
-            requires_approval=False
+            requires_approval=False,
         )
 
     async def optimize_content_generation(self, db: Session) -> List[AgentDecision]:
@@ -253,7 +251,7 @@ class Level6Agent:
             reasoning="Optimizing AI prompts based on user engagement metrics",
             data={"improvements": ["tone", "length", "specificity"]},
             timestamp=datetime.utcnow(),
-            requires_approval=False
+            requires_approval=False,
         )
 
         decisions.append(decision)
@@ -269,9 +267,7 @@ class Level6Agent:
         decisions = []
 
         # Get paid subscribers
-        subscriptions = db.query(Subscription).filter(
-            Subscription.status == "active"
-        ).all()
+        subscriptions = db.query(Subscription).filter(Subscription.status == "active").all()
 
         for subscription in subscriptions:
             churn_risk = self._calculate_churn_risk(subscription, db)
@@ -310,7 +306,9 @@ class Level6Agent:
 
         return min(risk_score, 1.0)
 
-    async def _create_retention_campaign(self, user: User, risk_score: float, db: Session) -> AgentDecision:
+    async def _create_retention_campaign(
+        self, user: User, risk_score: float, db: Session
+    ) -> AgentDecision:
         """Create personalized retention campaign."""
         email_data = self.openai.generate_email_campaign(
             business_name="Better Business Builder",
@@ -320,14 +318,12 @@ class Level6Agent:
                 "We value your business",
                 "How can we serve you better?",
                 "Exclusive features for you",
-                "Let's schedule a success call"
-            ]
+                "Let's schedule a success call",
+            ],
         )
 
         self.sendgrid.send_email(
-            to_email=user.email,
-            subject=email_data["subject"],
-            html_content=email_data["body"]
+            to_email=user.email, subject=email_data["subject"], html_content=email_data["body"]
         )
 
         return AgentDecision(
@@ -337,7 +333,7 @@ class Level6Agent:
             reasoning=f"User {user.email} has {risk_score:.0%} churn risk, proactive retention",
             data={"user_id": str(user.id), "churn_risk": risk_score},
             timestamp=datetime.utcnow(),
-            requires_approval=risk_score > 0.9  # Require approval for very high risk
+            requires_approval=risk_score > 0.9,  # Require approval for very high risk
         )
 
     async def optimize_revenue(self, db: Session) -> List[AgentDecision]:
@@ -350,9 +346,7 @@ class Level6Agent:
         decisions = []
 
         # Identify upsell opportunities
-        users = db.query(User).filter(
-            User.subscription_tier.in_(["free", "starter", "pro"])
-        ).all()
+        users = db.query(User).filter(User.subscription_tier.in_(["free", "starter", "pro"])).all()
 
         for user in users:
             if self._has_upsell_opportunity(user, db):
@@ -361,9 +355,12 @@ class Level6Agent:
                     action="identify_upsell",
                     confidence=0.82,
                     reasoning=f"User {user.email} showing signals for tier upgrade",
-                    data={"user_id": str(user.id), "recommended_tier": self._get_recommended_tier(user, db)},
+                    data={
+                        "user_id": str(user.id),
+                        "recommended_tier": self._get_recommended_tier(user, db),
+                    },
                     timestamp=datetime.utcnow(),
-                    requires_approval=False
+                    requires_approval=False,
                 )
                 decisions.append(decision)
 
@@ -408,22 +405,54 @@ class Level6Agent:
         """
         decisions = []
 
-        # Auto-generate marketing campaigns for businesses without recent campaigns
-        businesses = db.query(Business).filter(Business.status == "active").all()
+        # Find active businesses
+        # Use a single query with LEFT OUTER JOIN and GROUP BY to find businesses
+        # that DO NOT have a recent marketing campaign, resolving the N+1 issue.
+        from sqlalchemy import func
 
-        for business in businesses:
-            if self._needs_marketing_campaign(business, db):
-                decision = await self._create_auto_campaign(business, db)
-                decisions.append(decision)
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+
+        # We want to count recent campaigns for each active business
+        recent_campaign_count = (
+            db.query(Business.id, func.count(MarketingCampaign.id).label("recent_count"))
+            .outerjoin(
+                MarketingCampaign,
+                (MarketingCampaign.business_id == Business.id)
+                & (MarketingCampaign.created_at > thirty_days_ago),
+            )
+            .filter(Business.status == "active")
+            .group_by(Business.id)
+            .having(func.count(MarketingCampaign.id) == 0)
+            .all()
+        )
+
+        # Get the business IDs that need a campaign
+        business_ids_needing_campaign = [row.id for row in recent_campaign_count]
+
+        if not business_ids_needing_campaign:
+            return decisions
+
+        # Fetch the actual Business objects we need to process
+        businesses_needing_campaign = (
+            db.query(Business).filter(Business.id.in_(business_ids_needing_campaign)).all()
+        )
+
+        for business in businesses_needing_campaign:
+            decision = await self._create_auto_campaign(business, db)
+            decisions.append(decision)
 
         return decisions
 
     def _needs_marketing_campaign(self, business: Business, db: Session) -> bool:
         """Check if business needs a new marketing campaign."""
-        recent_campaigns = db.query(MarketingCampaign).filter(
-            MarketingCampaign.business_id == business.id,
-            MarketingCampaign.created_at > datetime.utcnow() - timedelta(days=30)
-        ).count()
+        recent_campaigns = (
+            db.query(MarketingCampaign)
+            .filter(
+                MarketingCampaign.business_id == business.id,
+                MarketingCampaign.created_at > datetime.utcnow() - timedelta(days=30),
+            )
+            .count()
+        )
 
         return recent_campaigns == 0
 
@@ -435,7 +464,7 @@ class Level6Agent:
             platform="general",
             campaign_goal="Brand awareness and customer acquisition",
             target_audience="Small business owners and entrepreneurs",
-            tone="professional"
+            tone="professional",
         )
 
         # Create campaign in database
@@ -445,7 +474,7 @@ class Level6Agent:
             platform="multi-platform",
             campaign_type="awareness",
             content=campaign_copy,
-            status="draft"
+            status="draft",
         )
         db.add(campaign)
         db.commit()
@@ -457,7 +486,7 @@ class Level6Agent:
             reasoning=f"Business {business.business_name} has no recent campaigns, auto-generating",
             data={"business_id": str(business.id), "campaign_id": str(campaign.id)},
             timestamp=datetime.utcnow(),
-            requires_approval=True  # Require approval before publishing
+            requires_approval=True,  # Require approval before publishing
         )
 
     async def handle_support_automation(self, db: Session) -> List[AgentDecision]:
@@ -477,7 +506,7 @@ class Level6Agent:
             reasoning="Handling 95% of support tickets automatically",
             data={"tickets_handled": 47, "escalated": 2},
             timestamp=datetime.utcnow(),
-            requires_approval=False
+            requires_approval=False,
         )
 
         decisions.append(decision)
@@ -510,12 +539,16 @@ class Level6Agent:
                 "paid_users": paid_users,
                 "conversion_rate": f"{conversion_rate:.2f}%",
                 "recommendations": [
-                    "Increase free-to-paid conversion" if conversion_rate < 10 else "Maintain conversion rate",
-                    "Expand marketing efforts" if total_users < 1000 else "Scale operations"
-                ]
+                    (
+                        "Increase free-to-paid conversion"
+                        if conversion_rate < 10
+                        else "Maintain conversion rate"
+                    ),
+                    "Expand marketing efforts" if total_users < 1000 else "Scale operations",
+                ],
             },
             timestamp=datetime.utcnow(),
-            requires_approval=True
+            requires_approval=True,
         )
 
         decisions.append(decision)
@@ -542,11 +575,11 @@ class Level6Agent:
                 "opportunities": [
                     {"market": "Real estate agencies", "potential": "high"},
                     {"market": "E-commerce brands", "potential": "medium"},
-                    {"market": "SaaS companies", "potential": "high"}
+                    {"market": "SaaS companies", "potential": "high"},
                 ]
             },
             timestamp=datetime.utcnow(),
-            requires_approval=True
+            requires_approval=True,
         )
 
         decisions.append(decision)
@@ -583,10 +616,10 @@ class AgentMonitor:
                     "type": d.decision_type,
                     "action": d.action,
                     "confidence": d.confidence,
-                    "timestamp": d.timestamp.isoformat()
+                    "timestamp": d.timestamp.isoformat(),
                 }
                 for d in self.decisions_log[-10:]  # Last 10 decisions
-            ]
+            ],
         }
 
     def _count_by_type(self) -> Dict[str, int]:
