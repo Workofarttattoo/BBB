@@ -249,7 +249,7 @@ async def accept_revenue_share(
         user_id=str(current_user.id),
         agreement_type="revenue_share",
         accepted_at=datetime.utcnow(),
-        ip_address=http_request.client.host,
+        ip_address=getattr(http_request.client, "host", "unknown") if getattr(http_request, "client", None) else "unknown",
         user_agent=http_request.headers.get("user-agent", ""),
         company_name=request.company_name,
         legal_entity_type=request.legal_entity_type,

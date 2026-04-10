@@ -36,12 +36,40 @@ try:
 except ImportError:
     EmailStr = str
 
+from fastapi.responses import JSONResponse
+import traceback
+
+from .middleware import RequestIDMiddleware
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Better Business Builder API",
     description="AI-powered business planning and marketing automation platform",
     version="1.0.0"
 )
+
+# Add Request ID Middleware
+app.add_middleware(RequestIDMiddleware)
+
+# Global Exception Handler
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    request_id = getattr(request.state, "request_id", None)
+    debug_mode = os.getenv("DEBUG", "false").lower() == "true"
+
+    response_content = {
+        "error": "Internal Server Error",
+        "request_id": request_id,
+        "detail": str(exc) if debug_mode else "An unexpected error occurred."
+    }
+
+    if debug_mode:
+        response_content["traceback"] = traceback.format_exception(type(exc), exc, exc.__traceback__)
+
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content=response_content
+    )
 
 # CORS configuration
 # Read allowed origins from environment variable, default to empty list for security
