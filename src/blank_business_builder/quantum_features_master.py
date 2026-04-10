@@ -414,8 +414,9 @@ class QuantumFeatureRegistry:
         for category in FeatureCategory:
             features = self.get_features_by_category(category)
             if features:
-                # ⚡ Bolt Optimization: Calculate all totals in a single O(N) pass
-                # instead of 4 separate O(N) sum generator expressions.
+                # ⚡ Bolt Optimization: Replace 4 sequential list comprehensions traversing
+                # `features` to compute `sum(f.attr...)` with a single O(N) `for` loop iteration
+                # across all impact, user_value, revenue, and complexity fields at once.
                 total_impact = 0.0
                 total_user_value = 0.0
                 total_revenue_potential = 0.0
@@ -428,6 +429,7 @@ class QuantumFeatureRegistry:
                     total_complexity += f.complexity
 
                 feature_count = len(features)
+
                 category_metrics[category.value] = {
                     "avg_impact": total_impact / feature_count,
                     "avg_user_value": total_user_value / feature_count,
