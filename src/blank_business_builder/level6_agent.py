@@ -95,10 +95,20 @@ class Level6Agent:
         - Upgrade prompts
         - Retention campaigns
         """
+        from sqlalchemy import func
         decisions = []
 
         # Get all active users
         users = db.query(User).filter(User.is_active == True).all()
+        if not users:
+            return decisions
+
+        # Bulk fetch business counts
+        user_ids = [u.id for u in users]
+        business_counts_result = db.query(
+            Business.user_id, func.count(Business.id)
+        ).filter(Business.user_id.in_(user_ids)).group_by(Business.user_id).all()
+        business_counts = {r[0]: r[1] for r in business_counts_result}
 
         for user in users:
             # Check if user needs onboarding
@@ -107,7 +117,8 @@ class Level6Agent:
                 decisions.append(decision)
 
             # Check for upgrade opportunities
-            if self._should_suggest_upgrade(user, db):
+            user_business_count = business_counts.get(user.id, 0)
+            if self._should_suggest_upgrade(user, user_business_count):
                 decision = await self._create_upgrade_campaign(user, db)
                 decisions.append(decision)
 
@@ -156,13 +167,10 @@ class Level6Agent:
             requires_approval=False
         )
 
-    def _should_suggest_upgrade(self, user: User, db: Session) -> bool:
+    def _should_suggest_upgrade(self, user: User, business_count: int) -> bool:
         """Determine if user should be prompted to upgrade."""
         if user.subscription_tier != "free":
             return False
-
-        # Check if user is hitting limits
-        business_count = db.query(Business).filter(Business.user_id == user.id).count()
 
         # Suggest upgrade if at 80% of free tier limits
         return business_count >= 1  # Free tier only allows 1 business
@@ -266,28 +274,45 @@ class Level6Agent:
         - Automated retention campaigns
         - Personalized intervention
         """
+        from sqlalchemy import func
         decisions = []
 
         # Get paid subscribers
         subscriptions = db.query(Subscription).filter(
             Subscription.status == "active"
         ).all()
+        if not subscriptions:
+            return decisions
+
+        user_ids = [s.user_id for s in subscriptions]
+
+        # Bulk fetch users
+        users = db.query(User).filter(User.id.in_(user_ids)).all()
+        users_by_id = {u.id: u for u in users}
+
+        # Bulk fetch business counts
+        business_counts_result = db.query(
+            Business.user_id, func.count(Business.id)
+        ).filter(Business.user_id.in_(user_ids)).group_by(Business.user_id).all()
+        business_counts = {r[0]: r[1] for r in business_counts_result}
 
         for subscription in subscriptions:
-            churn_risk = self._calculate_churn_risk(subscription, db)
+            user = users_by_id.get(subscription.user_id)
+            if not user:
+                continue
+
+            user_business_count = business_counts.get(user.id, 0)
+            churn_risk = self._calculate_churn_risk(subscription, user, user_business_count)
 
             if churn_risk > 0.7:  # High risk
-                user = db.query(User).filter(User.id == subscription.user_id).first()
                 decision = await self._create_retention_campaign(user, churn_risk, db)
                 decisions.append(decision)
 
         return decisions
 
-    def _calculate_churn_risk(self, subscription: Subscription, db: Session) -> float:
+    def _calculate_churn_risk(self, subscription: Subscription, user: User, business_count: int) -> float:
         """Calculate churn probability for a subscription."""
         risk_score = 0.0
-
-        user = db.query(User).filter(User.id == subscription.user_id).first()
 
         # Factor 1: Login frequency
         if user.last_login:
@@ -298,7 +323,6 @@ class Level6Agent:
                 risk_score += 0.2
 
         # Factor 2: Usage (businesses created)
-        business_count = db.query(Business).filter(Business.user_id == user.id).count()
         if business_count == 0:
             risk_score += 0.3
         elif business_count == 1:
@@ -347,21 +371,31 @@ class Level6Agent:
         - Upsell identification
         - Cross-sell automation
         """
+        from sqlalchemy import func
         decisions = []
 
         # Identify upsell opportunities
         users = db.query(User).filter(
             User.subscription_tier.in_(["free", "starter", "pro"])
         ).all()
+        if not users:
+            return decisions
+
+        user_ids = [u.id for u in users]
+        business_counts_result = db.query(
+            Business.user_id, func.count(Business.id)
+        ).filter(Business.user_id.in_(user_ids)).group_by(Business.user_id).all()
+        business_counts = {r[0]: r[1] for r in business_counts_result}
 
         for user in users:
-            if self._has_upsell_opportunity(user, db):
+            user_business_count = business_counts.get(user.id, 0)
+            if self._has_upsell_opportunity(user, user_business_count):
                 decision = AgentDecision(
                     decision_type="revenue_optimization",
                     action="identify_upsell",
                     confidence=0.82,
                     reasoning=f"User {user.email} showing signals for tier upgrade",
-                    data={"user_id": str(user.id), "recommended_tier": self._get_recommended_tier(user, db)},
+                    data={"user_id": str(user.id), "recommended_tier": self._get_recommended_tier(user, user_business_count)},
                     timestamp=datetime.utcnow(),
                     requires_approval=False
                 )
@@ -369,10 +403,8 @@ class Level6Agent:
 
         return decisions
 
-    def _has_upsell_opportunity(self, user: User, db: Session) -> bool:
+    def _has_upsell_opportunity(self, user: User, business_count: int) -> bool:
         """Identify if user is ready for upsell."""
-        business_count = db.query(Business).filter(Business.user_id == user.id).count()
-
         if user.subscription_tier == "free" and business_count >= 1:
             return True
 
@@ -384,10 +416,8 @@ class Level6Agent:
 
         return False
 
-    def _get_recommended_tier(self, user: User, db: Session) -> str:
+    def _get_recommended_tier(self, user: User, business_count: int) -> str:
         """Get recommended subscription tier for user."""
-        business_count = db.query(Business).filter(Business.user_id == user.id).count()
-
         if user.subscription_tier == "free":
             return "starter"
 
