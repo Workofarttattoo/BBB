@@ -85,26 +85,25 @@ class SmartLeadScorer:
         return min(100.0, max(0.0, total_score))
 
     def _calculate_engagement_score(self, interactions: List[Dict]) -> float:
-        """Calculate engagement based on interactions."""
+        """Calculate engagement based on interactions.
+        Optimized: Single O(N) iteration instead of four separate generators."""
         if not interactions:
             return 0.0
 
-        # ⚡ Bolt Optimization: Replaced 4 O(N) generator expressions with a single O(N) loop.
-        # This reduces list traversals from 4N to N and reduces .get('type') dictionary lookups by 75%.
         email_opens = 0
         email_clicks = 0
         page_views = 0
         demo_requests = 0
 
         for i in interactions:
-            itype = i.get('type')
-            if itype == 'email_open':
+            i_type = i.get('type')
+            if i_type == 'email_open':
                 email_opens += 1
-            elif itype == 'email_click':
+            elif i_type == 'email_click':
                 email_clicks += 1
-            elif itype == 'page_view':
+            elif i_type == 'page_view':
                 page_views += 1
-            elif itype == 'demo_request':
+            elif i_type == 'demo_request':
                 demo_requests += 1
 
         # Weighted scoring
