@@ -107,5 +107,108 @@ class TestEmailAutomation(unittest.TestCase):
         for call in self.mock_core.log_activity.call_args_list:
             self.assertNotEqual(call[0][1], "BLACKLIST_BLOCKED")
 
+    @patch('os.getenv')
+    @patch('imaplib.IMAP4_SSL')
+    def test_check_inbox_no_password(self, mock_imap, mock_getenv):
+        """Test check_inbox exits early if no EMAIL_PASSWORD_INVENTOR is set."""
+        mock_getenv.return_value = None
+
+        self.email_automation.check_inbox()
+
+        # Verify it logged INBOX_CHECK_SKIPPED
+        self.mock_core.log_activity.assert_called_with(
+            "email", "INBOX_CHECK_SKIPPED", "No password for test@example.com"
+        )
+        # Verify IMAP was never called
+        mock_imap.assert_not_called()
+
+    @patch('os.getenv')
+    @patch('imaplib.IMAP4_SSL')
+    def test_check_inbox_success(self, mock_imap_class, mock_getenv):
+        """Test check_inbox successfully processes unread messages."""
+        # Setup mocks
+        mock_getenv.return_value = "fake_password"
+        mock_imap_instance = MagicMock()
+        mock_imap_class.return_value = mock_imap_instance
+
+        # Simulate unread messages search returning IDs "1" and "2"
+        mock_imap_instance.search.return_value = ("OK", [b"1 2"])
+
+        # Create a mock email message for ID 1
+        from email.message import EmailMessage
+        msg1 = EmailMessage()
+        msg1["Subject"] = "Test Inquiry 1"
+        msg1["From"] = "lead1@example.com"
+        msg1.set_content("I am interested in your services.")
+
+        # Create a mock email message for ID 2
+        msg2 = EmailMessage()
+        msg2["Subject"] = "Test Inquiry 2"
+        msg2["From"] = "Jane Doe <lead2@example.com>"
+        msg2.set_content("Tell me more about the materials.")
+
+        # Simulate fetch responses
+        mock_imap_instance.fetch.side_effect = [
+            ("OK", [(b'1 (RFC822)', bytes(msg1))]),
+            ("OK", [(b'2 (RFC822)', bytes(msg2))])
+        ]
+
+        # Mock CRM and auto-respond methods
+        self.mock_core.modules = {
+            'crm': MagicMock(),
+        }
+        self.email_automation._handle_incoming_email = MagicMock()
+
+        # Run check_inbox
+        self.email_automation.check_inbox()
+
+        # Verify IMAP sequence
+        mock_imap_class.assert_called_with("mail.privateemail.com")
+        mock_imap_instance.login.assert_called_with('test@example.com', 'fake_password')
+        mock_imap_instance.select.assert_called_with("INBOX")
+        mock_imap_instance.search.assert_called_with(None, 'UNSEEN')
+
+        # Verify message processing
+        self.assertEqual(mock_imap_instance.fetch.call_count, 2)
+        mock_imap_instance.fetch.assert_any_call(b'1', '(RFC822)')
+        mock_imap_instance.fetch.assert_any_call(b'2', '(RFC822)')
+
+        # Verify activities were logged
+        self.mock_core.log_activity.assert_any_call("email", "NEW_REPLY", "From: lead1@example.com - Test Inquiry 1")
+        self.mock_core.log_activity.assert_any_call("email", "NEW_REPLY", "From: Jane Doe <lead2@example.com> - Test Inquiry 2")
+
+        # Verify CRM was notified
+        self.mock_core.modules['crm'].mark_as_replied.assert_any_call("lead1@example.com")
+        self.mock_core.modules['crm'].mark_as_replied.assert_any_call("lead2@example.com")
+
+        # Verify auto-respond was triggered
+        self.email_automation._handle_incoming_email.assert_any_call("lead1@example.com", "Test Inquiry 1", "I am interested in your services.\n")
+        self.email_automation._handle_incoming_email.assert_any_call("Jane Doe <lead2@example.com>", "Test Inquiry 2", "Tell me more about the materials.\n")
+
+        # Verify messages marked as seen
+        mock_imap_instance.store.assert_any_call(b'1', '+FLAGS', '\\Seen')
+        mock_imap_instance.store.assert_any_call(b'2', '+FLAGS', '\\Seen')
+
+        # Verify close/logout
+        mock_imap_instance.close.assert_called_once()
+        mock_imap_instance.logout.assert_called_once()
+
+    @patch('os.getenv')
+    @patch('imaplib.IMAP4_SSL')
+    def test_check_inbox_exception(self, mock_imap_class, mock_getenv):
+        """Test check_inbox handles exceptions during IMAP connection safely."""
+        mock_getenv.return_value = "fake_password"
+
+        # Simulate connection error
+        mock_imap_class.side_effect = Exception("Connection timed out")
+
+        self.email_automation.check_inbox()
+
+        # Verify exception was logged
+        self.mock_core.log_activity.assert_called_with(
+            "email", "INBOX_CHECK_ERROR", "Connection timed out"
+        )
+
+
 if __name__ == '__main__':
     unittest.main()
