@@ -1221,7 +1221,7 @@ class AutonomousBusinessOrchestrator:
             if task.dependencies:
                 deps_complete = all(dep_id in self.completed_task_ids for dep_id in task.dependencies)
                 if not deps_complete:
-                    task.status = TaskStatus.BLOCKED
+                    self._set_task_status(task, TaskStatus.BLOCKED)
                     is_blocked = True
 
             if is_blocked:
@@ -1231,7 +1231,7 @@ class AutonomousBusinessOrchestrator:
 
             # Dependencies met. If it was blocked, it's now unblocked.
             if task.status == TaskStatus.BLOCKED:
-                task.status = TaskStatus.PENDING
+                self._set_task_status(task, TaskStatus.PENDING)
 
             # Find agent with matching role
             agent = next(
@@ -1240,7 +1240,7 @@ class AutonomousBusinessOrchestrator:
 
             if agent:
                 task.assigned_to = agent.agent_id
-                task.status = TaskStatus.IN_PROGRESS
+                self._set_task_status(task, TaskStatus.IN_PROGRESS)
                 # Task assigned, do NOT add back to pending queue
             else:
                 # No agent available yet, keep in queue

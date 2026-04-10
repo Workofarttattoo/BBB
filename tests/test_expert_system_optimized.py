@@ -67,8 +67,8 @@ class TestExpertSystemOptimized(unittest.TestCase):
         print(f"Vector store search call count: {self.system.vector_store.search.call_count}")
 
         # Verify it called search fewer times (optimized behavior)
-        # We expect 2 calls: 1 global search + 1 expert search
-        self.assertEqual(self.system.vector_store.search.call_count, 2)
+        # We expect 1 call: 1 global search, and the result is passed to the expert
+        self.assertEqual(self.system.vector_store.search.call_count, 1)
 
         # Verify response comes from chemistry expert (since we returned chem doc)
         # Wait, if we return chem doc for ALL searches (including biology domain search),
@@ -102,7 +102,7 @@ class TestExpertSystemOptimized(unittest.TestCase):
 
         print(f"Vector store search call count (deterministic): {self.system.vector_store.search.call_count}")
         # Identify best domain (1 call) -> returns CHEM -> CHEM expert search (1 call) -> Total 2
-        self.assertEqual(self.system.vector_store.search.call_count, 2)
+        self.assertEqual(self.system.vector_store.search.call_count, 1)
         self.assertEqual(response.domain, ExpertDomain.CHEMISTRY)
 
 if __name__ == '__main__':
