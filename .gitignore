@@ -74,3 +74,4 @@ test_coverage.json
 test_dashboard.html
 backups/
 test_backups/
+.env.production
