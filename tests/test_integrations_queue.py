@@ -1,3 +1,4 @@
+import asyncio
 import unittest
 import sys
 import os
@@ -51,7 +52,7 @@ class TestIntegrationsQueue(unittest.TestCase):
 
     def test_buffer_create_post_queues_task(self):
         service = BufferService()
-        result = service.create_post("profile_123", "Hello World")
+        result = asyncio.run(service.create_post("profile_123", "Hello World"))
         self.assertTrue(result['success'])
 
         # Check queue

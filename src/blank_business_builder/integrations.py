@@ -358,9 +358,9 @@ class AnthropicService:
     def generate_content(self, prompt: str, model: Optional[str] = None) -> str:
         """Generate content using Claude."""
         if not self.client:
-             # Fallback if somehow client isn't initialized even with stub
-             if anthropic:
-                 self.client = anthropic.Anthropic(api_key=self.api_key)
+            # Fallback if somehow client isn't initialized even with stub
+            if anthropic:
+                self.client = anthropic.Anthropic(api_key=self.api_key)
 
         target_model = model or self.model
         # Map internal enum values to actual model names if needed
@@ -384,8 +384,8 @@ class AnthropicService:
             # or raise HTTPException depending on how strict we want to be.
             # But good practice is to raise or handle.
             if "api_key" in str(e).lower() or "authentication" in str(e).lower():
-                 print(f"Anthropic API Warning: {e}")
-                 return f"[Claude Simulation] {prompt[:100]}..."
+                print(f"Anthropic API Warning: {e}")
+                return f"[Claude Simulation] {prompt[:100]}..."
 
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -431,9 +431,10 @@ class SendGridService:
     ) -> bool:
         """Directly send email via API (Blocking)."""
         if not self.client:
-            # If not configured, we just log and return True (simulation)
-            print(f"[SendGrid Simulation] Sending email to {to_email}")
-            return True
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="SendGrid not configured"
+            )
 
         try:
             message = Mail(
@@ -543,8 +544,10 @@ class TwilioService:
     def send_sms(self, to_number: str, message: str) -> bool:
         """Send an SMS via Twilio."""
         if not self.client:
-            print(f"[Twilio Simulation] Sending SMS to {to_number}: {message}")
-            return True
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="Twilio not configured"
+            )
 
         try:
             self.client.messages.create(
@@ -584,8 +587,10 @@ class TwitterService:
     def post_tweet(self, text: str) -> bool:
         """Post a tweet via Twitter API v2."""
         if not self.client:
-            print(f"[Twitter Simulation] Posting tweet: {text}")
-            return True
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="Twitter not configured"
+            )
 
         try:
             # Note: For posting, you usually need Access Token and Secret as well
@@ -609,8 +614,10 @@ class BufferService:
     async def get_profiles(self) -> List[Dict]:
         """Get user's Buffer profiles."""
         if not self.access_token:
-            # If not configured, simulation
-            return [{"id": "sim_profile_1", "service": "twitter", "formatted_username": "@SimulatedUser"}]
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="Buffer not configured"
+            )
 
         try:
             if httpx:
@@ -668,8 +675,10 @@ class BufferService:
     ) -> Dict:
         """Create post directly via API."""
         if not self.access_token:
-             # Simulation
-             return {"success": True, "id": "sim_post_id"}
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="Buffer not configured"
+            )
 
         try:
             data = {
