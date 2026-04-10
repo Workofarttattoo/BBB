@@ -790,7 +790,7 @@ class ChiefEnhancementOfficer:
 
         if num_pending > 10:
             logger.warning(
-                f"[CEO Daemon] High backlog detected ({len(pending_tasks)} tasks). Suggesting scale-up."
+                f"[CEO Daemon] High backlog detected ({num_pending} tasks). Suggesting scale-up."
             )
 
     async def _make_improvement(self):

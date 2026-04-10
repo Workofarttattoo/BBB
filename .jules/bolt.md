@@ -16,3 +16,6 @@
 ## 2026-03-03 - Optimize AutonomousBusinessOrchestrator Metrics Gathering
 **Learning:** Found O(N) list comprehensions being used to calculate task statuses in `get_metrics_dashboard`, `_report_progress`, and `_check_bottlenecks` by iterating over the unbounded `task_queue`. This causes measurable event loop blocking as the business runs.
 **Action:** Centralized task status updates into `_set_task_status` which maintains an O(1) `task_status_counts` dictionary, eliminating the need to iterate over history.
+## 2026-04-10 - [optimize_revenue N+1]
+**Learning:** Found an N+1 query issue in `optimize_revenue` inside `src/blank_business_builder/level6_agent.py` fetching business counts for each user iteratively. Fixed by using `.in_()` to bulk load business counts for the users returned by the initial query.
+**Action:** Created benchmark to verify performance gain, then implemented `GROUP BY` and `.in_()` in `optimize_revenue`, caching counts into a dictionary and looking it up dynamically in `_has_upsell_opportunity` and `_get_recommended_tier`.

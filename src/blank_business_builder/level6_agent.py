@@ -12,6 +12,7 @@ from enum import Enum
 import json
 from dataclasses import dataclass
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from .database import User, Business, MarketingCampaign, Subscription
 from .integrations import IntegrationFactory
@@ -354,14 +355,26 @@ class Level6Agent:
             User.subscription_tier.in_(["free", "starter", "pro"])
         ).all()
 
+        if not users:
+            return decisions
+
+        # Optimization: Pre-fetch and group business counts in a single O(N) database query
+        user_ids = [user.id for user in users]
+        business_counts_query = db.query(Business.user_id, func.count(Business.id)).filter(
+            Business.user_id.in_(user_ids)
+        ).group_by(Business.user_id).all()
+
+        business_counts = {user_id: count for user_id, count in business_counts_query}
+
         for user in users:
-            if self._has_upsell_opportunity(user, db):
+            business_count = business_counts.get(user.id, 0)
+            if self._has_upsell_opportunity(user, business_count):
                 decision = AgentDecision(
                     decision_type="revenue_optimization",
                     action="identify_upsell",
                     confidence=0.82,
                     reasoning=f"User {user.email} showing signals for tier upgrade",
-                    data={"user_id": str(user.id), "recommended_tier": self._get_recommended_tier(user, db)},
+                    data={"user_id": str(user.id), "recommended_tier": self._get_recommended_tier(user, business_count)},
                     timestamp=datetime.utcnow(),
                     requires_approval=False
                 )
@@ -369,10 +382,8 @@ class Level6Agent:
 
         return decisions
 
-    def _has_upsell_opportunity(self, user: User, db: Session) -> bool:
+    def _has_upsell_opportunity(self, user: User, business_count: int) -> bool:
         """Identify if user is ready for upsell."""
-        business_count = db.query(Business).filter(Business.user_id == user.id).count()
-
         if user.subscription_tier == "free" and business_count >= 1:
             return True
 
@@ -384,10 +395,8 @@ class Level6Agent:
 
         return False
 
-    def _get_recommended_tier(self, user: User, db: Session) -> str:
+    def _get_recommended_tier(self, user: User, business_count: int) -> str:
         """Get recommended subscription tier for user."""
-        business_count = db.query(Business).filter(Business.user_id == user.id).count()
-
         if user.subscription_tier == "free":
             return "starter"
 
