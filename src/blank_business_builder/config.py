@@ -67,6 +67,9 @@ class Config:
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "echo")
 
+    # Simulation Mode
+    FEATURES_SIMULATION_MODE = os.getenv("FEATURES_SIMULATION_MODE", "false").lower() == "true"
+
 settings = Config()
 
 
