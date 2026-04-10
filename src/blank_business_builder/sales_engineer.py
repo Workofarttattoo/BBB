@@ -74,8 +74,8 @@ class SalesEngineer:
         if self.core.llm_engine:
             try:
                 email_body = self.core.llm_engine.generate_response(prompt)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"   ❌ EMAIL GENERATION ERROR: {e}")
         
         # Create a Sale object to track this opportunity
         sale = Sale(
