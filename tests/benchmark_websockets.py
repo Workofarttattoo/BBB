@@ -23,10 +23,10 @@ class MockQuery:
     def order_by(self, *args, **kwargs):
         return self
 
-    def limit(self, *args, **kwargs):
+    def group_by(self, *args, **kwargs):
         return self
 
-    def group_by(self, *args, **kwargs):
+    def limit(self, *args, **kwargs):
         return self
 
     def first(self):
@@ -34,13 +34,9 @@ class MockQuery:
         return self.result
 
     def all(self):
-        # We simulate the fact that this replaces multiple separate slow `.first()` calls
-        # with one slightly slow `.all()` call. So the loop won't block 4 times for 0.1s.
-        time.sleep(0.01)
-        # If the result is already a list (e.g. for group_by), return it directly.
-        # Otherwise, wrap it in a list.
+        time.sleep(self.delay)  # Blocking sleep
         if isinstance(self.result, list):
-            return self.result
+             return self.result
         return [self.result] if self.result else []
 
     def count(self):
@@ -76,33 +72,19 @@ def create_mock_session():
 
     mock_metrics = MagicMock(spec=MetricsHistory)
 
-    def side_effect(*args):
-        # Handle func.count, func.sum etc.
-        if not args:
-            return MockQuery(delay=0.1, result=(0, 0, 0, 0))
-
-        model = args[0]
-
-        # We need string matching since args might be Column elements
-        # like count(AgentTask.id), not the actual Class.
-        model_str = str(model)
-
+    def side_effect(*models):
+        model_str = str(models[0]) if models else ""
         if "Business" in model_str:
-            return MockQuery(delay=0.01, result=mock_business)
-        elif "AgentTask" in model_str:
-            # For the group by query, we might want to return a tuple-like result
-            # but for benchmarking, mock_task is fine.
-            # If the query is an aggregation (func.count, etc.), it returns a tuple usually.
-            if "count" in model_str or "sum" in model_str:
-                # Mock result for task_stats: (total, completed, pending, failed)
-                return MockQuery(delay=0.01, result=(100, 50, 30, 20))
-            if "status" in model_str:
-                 # mock result for group_by AgentTask.status
-                 return MockQuery(delay=0.01, result=[("completed", 50), ("pending", 30), ("failed", 20)])
-            return MockQuery(delay=0.01, result=mock_task)
+            return MockQuery(delay=0.1, result=mock_business)
+        elif "AgentTask" in model_str or "count" in model_str:
+            # We are doing multiple queries in one with count/sum/case, handle it
+            if len(models) > 1:
+               # Group by query returns list of tuples (status, count)
+               return MockQuery(delay=0.1, result=[("completed", 5), ("pending", 3), ("failed", 2)])
+            return MockQuery(delay=0.1, result=mock_task)
         elif "MetricsHistory" in model_str:
-            return MockQuery(delay=0.01, result=mock_metrics)
-        return MockQuery(delay=0.01, result=(0, 0, 0, 0))
+            return MockQuery(delay=0.1, result=mock_metrics)
+        return MockQuery()
 
     session.query.side_effect = side_effect
     return session
@@ -154,6 +136,8 @@ async def main():
         result = await get_business_metrics("test-id", session)
     except Exception as e:
         print(f"Error calling get_business_metrics: {e}")
+        import traceback
+        traceback.print_exc()
         monitor_task.cancel()
         return
 

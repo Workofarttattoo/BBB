@@ -17,6 +17,6 @@
 **Learning:** Found O(N) list comprehensions being used to calculate task statuses in `get_metrics_dashboard`, `_report_progress`, and `_check_bottlenecks` by iterating over the unbounded `task_queue`. This causes measurable event loop blocking as the business runs.
 **Action:** Centralized task status updates into `_set_task_status` which maintains an O(1) `task_status_counts` dictionary, eliminating the need to iterate over history.
 
-## 2026-03-03 - Optimize websockets GROUP BY Task metrics
-**Learning:** Found that `_get_business_metrics_sync` in `websockets.py` blocked the SQLite event loop by executing multiple scalar `SUM(CASE(...))` expressions over task statuses. This iterates sequentially row-by-row for each aggregation causing significant performance impacts on scale. Wait, I noticed earlier I already put a 2026-03-03 entry!
-**Action:** Always prefer `GROUP BY` aggregations coupled with native dictionary manipulations in Python over complex conditionals in `SQLAlchemy` functions.
+## 2025-05-27 - Task Statistics Aggregation Optimization
+**Learning:** Found multiple `sum(case(...))` clauses being used to calculate task statistics in `websockets.py`. This structure causes severe event loop blocking as the database sequentially scans rows and applies conditional logic.
+**Action:** Replaced conditional aggregations with a `GROUP BY` query on `AgentTask.status`. This approach shifts the burden to the database engine which can use indexes effectively to quickly summarize records without large sequential scans, drastically reducing execution time and main thread blocking in async contexts.
