@@ -7,12 +7,15 @@ Software audit task with comprehensive code analysis capabilities.
 from __future__ import annotations
 
 import ast
+import logging
 import json
 import re
 import subprocess
 from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+
+logger = logging.getLogger(__name__)
 
 from .base import EnhancementTask
 
@@ -159,8 +162,8 @@ class CodeMetricsAnalyzer:
                     'metrics': {'lines_of_code': len(lines)}
                 })
                 results['rust']['totals']['lines_of_code'] += len(lines)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Error analyzing rust file {rs_file}: {e}")
 
         return dict(results)
 
@@ -235,8 +238,8 @@ class SecurityScanner:
                         'line': self._find_line_number(content, 'api')
                     })
 
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Error scanning security for {py_file}: {e}")
 
         return {
             'total_issues': len(issues),
