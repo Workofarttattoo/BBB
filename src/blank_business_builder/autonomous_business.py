@@ -885,6 +885,11 @@ class AutonomousBusinessOrchestrator:
         self.completed_task_ids: Set[str] = set()
         self.task_transition_counts: Dict[str, int] = {}
         self.task_execution_attempts: Dict[str, int] = {}
+        # Optimized tracking structures
+        self.task_status_counts: Dict[TaskStatus, int] = {status: 0 for status in TaskStatus}
+        self.in_progress_tasks: Set[str] = set()  # Set of task_ids
+        self.waiting_for_tasks: Dict[str, List[str]] = {}  # dependency_id -> list of dependent task_ids
+        self.task_map: Dict[str, AutonomousTask] = {}  # task_id -> task object
         self.metrics = BusinessMetrics()
         self.running = False
         self.market_research = MarketResearch(api_key=market_research_api_key)
@@ -899,7 +904,6 @@ class AutonomousBusinessOrchestrator:
         self.prompt_registry = PromptRegistry()
         self.ceo = ChiefEnhancementOfficer(self)
         self.hive_mind = HiveMindCoordinator()
-        self.task_status_counts = {status: 0 for status in TaskStatus}
 
         # Identify required roles for the selected business concept
         self.required_roles = self._identify_required_roles(business_concept)
@@ -908,7 +912,15 @@ class AutonomousBusinessOrchestrator:
         """Add a new task to the queue."""
         self.task_queue.append(task)
         self.pending_tasks.append(task)
-        self.task_status_counts[task.status] += 1
+        self.task_map[task.task_id] = task
+        self.task_status_counts[task.status] = self.task_status_counts.get(task.status, 0) + 1
+
+        # Register dependencies for O(1) resolution
+        if task.dependencies:
+            for dep_id in task.dependencies:
+                if dep_id not in self.waiting_for_tasks:
+                    self.waiting_for_tasks[dep_id] = []
+                self.waiting_for_tasks[dep_id].append(task.task_id)
 
     def _identify_required_roles(self, business_concept: str) -> List[AgentRole]:
         """Identify which roles are needed for this business."""
@@ -1219,22 +1231,18 @@ class AutonomousBusinessOrchestrator:
                 continue
 
             # Check dependencies
-            is_blocked = False
             if task.dependencies:
                 deps_complete = all(dep_id in self.completed_task_ids for dep_id in task.dependencies)
                 if not deps_complete:
-                    if task.status != TaskStatus.BLOCKED:
-                         self._set_task_status(task, TaskStatus.BLOCKED)
-                    is_blocked = True
+                    # Mark as blocked using optimized setter
+                    # This removes it from pending loop implicitly (we don't append to remaining_tasks)
+                    # It will be re-added to pending_tasks when dependency completes via _resolve_dependencies
+                    self._set_task_status(task, TaskStatus.BLOCKED)
+                    continue
 
-            if is_blocked:
-                # Keep in queue for later retry
-                remaining_tasks.append(task)
-                continue
-
-            # Dependencies met. If it was blocked, it's now unblocked.
+            # Dependencies met. If it was blocked, set to pending (metrics update)
             if task.status == TaskStatus.BLOCKED:
-                 self._set_task_status(task, TaskStatus.PENDING)
+                self._set_task_status(task, TaskStatus.PENDING)
 
             # Find agent with matching role
             agent = next(
@@ -1242,94 +1250,28 @@ class AutonomousBusinessOrchestrator:
             )
 
             if agent:
-                self._set_task_status(task, TaskStatus.IN_PROGRESS)
                 task.assigned_to = agent.agent_id
-                # Task assigned, do NOT add back to pending queue
+                # Use setter to update indices
+                self._set_task_status(task, TaskStatus.IN_PROGRESS)
             else:
                 # No agent available yet, keep in queue
                 remaining_tasks.append(task)
 
         self.pending_tasks = remaining_tasks
 
-    def _set_task_status(
-        self,
-        task: AutonomousTask,
-        status: TaskStatus,
-        result: Optional[Dict] = None,
-        clear_assignment: bool = False,
-    ) -> None:
-        """
-        Update task status and maintain internal counters (O(1)).
-        Also handles dependency tracking and metric updates.
-        """
-        if task.status == status:
-            # Update result if provided even if status unchanged
-            if result:
-                task.result = result
-            return
-
-        # Update O(1) counters
-        self.task_status_counts[task.status] -= 1
-        self.task_status_counts[status] += 1
-
-        # Track transition
-        transition_key = f"{task.status.value}_to_{status.value}"
-        self.task_transition_counts[transition_key] = (
-            self.task_transition_counts.get(transition_key, 0) + 1
-        )
-
-        # Update task state
-        task.status = status
-        if result:
-            task.result = result
-
-        if status == TaskStatus.COMPLETED:
-            task.completed_at = datetime.now()
-            self.completed_task_ids.add(task.task_id)
-        elif status == TaskStatus.FAILED:
-            # Don't add to completed_task_ids
-            pass
-
-        if clear_assignment:
-            task.assigned_to = None
-
-    def _reconcile_orphaned_in_progress_tasks(self) -> None:
-        """
-        Check for IN_PROGRESS tasks assigned to inactive/missing agents and requeue them.
-        """
-        # We can't iterate efficiently over just IN_PROGRESS without a separate list,
-        # but iterating task_queue is unavoidable unless we index it.
-        # However, we only care about 'IN_PROGRESS' which should be small.
-        # Let's iterate task_queue for now, but in a real massive system we'd want a set of in_progress tasks.
-        # For optimization, let's skip if count is 0
-        if self.task_status_counts[TaskStatus.IN_PROGRESS] == 0:
-            return
-
-        for task in self.task_queue:
-            if task.status == TaskStatus.IN_PROGRESS:
-                agent = self.agents.get(task.assigned_to)
-                if not agent or not agent.active:
-                    logger.warning(
-                        f"Found orphaned task {task.task_id} assigned to {task.assigned_to}. Re-queuing."
-                    )
-                    self._set_task_status(
-                        task,
-                        TaskStatus.PENDING,
-                        result={"error": "Agent orphaned task"},
-                        clear_assignment=True,
-                    )
-                    # Add back to pending queue for reassignment
-                    self.pending_tasks.append(task)
-
-    def get_task_status_counts(self) -> Dict[str, int]:
-        """Return O(1) counts of tasks by status."""
-        return {k.value: v for k, v in self.task_status_counts.items()}
-
     async def _execute_tasks_parallel(self) -> List[Dict]:
         """Execute all in-progress tasks in parallel."""
         # Requeue stale in-progress tasks before execution to avoid deadlocks.
         self._reconcile_orphaned_in_progress_tasks()
-        in_progress = [t for t in self.task_queue if t.status == TaskStatus.IN_PROGRESS]
+        # Optimization: Use set for O(1) instead of scanning queue
+        in_progress_ids = list(self.in_progress_tasks)
+        in_progress = []
+        for tid in in_progress_ids:
+            task = self.task_map.get(tid)
+            if task:
+                in_progress.append(task)
+            else:
+                self.in_progress_tasks.remove(tid)
 
         if not in_progress:
             return []
@@ -1491,17 +1433,121 @@ class AutonomousBusinessOrchestrator:
 ║  📈 Leads Generated:      {self.metrics.leads_generated:10}               ║
 ║  🎯 Conversion Rate:      {self.metrics.conversion_rate*100:9.2f}%              ║
 ║  ✅ Tasks Completed:      {self.metrics.tasks_completed:10}               ║
-║  ⏳ Tasks Pending:        {self.task_status_counts[TaskStatus.PENDING]:10}               ║
+║  ⏳ Tasks Pending:        {self.task_status_counts.get(TaskStatus.PENDING, 0):10}               ║
 ╠════════════════════════════════════════════════════════════╣
 ║  Active Agents: {len(self.agents):2}                                       ║
 ╚════════════════════════════════════════════════════════════╝
         """)
 
+    def get_task_status_counts(self) -> Dict[str, int]:
+        """Get task counts by status efficiently."""
+        return {status.value: self.task_status_counts.get(status, 0) for status in TaskStatus}
+
+    def _set_task_status(
+        self,
+        task: AutonomousTask,
+        status: TaskStatus,
+        result: Optional[Dict] = None,
+        clear_assignment: bool = False
+    ) -> None:
+        """
+        Update task status and maintain internal indices.
+        O(1) complexity for state tracking.
+        """
+        old_status = task.status
+        if old_status == status:
+            return
+
+        # Update counts
+        self.task_status_counts[old_status] = max(0, self.task_status_counts.get(old_status, 0) - 1)
+        self.task_status_counts[status] = self.task_status_counts.get(status, 0) + 1
+
+        # Track transition
+        transition_key = f"{old_status.value}->{status.value}"
+        self.task_transition_counts[transition_key] = self.task_transition_counts.get(transition_key, 0) + 1
+
+        # Update in_progress set
+        if old_status == TaskStatus.IN_PROGRESS:
+            if task.task_id in self.in_progress_tasks:
+                self.in_progress_tasks.remove(task.task_id)
+
+        if status == TaskStatus.IN_PROGRESS:
+            self.in_progress_tasks.add(task.task_id)
+
+        # Update task object
+        task.status = status
+        if result:
+            task.result = result
+
+        if status == TaskStatus.COMPLETED:
+            task.completed_at = datetime.now()
+            self.completed_task_ids.add(task.task_id)
+            # Trigger waiting tasks
+            self._resolve_dependencies(task.task_id)
+
+        if status == TaskStatus.FAILED:
+            # Also remove assignment if failed? Depends on logic.
+            # Usually we retry.
+            pass
+
+        if clear_assignment:
+            task.assigned_to = None
+
+        # If moving back to PENDING (e.g. from failed/blocked/in_progress), add to pending queue
+        if status == TaskStatus.PENDING:
+            # Avoid duplicates if it's already in pending queue (though deque search is O(N))
+            # But wait, if we are setting it to PENDING, we assume it's ready to be picked up.
+            # We just append it. Duplicate references are okay-ish if we handle them, but ideally avoid.
+            # Since we maintain state properly, duplicates in deque just mean we check it twice.
+            self.pending_tasks.append(task)
+
+    def _resolve_dependencies(self, completed_task_id: str) -> None:
+        """
+        Unlock tasks waiting for this dependency.
+        O(1) lookup using waiting_for_tasks index.
+        """
+        waiting_task_ids = self.waiting_for_tasks.pop(completed_task_id, [])
+        if not waiting_task_ids:
+            return
+
+        for task_id in waiting_task_ids:
+            task = self.task_map.get(task_id)
+            if not task:
+                continue
+
+            # Check if ALL dependencies are met now
+            all_deps_met = all(dep_id in self.completed_task_ids for dep_id in task.dependencies)
+            if all_deps_met:
+                if task.status == TaskStatus.BLOCKED:
+                    self._set_task_status(task, TaskStatus.PENDING)
+                    logger.info(f"Task {task_id} unblocked by completion of {completed_task_id}")
+
+    def _reconcile_orphaned_in_progress_tasks(self) -> None:
+        """
+        Identify and reset tasks assigned to inactive/missing agents.
+        Uses in_progress_tasks set for O(k) efficiency.
+        """
+        orphaned_tasks = []
+        for task_id in list(self.in_progress_tasks):
+            task = self.task_map.get(task_id)
+            if not task:
+                self.in_progress_tasks.remove(task_id)
+                continue
+
+            if not task.assigned_to:
+                orphaned_tasks.append(task)
+                continue
+
+            agent = self.agents.get(task.assigned_to)
+            if not agent or not agent.active:
+                orphaned_tasks.append(task)
+
+        for task in orphaned_tasks:
+            logger.warning(f"Reconciling orphaned task {task.task_id} (Agent {task.assigned_to} inactive)")
+            self._set_task_status(task, TaskStatus.PENDING, clear_assignment=True)
+
     def get_metrics_dashboard(self) -> Dict:
         """Get comprehensive metrics for user dashboard."""
-        total_finished = self.task_status_counts[TaskStatus.COMPLETED] + self.task_status_counts[TaskStatus.FAILED]
-        success_rate = (self.task_status_counts[TaskStatus.COMPLETED] / max(1, total_finished))
-
         return {
             "business_concept": self.business_concept,
             "founder": self.founder_name,
@@ -1518,10 +1564,15 @@ class AutonomousBusinessOrchestrator:
                 },
                 "operations": {
                     "tasks_completed": self.metrics.tasks_completed,
-                    "tasks_pending": self.task_status_counts[TaskStatus.PENDING],
+                    "tasks_pending": self.task_status_counts.get(TaskStatus.PENDING, 0),
                     "tasks_by_status": self.get_task_status_counts(),
                     "task_transition_counts": dict(self.task_transition_counts),
-                    "success_rate": success_rate,
+                    "success_rate": self.task_status_counts.get(TaskStatus.COMPLETED, 0)
+                    / max(
+                        1,
+                        self.task_status_counts.get(TaskStatus.COMPLETED, 0)
+                        + self.task_status_counts.get(TaskStatus.FAILED, 0),
+                    ),
                 },
             },
             "agents": [
