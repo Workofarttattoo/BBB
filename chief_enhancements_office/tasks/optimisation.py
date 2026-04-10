@@ -7,9 +7,12 @@ Optimisation task with performance profiling and actionable recommendations.
 from __future__ import annotations
 
 import ast
+import logging
 import json
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+
+logger = logging.getLogger(__name__)
 
 from .base import EnhancementTask
 
@@ -91,8 +94,8 @@ class PerformanceAnalyzer:
                                     'line': node.lineno
                                 })
 
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Error analyzing performance for {py_file}: {e}")
 
         return {
             'performance_issues': issues,
@@ -181,8 +184,8 @@ class CodeQualityAnalyzer:
                                 'priority': 'high'
                             })
 
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Error analyzing code quality for {py_file}: {e}")
 
         return {
             'suggestions': suggestions,
@@ -257,8 +260,8 @@ class ResourceOptimizer:
                         'benefit': 'Optimized bundle size and load times'
                     })
 
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Error analyzing resource usage in package.json: {e}")
 
         # Check for Docker optimization opportunities
         dockerfile = self.project_root / 'Dockerfile'
