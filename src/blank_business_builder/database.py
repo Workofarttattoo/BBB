@@ -4,6 +4,7 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 """
 
 from sqlalchemy import create_engine, Column, String, Integer, Numeric, DateTime, ForeignKey, Text, Boolean, JSON
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.types import TypeDecorator
@@ -324,6 +325,49 @@ class MarketingCampaign(Base):
 
 
 # Database connection helpers
+_async_engine = None
+_AsyncSessionLocal = None
+
+def get_async_db_engine(database_url: Optional[str] = None):
+    """Create async database engine"""
+    global _async_engine
+    if _async_engine is not None:
+        return _async_engine
+
+    if database_url is None:
+        database_url = os.environ.get("DATABASE_URL", "postgresql://bbbuser:password@localhost:5432/bbb_production")
+
+    if database_url.startswith("postgresql://"):
+        database_url = database_url.replace("postgresql://", "postgresql+asyncpg://")
+
+    _async_engine = create_async_engine(
+        database_url,
+        pool_pre_ping=True,
+        pool_size=10,
+        max_overflow=20,
+        echo=False
+    )
+    return _async_engine
+
+
+def get_async_session_maker(engine):
+    """Create async session maker"""
+    global _AsyncSessionLocal
+    if _AsyncSessionLocal is not None:
+        return _AsyncSessionLocal
+
+    _AsyncSessionLocal = async_sessionmaker(bind=engine, class_=AsyncSession, autocommit=False, autoflush=False)
+    return _AsyncSessionLocal
+
+
+async def get_async_db():
+    """FastAPI dependency for async database sessions"""
+    engine = get_async_db_engine()
+    AsyncSessionLocal = get_async_session_maker(engine)
+    async with AsyncSessionLocal() as session:
+        yield session
+
+
 def get_db_engine(database_url: Optional[str] = None):
     """Create database engine"""
     if database_url is None:
