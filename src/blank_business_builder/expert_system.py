@@ -84,7 +84,7 @@ class ExpertQuery:
     max_results: int = 5
     confidence_threshold: float = 0.7
     use_ensemble: bool = False
-    precomputed_docs: Optional[List[Tuple[Any, float]]] = None
+    precomputed_docs: Optional[List[Tuple[KnowledgeDocument, float]]] = None
 
 
 @dataclass
@@ -371,7 +371,7 @@ class StandardDomainExpert(DomainExpert):
 
     async def answer_query(self, query: ExpertQuery) -> ExpertResponse:
         """Answer query using domain expertise."""
-        # Retrieve relevant documents
+        # Retrieve relevant documents (or use precomputed ones if available)
         if query.precomputed_docs is not None:
             context_docs = query.precomputed_docs
         else:
@@ -677,33 +677,34 @@ class MultiDomainExpertSystem:
     async def _auto_select_expert(self, query: ExpertQuery) -> ExpertResponse:
         """Automatically select best expert for query."""
 
-        # Optimization: Global search to identify domain and gather context
-        # This replaces separate domain identification and context retrieval calls
+        # Optimization: Fetch global top-k docs and identify domain from them
+        # This reduces N searches to 1 global search
         loop = asyncio.get_running_loop()
-        results = await loop.run_in_executor(
+        global_results = await loop.run_in_executor(
             None,
             self.vector_store.search,
             query.query,
-            query.max_results,
-            None,  # Global search across all domains
+            query.max_results,  # top_k matching request
+            None,  # global search
         )
 
         best_domain = None
-        if results:
-            # Assume the top result's domain is the most relevant
-            best_domain = results[0][0].domain
+        if global_results:
+            # Logic to pick best domain. Simple approach: Top doc's domain.
+            best_domain = global_results[0][0].domain
 
         if best_domain:
             expert = self.experts.get(best_domain)
             if expert:
-                # Filter results for this domain to pass as context
-                # This avoids a second vector store search in the expert
-                domain_docs = [r for r in results if r[0].domain == best_domain]
+                # Filter docs for this domain
+                relevant_docs = [r for r in global_results if r[0].domain == best_domain]
 
-                # Create a new query with precomputed docs
-                enhanced_query = replace(query, precomputed_docs=domain_docs)
+                # Update query with precomputed docs to avoid re-search
+                # Using replace to create a new instance with the context
+                query_with_context = replace(query, precomputed_docs=relevant_docs)
 
-                return await expert.answer_query(enhanced_query)
+                # Query just that expert with precomputed context
+                return await expert.answer_query(query_with_context)
 
         # Fallback to querying all experts if no clear domain match
         # (or if identified domain expert is missing, which shouldn't happen)
