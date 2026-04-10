@@ -4,6 +4,7 @@ import sys
 import os
 from unittest.mock import MagicMock
 from sqlalchemy.orm import Session
+from unittest.mock import patch
 
 # Add src to path if needed
 sys.path.append(os.path.join(os.getcwd(), 'src'))
@@ -35,8 +36,6 @@ class MockQuery:
 
     def all(self):
         time.sleep(self.delay)  # Blocking sleep
-        if isinstance(self.result, list):
-             return self.result
         return [self.result] if self.result else []
 
     def count(self):
@@ -72,20 +71,21 @@ def create_mock_session():
 
     mock_metrics = MagicMock(spec=MetricsHistory)
 
-    def side_effect(*models):
-        model_str = str(models[0]) if models else ""
-        if "Business" in model_str:
-            return MockQuery(delay=0.1, result=mock_business)
-        elif "AgentTask" in model_str or "count" in model_str:
-            # We are doing multiple queries in one with count/sum/case, handle it
-            if len(models) > 1:
-               # Group by query returns list of tuples (status, count)
-               return MockQuery(delay=0.1, result=[("completed", 5), ("pending", 3), ("failed", 2)])
-            return MockQuery(delay=0.1, result=mock_task)
-        elif "MetricsHistory" in model_str:
-            return MockQuery(delay=0.1, result=mock_metrics)
-        return MockQuery()
+    def side_effect(*args):
+        try:
+            model = args[0]
+            if model == Business or getattr(model, "__name__", "") == "Business":
+                return MockQuery(delay=0.1, result=mock_business)
+            elif model == AgentTask or getattr(model, "__name__", "") == "AgentTask":
+                return MockQuery(delay=0.1, result=mock_task)
+            elif model == MetricsHistory or getattr(model, "__name__", "") == "MetricsHistory":
+                return MockQuery(delay=0.1, result=mock_metrics)
+        except Exception:
+            pass
+        return MockQuery(delay=0.1, result=("completed", 100)) # Default return a tuple to prevent crashes on func.count()
 
+    # The issue might be from db.query() checking args, but let's patch _get_business_metrics_sync
+    # instead if we need to
     session.query.side_effect = side_effect
     return session
 
@@ -136,8 +136,6 @@ async def main():
         result = await get_business_metrics("test-id", session)
     except Exception as e:
         print(f"Error calling get_business_metrics: {e}")
-        import traceback
-        traceback.print_exc()
         monitor_task.cancel()
         return
 

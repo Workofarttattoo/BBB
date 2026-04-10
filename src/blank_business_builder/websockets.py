@@ -78,13 +78,10 @@ def _get_business_metrics_sync(business_id: str, db: Session) -> dict:
     if not business:
         return {"error": "Business not found"}
 
-    # Get task statistics
-    # OPTIMIZATION: Replaced multiple sum(case(...)) with a GROUP BY query on AgentTask.status.
-    # Expected impact: Significantly reduces CPU and event loop blocking by leveraging indexes
-    # more effectively, scaling O(1) in the DB rather than scanning rows sequentially for multiple cases.
+    # Get task statistics efficiently using GROUP BY
+    # This avoids expensive case statements across the whole table
     status_counts = db.query(
-        AgentTask.status,
-        func.count(AgentTask.id)
+        AgentTask.status, func.count(AgentTask.id)
     ).filter(
         AgentTask.business_id == business_id
     ).group_by(AgentTask.status).all()
