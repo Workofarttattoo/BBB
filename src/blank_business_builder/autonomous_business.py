@@ -881,6 +881,8 @@ class AutonomousBusinessOrchestrator:
         self.founder_name = founder_name
         self.agents: Dict[str, Level6BusinessAgent] = {}
         self.task_queue: List[AutonomousTask] = []
+        self.task_map: Dict[str, AutonomousTask] = {}
+        self.in_progress_tasks: Dict[str, None] = {}
         self.pending_tasks: deque[AutonomousTask] = deque()
         self.completed_task_ids: Set[str] = set()
         self.task_transition_counts: Dict[str, int] = {}
@@ -909,6 +911,9 @@ class AutonomousBusinessOrchestrator:
         self.task_queue.append(task)
         self.pending_tasks.append(task)
         self.task_status_counts[task.status.value] = self.task_status_counts.get(task.status.value, 0) + 1
+        self.task_map[task.task_id] = task
+        if task.status == TaskStatus.IN_PROGRESS:
+            self.in_progress_tasks[task.task_id] = None
 
     def _identify_required_roles(self, business_concept: str) -> List[AgentRole]:
         """Identify which roles are needed for this business."""
@@ -1273,6 +1278,12 @@ class AutonomousBusinessOrchestrator:
         self.task_status_counts[old_status.value] = max(0, self.task_status_counts.get(old_status.value, 0) - 1)
         self.task_status_counts[new_status.value] = self.task_status_counts.get(new_status.value, 0) + 1
 
+        # Update in-progress set for O(1) lookups
+        if old_status == TaskStatus.IN_PROGRESS:
+            self.in_progress_tasks.pop(task.task_id, None)
+        if new_status == TaskStatus.IN_PROGRESS:
+            self.in_progress_tasks[task.task_id] = None
+
     def _reconcile_orphaned_in_progress_tasks(self) -> None:
         """Requeue tasks stuck in IN_PROGRESS (e.g., if agent disconnected)."""
         # For now, this is a placeholder to resolve AttributeError
@@ -1282,7 +1293,9 @@ class AutonomousBusinessOrchestrator:
         """Execute all in-progress tasks in parallel."""
         # Requeue stale in-progress tasks before execution to avoid deadlocks.
         self._reconcile_orphaned_in_progress_tasks()
-        in_progress = [t for t in self.task_queue if t.status == TaskStatus.IN_PROGRESS]
+
+        # Optimization: use O(1) set lookup instead of O(N) list scan
+        in_progress = [self.task_map[tid] for tid in list(self.in_progress_tasks) if tid in self.task_map]
 
         if not in_progress:
             return []

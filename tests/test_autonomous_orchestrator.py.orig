@@ -136,7 +136,7 @@ class TestAutonomousOrchestrator(unittest.IsolatedAsyncioTestCase):
         # 2. Complete T1
         # Manually mark T1 as completed to simulate execution finishing
         task1.status = TaskStatus.COMPLETED
-        orchestrator.in_progress_tasks.pop("t1", None)
+        orchestrator.in_progress_tasks.discard("t1")
         orchestrator.completed_task_ids.add("t1")
 
         # 3. Assign again - T2 should be picked up (unblocked)
