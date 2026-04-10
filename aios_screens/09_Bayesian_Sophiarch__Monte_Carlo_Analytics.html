@@ -1,0 +1,317 @@
+<html class="dark"><head>
+<meta charset="utf-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0df280",
+                        "accent-gold": "#d4af37",
+                        "background-light": "#f5f8f7",
+                        "background-dark": "#0a120e",
+                        "surface-dark": "#121f18",
+                        "border-dark": "#1a2e23",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden">
+<div class="relative flex h-screen flex-col">
+<!-- Top Navigation -->
+<header class="flex items-center justify-between border-b border-border-dark bg-surface-dark px-8 py-4">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3">
+<div class="size-8 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-background-dark font-bold">query_stats</span>
+</div>
+<h2 class="text-xl font-bold tracking-tight text-slate-100">Bayesian Sophiarch <span class="text-primary opacity-70">OS</span></h2>
+</div>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-sm font-medium hover:text-primary transition-colors text-slate-400" href="#">Financial</a>
+<a class="text-sm font-medium hover:text-primary transition-colors text-slate-400" href="#">Medical</a>
+<a class="text-sm font-medium hover:text-primary transition-colors text-slate-400" href="#">Discovery</a>
+<a class="text-sm font-medium hover:text-primary transition-colors text-slate-400" href="#">Simulations</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">search</span>
+<input class="bg-background-dark border-border-dark rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-primary focus:border-primary w-64" placeholder="Query quantum nodes..." type="text"/>
+</div>
+<button class="p-2 hover:bg-border-dark rounded-lg transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="p-2 hover:bg-border-dark rounded-lg transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-primary rounded-full"></span>
+</button>
+<div class="h-8 w-[1px] bg-border-dark mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden lg:block">
+<p class="text-xs font-bold text-slate-100">DR. ELARA VOSS</p>
+<p class="text-[10px] text-primary">Chief Investigator</p>
+</div>
+<div class="size-10 rounded-full border-2 border-primary bg-cover bg-center" data-alt="Portrait of a female scientist in futuristic attire" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAUtzpJvHeWRV20foFnVDQS8FhQYndEbgV4qxqemLIWiKnYQRHGl4OxOvTckC-4v7Ts0eZ8VuefAaH0qApxymgX0TPUEbROzd4CdNqtkNtVxTU8QF-Zx3BAL4yR8y1wl41sF3yGFU7bQI-tMp6YoKgznp1DI57iNRwATiQmLB9YKkWlcPc-gZF3gg-yH8OVIoCrekwFgh5bTF7l78e2No5Oxb0cHeiBmPbMVuOmeC9F9zjJ_SV4iZwXT57uvJqcrKmfxTEY63UjEXQ')"></div>
+</div>
+</div>
+</header>
+<main class="flex-1 flex overflow-hidden">
+<!-- Sidebar Navigation -->
+<nav class="w-20 lg:w-64 border-r border-border-dark bg-surface-dark flex flex-col p-4 gap-2">
+<div class="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary/10 border border-primary/20 text-primary mb-4">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="hidden lg:block font-bold">Overview</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-border-dark text-slate-400 transition-all cursor-pointer">
+<span class="material-symbols-outlined">monitoring</span>
+<span class="hidden lg:block font-medium">Predictive Models</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-border-dark text-slate-400 transition-all cursor-pointer">
+<span class="material-symbols-outlined">hub</span>
+<span class="hidden lg:block font-medium">Data Streams</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-border-dark text-slate-400 transition-all cursor-pointer">
+<span class="material-symbols-outlined">model_training</span>
+<span class="hidden lg:block font-medium">Simulations</span>
+</div>
+<div class="mt-auto space-y-4">
+<div class="p-4 rounded-xl bg-background-dark/50 border border-border-dark hidden lg:block">
+<p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-2">System Load</p>
+<div class="w-full bg-border-dark h-1.5 rounded-full overflow-hidden">
+<div class="bg-accent-gold h-full w-[82%]"></div>
+</div>
+<p class="text-[10px] text-accent-gold mt-1 text-right font-bold">82% Quantum Utilization</p>
+</div>
+<button class="w-full bg-primary text-background-dark font-bold py-3 rounded-xl flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">add_chart</span>
+<span class="hidden lg:block">New Analysis</span>
+</button>
+</div>
+</nav>
+<!-- Main Dashboard Area -->
+<div class="flex-1 overflow-y-auto p-6 bg-background-dark custom-scrollbar">
+<!-- Bayesian Sophiarch Central Widget -->
+<div class="grid grid-cols-12 gap-6 mb-6">
+<div class="col-span-12 lg:col-span-8 bg-surface-dark rounded-xl border border-border-dark p-6 relative overflow-hidden">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-lg font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">analytics</span>
+                                    Bayesian Sophiarch: Predicted Outcomes
+                                </h3>
+<p class="text-sm text-slate-500">Cross-domain inference map (Financial + Bio-Medical)</p>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-primary/20 text-primary text-[10px] font-bold rounded-full border border-primary/30 uppercase tracking-widest">Confidence: 99.4%</span>
+</div>
+</div>
+<!-- Probability Distribution Visual -->
+<div class="h-48 flex items-end gap-1 px-4 relative">
+<!-- Abstract distribution bars -->
+<div class="flex-1 bg-primary/20 h-[30%] rounded-t opacity-40"></div>
+<div class="flex-1 bg-primary/30 h-[45%] rounded-t opacity-50"></div>
+<div class="flex-1 bg-primary/40 h-[65%] rounded-t opacity-60"></div>
+<div class="flex-1 bg-primary/60 h-[85%] rounded-t opacity-80 border-t-2 border-primary"></div>
+<div class="flex-1 bg-primary h-[100%] rounded-t border-t-4 border-accent-gold relative">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-accent-gold text-background-dark px-2 py-1 rounded text-[10px] font-bold">MODAL POINT</div>
+</div>
+<div class="flex-1 bg-primary/60 h-[80%] rounded-t opacity-80 border-t-2 border-primary"></div>
+<div class="flex-1 bg-primary/40 h-[60%] rounded-t opacity-60"></div>
+<div class="flex-1 bg-primary/30 h-[40%] rounded-t opacity-50"></div>
+<div class="flex-1 bg-primary/20 h-[25%] rounded-t opacity-40"></div>
+<!-- Overlaying path lines -->
+<div class="absolute inset-0 pointer-events-none overflow-hidden">
+<svg class="w-full h-full opacity-30" preserveaspectratio="none" viewbox="0 0 800 200">
+<path d="M0,180 Q200,100 400,20 T600,100 T800,180" fill="none" stroke="#d4af37" stroke-width="2"></path>
+<path d="M0,190 Q200,150 400,80 T600,150 T800,190" fill="none" stroke="#0df280" stroke-width="1"></path>
+</svg>
+</div>
+</div>
+<div class="mt-4 flex justify-between text-[10px] text-slate-500 font-bold uppercase tracking-widest border-t border-border-dark pt-4">
+<span>σ Lower Bound</span>
+<span>Historical Mean</span>
+<span>Projected Outcome</span>
+<span>σ Upper Bound</span>
+</div>
+</div>
+<div class="col-span-12 lg:col-span-4 bg-surface-dark rounded-xl border border-border-dark p-6">
+<h3 class="text-sm font-bold text-slate-400 mb-4 uppercase tracking-widest">Key Performance Matrix</h3>
+<div class="space-y-4">
+<div class="p-4 bg-background-dark rounded-lg border-l-4 border-primary">
+<p class="text-xs text-slate-500">Financial Liquidity Prediction</p>
+<p class="text-2xl font-bold text-slate-100">98.4% <span class="text-xs text-primary font-normal">+1.2%</span></p>
+</div>
+<div class="p-4 bg-background-dark rounded-lg border-l-4 border-accent-gold">
+<p class="text-xs text-slate-500">Medical Accuracy (Bio-Synthesis)</p>
+<p class="text-2xl font-bold text-slate-100">99.1% <span class="text-xs text-red-400 font-normal">-0.3%</span></p>
+</div>
+<div class="p-4 bg-background-dark rounded-lg border-l-4 border-slate-600">
+<p class="text-xs text-slate-500">Simulation Iterations</p>
+<p class="text-2xl font-bold text-slate-100">4.2M <span class="text-xs text-primary font-normal">+15%</span></p>
+</div>
+</div>
+</div>
+</div>
+<!-- Secondary Zones: Financial & Medical -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+<!-- Stock Prediction Tools -->
+<div class="bg-surface-dark rounded-xl border border-border-dark overflow-hidden flex flex-col">
+<div class="p-4 border-b border-border-dark flex justify-between items-center">
+<h4 class="font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-accent-gold">candlestick_chart</span>
+                                Stock Prediction Tools
+                            </h4>
+<div class="flex gap-2">
+<button class="text-[10px] bg-border-dark px-2 py-1 rounded">1H</button>
+<button class="text-[10px] bg-primary text-background-dark font-bold px-2 py-1 rounded">24H</button>
+</div>
+</div>
+<div class="flex-1 p-4 flex flex-col gap-4">
+<div class="h-64 bg-background-dark rounded-lg border border-border-dark p-2 relative">
+<!-- Candlestick Simulation -->
+<div class="flex h-full items-end justify-between px-2 gap-1 relative z-10">
+<div class="w-2 bg-red-500 h-[60%] opacity-80 rounded-sm"></div>
+<div class="w-2 bg-red-500 h-[50%] opacity-80 rounded-sm"></div>
+<div class="w-2 bg-primary h-[55%] opacity-80 rounded-sm"></div>
+<div class="w-2 bg-primary h-[70%] opacity-80 rounded-sm"></div>
+<div class="w-2 bg-red-500 h-[65%] opacity-80 rounded-sm"></div>
+<div class="w-2 bg-primary h-[80%] opacity-80 rounded-sm"></div>
+<div class="w-2 bg-primary h-[75%] opacity-80 rounded-sm"></div>
+<div class="w-2 bg-primary h-[90%] opacity-80 rounded-sm"></div>
+<div class="w-2 border-2 border-primary border-dashed h-[95%] opacity-100 rounded-sm shadow-[0_0_10px_#0df280]"></div>
+<div class="w-2 border-2 border-accent-gold border-dashed h-[98%] opacity-100 rounded-sm shadow-[0_0_10px_#d4af37]"></div>
+</div>
+<!-- Quantum Trend Overlay -->
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="text-[8px] font-bold text-accent-gold uppercase tracking-[0.5em] opacity-30 select-none">Quantum Trend Projection Layer Active</div>
+</div>
+<svg class="absolute inset-0 w-full h-full opacity-40 z-0" viewbox="0 0 400 200">
+<path d="M0,150 L50,160 L100,140 L150,155 L200,120 L250,90 L300,105 L350,60 L400,40" fill="none" stroke="#d4af37" stroke-dasharray="5,5" stroke-width="3"></path>
+</svg>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-3 bg-background-dark/50 rounded-lg">
+<p class="text-[10px] text-slate-500">Predicted High</p>
+<p class="text-sm font-bold text-primary">$1,244.90</p>
+</div>
+<div class="p-3 bg-background-dark/50 rounded-lg">
+<p class="text-[10px] text-slate-500">Volatility Index</p>
+<p class="text-sm font-bold text-accent-gold">0.14% (Ultra Low)</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Medical Diagnostic Lab -->
+<div class="bg-surface-dark rounded-xl border border-border-dark overflow-hidden flex flex-col">
+<div class="p-4 border-b border-border-dark flex justify-between items-center">
+<h4 class="font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">biotech</span>
+                                Medical Diagnostic Lab
+                            </h4>
+<span class="text-[10px] font-bold text-primary animate-pulse">LIVING MODEL ACTIVE</span>
+</div>
+<div class="flex-1 p-4 flex flex-col gap-4">
+<div class="h-64 bg-background-dark rounded-lg border border-border-dark relative flex items-center justify-center overflow-hidden">
+<!-- DNA / Protein 3D Representation -->
+<div class="relative w-48 h-48">
+<div class="absolute inset-0 border-2 border-primary/20 rounded-full animate-[spin_10s_linear_infinite]"></div>
+<div class="absolute inset-4 border border-accent-gold/20 rounded-full animate-[spin_15s_linear_infinite_reverse]"></div>
+<div class="absolute inset-0 flex flex-col items-center justify-center gap-1 opacity-60">
+<div class="w-24 h-4 bg-primary rounded-full"></div>
+<div class="w-32 h-4 bg-accent-gold rounded-full"></div>
+<div class="w-20 h-4 bg-primary rounded-full"></div>
+<div class="w-36 h-4 bg-accent-gold rounded-full"></div>
+<div class="w-28 h-4 bg-primary rounded-full"></div>
+</div>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+<span class="material-symbols-outlined text-5xl text-primary drop-shadow-[0_0_15px_#0df280]">genetics</span>
+</div>
+</div>
+<div class="absolute bottom-2 right-4 text-[10px] text-slate-600 font-mono">MODEL ID: 0xFF-772A-Q</div>
+</div>
+<div class="p-3 bg-background-dark/50 rounded-lg">
+<p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-2">Synthesis Probability</p>
+<div class="flex items-center gap-4">
+<div class="flex-1 bg-border-dark h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[94.2%] shadow-[0_0_8px_#0df280]"></div>
+</div>
+<span class="text-xs font-bold text-primary">94.2%</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Monte Carlo Reduction Layer -->
+<div class="bg-surface-dark rounded-xl border border-border-dark p-6">
+<div class="flex justify-between items-end mb-6">
+<div>
+<h3 class="text-lg font-bold">Monte Carlo Reduction Layer</h3>
+<p class="text-sm text-slate-500">10,000 simulated paths narrowing to high-confidence attractor</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-slate-500 uppercase font-bold">Reduction Factor</p>
+<p class="text-xl font-bold text-accent-gold">1:10,000</p>
+</div>
+</div>
+<div class="h-48 bg-background-dark rounded-xl relative overflow-hidden flex items-center justify-center">
+<!-- Simulated Paths Visualization -->
+<div class="absolute inset-0 opacity-20">
+<svg class="w-full h-full" preserveaspectratio="none">
+<!-- Converging lines from left to right center -->
+<path d="M0,0 Q200,100 800,100" fill="none" stroke="#0df280" stroke-width="0.5"></path>
+<path d="M0,50 Q200,100 800,100" fill="none" stroke="#0df280" stroke-width="0.5"></path>
+<path d="M0,100 Q200,100 800,100" fill="none" stroke="#d4af37" stroke-width="1.5"></path>
+<path d="M0,150 Q200,100 800,100" fill="none" stroke="#0df280" stroke-width="0.5"></path>
+<path d="M0,200 Q200,100 800,100" fill="none" stroke="#0df280" stroke-width="0.5"></path>
+<path d="M0,20 Q250,90 800,100" fill="none" stroke="#0df280" stroke-width="0.5"></path>
+<path d="M0,180 Q250,110 800,100" fill="none" stroke="#0df280" stroke-width="0.5"></path>
+</svg>
+</div>
+<!-- The "Single Outcome" focal point -->
+<div class="relative z-10 flex items-center">
+<div class="w-px h-24 bg-gradient-to-b from-transparent via-accent-gold to-transparent opacity-50"></div>
+<div class="size-4 bg-accent-gold rounded-full shadow-[0_0_20px_#d4af37] mx-2"></div>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-accent-gold uppercase tracking-tighter">Singular Outcome Alpha</span>
+<span class="text-[10px] text-slate-500 font-mono">P = 0.99923</span>
+</div>
+</div>
+<!-- Decorative Scanning Line -->
+<div class="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-transparent via-primary to-transparent opacity-40 shadow-[0_0_15px_#0df280] animate-[pulse_2s_infinite]"></div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer / Status Bar -->
+<footer class="bg-surface-dark border-t border-border-dark px-6 py-2 flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+<div class="flex gap-6">
+<span class="flex items-center gap-2">
+<span class="size-2 bg-primary rounded-full"></span>
+                    Quantum Link: Operational
+                </span>
+<span class="flex items-center gap-2">
+<span class="size-2 bg-accent-gold rounded-full"></span>
+                    Bayesian Engines: Synced
+                </span>
+<span class="flex items-center gap-2">
+                    Latent Space: 4.2 Exabytes Free
+                </span>
+</div>
+<div class="flex gap-4">
+<span>Ref: SOPHI-228-BETA</span>
+<span class="text-slate-100">2024-11-20 14:02:44 UTC</span>
+</div>
+</footer>
+</div>
+</body></html>

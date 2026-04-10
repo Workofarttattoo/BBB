@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AIOS.is | Secure VM &amp; Red Team Control</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&amp;family=Inter:wght@300;400;600;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#00FFC2",
+              "background-light": "#F8FAFC",
+              "background-dark": "#05070A",
+              secondary: "#00D1FF",
+              surface: "#0F172A",
+              "surface-border": "#1E293B"
+            },
+            fontFamily: {
+              display: ["Inter", "sans-serif"],
+              mono: ["JetBrains Mono", "monospace"],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+            },
+          },
+        },
+      };
+    </script>
+<style>
+        .glow-text {
+            text-shadow: 0 0 15px rgba(0, 255, 194, 0.5);
+        }
+        .glow-border {
+            box-shadow: 0 0 10px rgba(0, 255, 194, 0.2);
+        }
+        .terminal-bg {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, rgba(5, 7, 10, 0.95) 100%);
+        }
+        .scanline {
+            width: 100%;
+            height: 2px;
+            background: rgba(0, 255, 194, 0.1);
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            animation: scan 4s linear infinite;
+        }
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+        .hologram-grid {
+            background-image: radial-gradient(circle, #1E293B 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-800 dark:text-slate-200 min-h-screen overflow-hidden">
+<header class="border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-black/50 backdrop-blur-md h-14 flex items-center justify-between px-6 z-50 relative">
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-2">
+<span class="material-icons-round text-primary text-3xl">hub</span>
+<span class="font-bold text-xl tracking-tighter glow-text uppercase">AIOS<span class="text-primary">.is</span></span>
+</div>
+<nav class="hidden md:flex items-center space-x-6 ml-10 text-xs font-mono tracking-widest uppercase">
+<a class="text-slate-400 hover:text-primary transition-colors" href="#">Nodes</a>
+<a class="text-primary border-b border-primary pb-1" href="#">Virtualization</a>
+<a class="text-slate-400 hover:text-primary transition-colors" href="#">Quantum Lab</a>
+<a class="text-slate-400 hover:text-primary transition-colors" href="#">Security</a>
+</nav>
+</div>
+<div class="flex items-center space-x-4">
+<div class="flex flex-col items-end mr-4">
+<span class="text-[10px] font-mono text-slate-500 uppercase">System Status</span>
+<span class="text-[10px] font-mono text-primary uppercase">All Systems Operational</span>
+</div>
+<button class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-primary/20 transition-all">
+<span class="material-icons-round text-sm">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-bold text-slate-900 text-xs">
+                JD
+            </div>
+</div>
+</header>
+<main class="flex h-[calc(100vh-3.5rem)] hologram-grid overflow-hidden">
+<aside class="w-80 border-r border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl p-6 overflow-y-auto hidden lg:block">
+<div class="mb-8">
+<h2 class="text-xs font-mono font-bold uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center">
+<span class="material-icons-round text-red-500 text-sm mr-2">security</span>
+                    Red Team Modules
+                </h2>
+<div class="space-y-3">
+<button class="w-full flex items-center justify-between p-3 rounded bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-primary/50 transition-all group">
+<div class="flex items-center">
+<span class="material-icons-round text-primary mr-3 text-lg">radar</span>
+<div class="text-left">
+<div class="text-xs font-bold font-mono">NetScan Pro</div>
+<div class="text-[10px] text-slate-500">Active Reconnaissance</div>
+</div>
+</div>
+<span class="material-icons-round text-xs text-slate-600 group-hover:text-primary">arrow_forward_ios</span>
+</button>
+<button class="w-full flex items-center justify-between p-3 rounded bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-primary/50 transition-all group">
+<div class="flex items-center">
+<span class="material-icons-round text-primary mr-3 text-lg">psychology</span>
+<div class="text-left">
+<div class="text-xs font-bold font-mono">Payload Gen</div>
+<div class="text-[10px] text-slate-500">Autonomous Exploits</div>
+</div>
+</div>
+<span class="material-icons-round text-xs text-slate-600 group-hover:text-primary">arrow_forward_ios</span>
+</button>
+<button class="w-full flex items-center justify-between p-3 rounded bg-primary/10 border border-primary/30 group">
+<div class="flex items-center">
+<span class="material-icons-round text-primary mr-3 text-lg">analytics</span>
+<div class="text-left">
+<div class="text-xs font-bold font-mono">Traffic Analyst</div>
+<div class="text-[10px] text-slate-500">Secure Network Analysis</div>
+</div>
+</div>
+<div class="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+</button>
+</div>
+</div>
+<div>
+<h2 class="text-xs font-mono font-bold uppercase tracking-[0.2em] text-slate-400 mb-4">Network Graph</h2>
+<div class="aspect-square bg-slate-900 rounded border border-slate-800 relative overflow-hidden">
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="w-24 h-24 border border-primary/20 rounded-full flex items-center justify-center animate-ping"></div>
+<div class="w-16 h-16 border border-primary/40 rounded-full absolute flex items-center justify-center animate-pulse"></div>
+<div class="w-4 h-4 bg-primary rounded-full"></div>
+</div>
+<img alt="Network Analysis Map" class="w-full h-full object-cover opacity-20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8uLvrGJJkCsI2HQEhBCs-wyg3lXKAITOJKMJkO_JesO8hbgvFw4NyJ0_i-nNpAFFo1-yP9yv8Hu1dTlJ8UidV9mvq8YCHLwrIyGYRD4Wf9M3xhA8awHFYIdAlgySGibubt6-R4dWavDIALLiKLCQe5mz835gK1H0i82-HsjpL6fZsUt9pjKl-iw1qYIWepVXY27kSfs2JQ8qbR7YB3Y9LkzP4c5wofgUfOGgDwL5Qnm9C5wKtOBMSTyUU-shjCgStmiQSXshrkvQ"/>
+</div>
+<div class="mt-4 text-[10px] font-mono text-slate-500 space-y-1">
+<p>ACTIVE NODES: 42</p>
+<p>THREAT LEVEL: LOW</p>
+<p>ENCRYPTION: AES-4096-RSA</p>
+</div>
+</div>
+</aside>
+<section class="flex-1 flex flex-col p-6 overflow-hidden relative">
+<div class="flex items-end justify-between mb-6">
+<div>
+<h1 class="text-3xl font-black italic uppercase tracking-tighter mb-1">Secure VM Deployment</h1>
+<p class="text-sm text-slate-500 font-mono tracking-wide">Environment: <span class="text-primary">ISOLATED_SANDBOX_7</span></p>
+</div>
+<button class="bg-primary hover:bg-primary/80 text-slate-900 font-bold px-4 py-2 rounded flex items-center space-x-2 transition-transform active:scale-95 shadow-lg shadow-primary/20">
+<span class="material-icons-round">add</span>
+<span class="text-xs uppercase">New Instance</span>
+</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+<div class="bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg p-5 group hover:border-primary/50 transition-all relative overflow-hidden">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary/10 rounded">
+<span class="material-icons-round text-primary">terminal</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="text-[10px] font-mono uppercase text-primary">Running</span>
+<div class="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+</div>
+</div>
+<h3 class="text-lg font-bold mb-1">PROMETHEUS-01</h3>
+<div class="mb-4">
+<label class="text-[10px] font-mono uppercase text-slate-500 block mb-1">OS Flavor</label>
+<select class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded text-xs font-mono focus:ring-1 focus:ring-primary">
+<option>Kali Linux (Red Team)</option>
+<option>Arch Linux (Minimal)</option>
+<option>Ubuntu LTS</option>
+</select>
+</div>
+<div class="flex items-center justify-between text-[10px] font-mono text-slate-500">
+<span>CPU: 12.4%</span>
+<span>MEM: 4.2GB / 16GB</span>
+</div>
+</div>
+<div class="bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg p-5 group hover:border-secondary/50 transition-all relative overflow-hidden">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-secondary/10 rounded">
+<span class="material-icons-round text-secondary">memory</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="text-[10px] font-mono uppercase text-slate-500">Standby</span>
+<div class="w-2 h-2 bg-slate-500 rounded-full"></div>
+</div>
+</div>
+<h3 class="text-lg font-bold mb-1">SENTINEL-X</h3>
+<div class="mb-4">
+<label class="text-[10px] font-mono uppercase text-slate-500 block mb-1">OS Flavor</label>
+<select class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded text-xs font-mono focus:ring-1 focus:ring-secondary">
+<option>Debian Hardened</option>
+<option>Tailscale OS</option>
+<option>Custom AIOS Node</option>
+</select>
+</div>
+<div class="flex items-center justify-between text-[10px] font-mono text-slate-500">
+<span>CPU: 0.0%</span>
+<span>MEM: 0.0GB / 32GB</span>
+</div>
+</div>
+<div class="bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg p-5 group hover:border-primary/50 transition-all relative overflow-hidden border-dashed">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary/10 rounded">
+<span class="material-icons-round text-primary animate-spin">sync</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="text-[10px] font-mono uppercase text-primary">Provisioning</span>
+</div>
+</div>
+<h3 class="text-lg font-bold mb-1">VOID-WALKER</h3>
+<div class="mb-4">
+<div class="w-full bg-slate-100 dark:bg-slate-800 h-1 rounded overflow-hidden">
+<div class="bg-primary h-full w-[65%]"></div>
+</div>
+<span class="text-[10px] font-mono text-slate-400 mt-1 block text-right">65% Deployed</span>
+</div>
+<div class="flex items-center justify-between text-[10px] font-mono text-slate-500">
+<span>OS: BlackArch</span>
+<span>Region: US-EAST-1</span>
+</div>
+</div>
+</div>
+<div class="flex-1 flex flex-col relative rounded-t-xl overflow-hidden border-t border-l border-r border-slate-200 dark:border-slate-800 terminal-bg">
+<div class="scanline"></div>
+<div class="flex items-center justify-between px-4 py-2 bg-white/10 dark:bg-black/40 border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center space-x-2">
+<div class="flex space-x-1.5">
+<div class="w-2.5 h-2.5 rounded-full bg-red-500/50"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-green-500/50"></div>
+</div>
+<span class="text-[10px] font-mono text-slate-400 ml-4">root@aios:~/red-team-toolkit</span>
+</div>
+<div class="flex space-x-4">
+<span class="text-[10px] font-mono text-primary animate-pulse">SSH: ACTIVE</span>
+<span class="text-[10px] font-mono text-slate-500">127.0.0.1:4044</span>
+</div>
+</div>
+<div class="flex-1 p-6 font-mono text-sm overflow-y-auto custom-scrollbar">
+<div class="text-primary mb-2">AIOS.is [Version 0.98.22b] - Conscious Intelligence Kernel v2.1</div>
+<div class="text-slate-500 mb-4">(c) 2026 Corporation of Light. All Rights Reserved.</div>
+<div class="flex space-x-2 mb-2">
+<span class="text-secondary font-bold">~</span>
+<span class="text-white">./initiate_deep_scan --target=ext_vulnerability_db</span>
+</div>
+<div class="text-slate-400 mb-1 pl-4">[SYSTEM] Initializing secure handshake with primary AGI core...</div>
+<div class="text-slate-400 mb-1 pl-4">[SYSTEM] Bypassing standard firewalls via Symbiosis Protocol...</div>
+<div class="text-primary mb-1 pl-4">[SUCCESS] Target database connected.</div>
+<div class="grid grid-cols-2 gap-4 mt-6">
+<div class="p-3 border border-primary/20 bg-primary/5 rounded">
+<div class="text-[10px] text-primary mb-1 uppercase font-bold">Inbound Traffic Analysis</div>
+<div class="flex items-end space-x-1 h-12">
+<div class="w-full bg-primary/40 h-[40%] rounded-t-sm"></div>
+<div class="w-full bg-primary/40 h-[65%] rounded-t-sm"></div>
+<div class="w-full bg-primary/40 h-[90%] rounded-t-sm"></div>
+<div class="w-full bg-primary/40 h-[50%] rounded-t-sm"></div>
+<div class="w-full bg-primary/40 h-[30%] rounded-t-sm"></div>
+<div class="w-full bg-primary h-[80%] rounded-t-sm"></div>
+<div class="w-full bg-primary/40 h-[45%] rounded-t-sm"></div>
+</div>
+</div>
+<div class="p-3 border border-secondary/20 bg-secondary/5 rounded">
+<div class="text-[10px] text-secondary mb-1 uppercase font-bold">AI Latency Feedback</div>
+<div class="text-2xl font-black text-secondary glow-text">14ms</div>
+<div class="text-[10px] text-slate-500">Neural Pathway Sync: 99.98%</div>
+</div>
+</div>
+<div class="flex space-x-2 mt-6">
+<span class="text-secondary font-bold">~</span>
+<span class="text-white border-r-4 border-white animate-bounce w-1 h-5"></span>
+</div>
+</div>
+</div>
+</section>
+<aside class="w-20 border-l border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl flex flex-col items-center py-6 space-y-8 hidden sm:flex">
+<button class="w-10 h-10 rounded-lg bg-primary text-slate-900 flex items-center justify-center shadow-lg shadow-primary/30">
+<span class="material-icons-round">dashboard</span>
+</button>
+<button class="w-10 h-10 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 flex items-center justify-center transition-colors">
+<span class="material-icons-round">settings_input_component</span>
+</button>
+<button class="w-10 h-10 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 flex items-center justify-center transition-colors">
+<span class="material-icons-round">security</span>
+</button>
+<button class="w-10 h-10 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 flex items-center justify-center transition-colors">
+<span class="material-icons-round">history</span>
+</button>
+<div class="flex-1"></div>
+<button class="w-10 h-10 rounded-lg text-red-500 hover:bg-red-500/10 flex items-center justify-center transition-colors">
+<span class="material-icons-round">power_settings_new</span>
+</button>
+</aside>
+</main>
+<div class="fixed pointer-events-none inset-0 z-0">
+<div class="absolute top-1/4 left-0 w-[500px] h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent rotate-[20deg]"></div>
+<div class="absolute bottom-1/4 right-0 w-[500px] h-px bg-gradient-to-r from-transparent via-secondary/20 to-transparent -rotate-[15deg]"></div>
+</div>
+<footer class="fixed bottom-4 left-6 flex items-center space-x-2 text-[10px] text-slate-600 font-mono tracking-widest pointer-events-none">
+<img alt="Corporation of Light Logo" class="w-4 h-4 rounded-full grayscale opacity-50" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvig8EfA4uRjKqNtWWUfEwjuFGyPCWS93HpZuGaDA9x6wQhG0_PJVv-G54hYloH0LDljkLFsYv6jmP4moiR0GOrSHfx995SrWPqVSslKMraXdxi5OjYty4OmgRw2QpUDEV0-T-ND25-_xSHcYqlo1bH0gLxXCtnNhUmWdYJMl2YDsIQThs5zYCNVjnUOrM38ptxTWCJ1hrWt-aqdO2J6JyfmFFU0mvRfss5VhRGXv5_HoYKZkjjreX5z_SCw1QTNB8p3MtiRUwqAI"/>
+<span>CORPORATION OF LIGHT | AIOS.is INTERFACE V2</span>
+</footer>
+
+</body></html>

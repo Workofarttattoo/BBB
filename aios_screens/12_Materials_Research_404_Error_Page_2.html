@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>404 - Material Under Research | Cosmic Discovery</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&amp;family=Playfair+Display:ital,wght@0,400;0,700;1,400&amp;family=Inter:wght@300;400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        cosmic: {
+                            deep: "#050112",
+                            purple: "#2D1B4E",
+                            blue: "#1E3A8A",
+                            ethereal: "#A5B4FC"
+                        }
+                    },
+                    fontFamily: {
+                        serif: ["Playfair Display", "serif"],
+                        display: ["Cinzel", "serif"],
+                        sans: ["Inter", "sans-serif"],
+                    },
+                },
+            },
+        };
+    </script>
+<style type="text/tailwindcss">
+        :root {
+            --primary-glow: rgba(139, 92, 246, 0.3);
+            --secondary-glow: rgba(30, 58, 138, 0.4);
+        }
+        body {
+            background-color: #050112;
+            overflow-x: hidden;
+        }
+        .cosmic-bg {
+            background:
+                radial-gradient(circle at 20% 30%, var(--primary-glow) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, var(--secondary-glow) 0%, transparent 40%),
+                linear-gradient(to bottom right, #050112, #1a0b2e, #050112);
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+        }
+        .lattice-overlay {
+            background-image:
+                linear-gradient(rgba(165, 180, 252, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(165, 180, 252, 0.05) 1px, transparent 1px);
+            background-size: 60px 60px;
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            mask-image: radial-gradient(circle at center, black, transparent 80%);
+        }
+        .nebulous-cloud {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120vw;
+            height: 120vh;
+            background: radial-gradient(circle at center, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+            filter: blur(80px);
+            z-index: -1;
+            pointer-events: none;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .text-glow {
+            text-shadow: 0 0 20px rgba(165, 180, 252, 0.3);
+        }
+        .serif-italic {
+            font-style: italic;
+        }
+    </style>
+</head>
+<body class="text-slate-300 min-h-screen flex flex-col font-sans">
+<div class="cosmic-bg"></div>
+<div class="lattice-overlay"></div>
+<div class="nebulous-cloud"></div>
+<nav class="relative z-50 border-b border-white/5">
+<div class="max-w-7xl mx-auto px-6">
+<div class="flex justify-between h-20 items-center">
+<div class="flex items-center gap-12">
+<div class="flex items-center gap-3 font-display text-xl tracking-[0.2em] text-white">
+<span class="material-symbols-outlined text-cosmic-ethereal font-light">blur_on</span>
+<span>MAT-RES</span>
+</div>
+<div class="hidden md:flex space-x-8 text-[10px] uppercase tracking-[0.3em] font-light text-slate-400">
+<a class="hover:text-white transition-all" href="#">Databases</a>
+<a class="hover:text-white transition-all" href="#">Publications</a>
+<a class="hover:text-white transition-all" href="#">Tools</a>
+<a class="hover:text-white transition-all" href="#">About</a>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<button class="text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined font-light">search</span>
+</button>
+<a class="text-[10px] uppercase tracking-widest font-light hover:text-white" href="#">Sign in</a>
+<a class="border border-white/20 hover:border-white/50 text-white px-6 py-2 rounded-full text-[10px] uppercase tracking-widest transition-all" href="#">Sign up</a>
+</div>
+</div>
+</div>
+</nav>
+<main class="flex-grow flex flex-col justify-center relative px-6">
+<div class="max-w-5xl mx-auto w-full text-center py-20">
+<div class="relative inline-block">
+<h1 class="text-[160px] md:text-[240px] font-display font-bold leading-none text-transparent bg-clip-text bg-gradient-to-b from-white/20 to-transparent select-none tracking-tighter">
+                    404
+                </h1>
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="space-y-6 max-w-2xl px-4">
+<h2 class="text-4xl md:text-6xl font-serif text-white text-glow leading-tight">
+                            This material is <span class="serif-italic">still</span> under research.
+                        </h2>
+<p class="text-cosmic-ethereal/60 text-lg font-light tracking-wide max-w-lg mx-auto leading-relaxed">
+                            The phase you are looking for does not exist in our current database.
+                        </p>
+</div>
+</div>
+</div>
+<div class="mt-24 max-w-2xl mx-auto">
+<p class="text-[10px] uppercase tracking-[0.4em] text-slate-500 mb-8">Find research, projects, or scientists:</p>
+<form class="relative group">
+<input class="w-full bg-white/5 border-0 border-b border-white/10 focus:border-cosmic-ethereal focus:ring-0 text-white placeholder:text-slate-600 py-4 px-0 text-xl font-light transition-all text-center italic" placeholder="e.g. Graphene conductivity, Quantum structures..." type="text"/>
+<button class="mt-8 text-[11px] uppercase tracking-[0.5em] text-cosmic-ethereal hover:text-white transition-all flex items-center gap-2 mx-auto" type="submit">
+                        Initiate Search <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</form>
+<div class="mt-16 flex flex-wrap justify-center gap-8 text-[10px] uppercase tracking-widest text-slate-500">
+<a class="hover:text-cosmic-ethereal transition-colors flex items-center gap-2" href="#"><span class="material-symbols-outlined text-sm">hub</span> Contact Lab Support</a>
+<a class="hover:text-cosmic-ethereal transition-colors flex items-center gap-2" href="#"><span class="material-symbols-outlined text-sm">potted_plant</span> Server Status</a>
+<a class="hover:text-cosmic-ethereal transition-colors flex items-center gap-2" href="#"><span class="material-symbols-outlined text-sm">auto_stories</span> Help Documentation</a>
+</div>
+</div>
+</div>
+</main>
+<footer class="relative z-10 border-t border-white/5 bg-black/40 backdrop-blur-xl py-16">
+<div class="max-w-7xl mx-auto px-6">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-16 mb-20">
+<div class="lg:col-span-2">
+<div class="flex items-center gap-2 font-display text-lg tracking-[0.2em] text-white mb-8">
+<span class="material-symbols-outlined text-cosmic-ethereal">blur_on</span>
+<span>MAT-RES</span>
+</div>
+<p class="text-slate-500 text-xs leading-relaxed mb-8 max-w-xs font-light">
+                        Subscribe to our research newsletter for the latest breakthroughs in material science, twice a month.
+                    </p>
+<div class="flex border-b border-white/10 group-focus-within:border-cosmic-ethereal transition-colors">
+<input class="bg-transparent border-none focus:ring-0 text-xs w-full py-2 px-0 text-white placeholder:text-slate-700" placeholder="Email address" type="email"/>
+<button class="text-[10px] uppercase tracking-widest text-white px-4">Join</button>
+</div>
+</div>
+<div>
+<h3 class="text-[10px] font-bold text-white mb-8 uppercase tracking-[0.3em]">Research</h3>
+<ul class="space-y-4 text-[11px] text-slate-500 uppercase tracking-widest font-light">
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">Nano-materials</a></li>
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">Quantum Dots</a></li>
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">Superconductors</a></li>
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">Polymers</a></li>
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">Bio-materials</a></li>
+</ul>
+</div>
+<div>
+<h3 class="text-[10px] font-bold text-white mb-8 uppercase tracking-[0.3em]">Resources</h3>
+<ul class="space-y-4 text-[11px] text-slate-500 uppercase tracking-widest font-light">
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">API Access</a></li>
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">Open Data</a></li>
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">Education</a></li>
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">Case Studies</a></li>
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">Mobile App</a></li>
+</ul>
+</div>
+<div>
+<h3 class="text-[10px] font-bold text-white mb-8 uppercase tracking-[0.3em]">Support</h3>
+<ul class="space-y-4 text-[11px] text-slate-500 uppercase tracking-widest font-light">
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">Docs</a></li>
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">Forum</a></li>
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">Expert Consult</a></li>
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">Skills</a></li>
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">Status</a></li>
+</ul>
+</div>
+<div>
+<h3 class="text-[10px] font-bold text-white mb-8 uppercase tracking-[0.3em]">Company</h3>
+<ul class="space-y-4 text-[11px] text-slate-500 uppercase tracking-widest font-light">
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">About Us</a></li>
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">Careers</a></li>
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">Newsroom</a></li>
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">Inclusion</a></li>
+<li><a class="hover:text-cosmic-ethereal transition-colors" href="#">Social Impact</a></li>
+</ul>
+</div>
+</div>
+<div class="flex flex-col md:flex-row justify-between items-center border-t border-white/5 pt-12 gap-8">
+<div class="flex gap-8 text-[9px] uppercase tracking-[0.3em] text-slate-600">
+<span>© 2024 Mat-Res Research Institute</span>
+<a class="hover:text-white" href="#">Terms</a>
+<a class="hover:text-white" href="#">Privacy</a>
+<a class="hover:text-white" href="#">Sitemap</a>
+</div>
+<div class="flex items-center gap-10">
+<div class="flex gap-6 text-slate-600">
+<a class="hover:text-cosmic-ethereal transition-colors" href="#"><span class="material-symbols-outlined text-lg font-light">language</span></a>
+<a class="hover:text-cosmic-ethereal transition-colors" href="#"><span class="material-symbols-outlined text-lg font-light">sensors</span></a>
+<a class="hover:text-cosmic-ethereal transition-colors" href="#"><span class="material-symbols-outlined text-lg font-light">code</span></a>
+</div>
+<button class="flex items-center gap-2 text-[10px] uppercase tracking-widest text-slate-600 hover:text-white transition-colors">
+                        English <span class="material-symbols-outlined text-xs">keyboard_arrow_down</span>
+</button>
+</div>
+</div>
+</div>
+</footer>
+
+</body></html>
