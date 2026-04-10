@@ -334,7 +334,8 @@ class GradualScalingOrchestrator:
                 response = await client.get(f"{self.monitoring_api_url}/metrics/financial")
                 if response.status_code == 200:
                     metrics['financial'] = response.json()
-        except:
+        except Exception as e:
+            print(f"   ⚠️ Financial metrics fetch failed: {e}. Using fallback.")
             # Use fallback calculation
             metrics['financial'] = self._calculate_financial_metrics()
 
@@ -344,7 +345,8 @@ class GradualScalingOrchestrator:
                 response = await client.get(f"{self.monitoring_api_url}/metrics/operational")
                 if response.status_code == 200:
                     metrics['operational'] = response.json()
-        except:
+        except Exception as e:
+            print(f"   ⚠️ Operational metrics fetch failed: {e}. Using fallback.")
             metrics['operational'] = self._calculate_operational_metrics()
 
         # Calculate risk metrics
