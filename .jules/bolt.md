@@ -17,6 +17,6 @@
 **Learning:** Found O(N) list comprehensions being used to calculate task statuses in `get_metrics_dashboard`, `_report_progress`, and `_check_bottlenecks` by iterating over the unbounded `task_queue`. This causes measurable event loop blocking as the business runs.
 **Action:** Centralized task status updates into `_set_task_status` which maintains an O(1) `task_status_counts` dictionary, eliminating the need to iterate over history.
 
-## 2025-04-05 - Optimize magic rd lab metrics calculations
-**Learning:** Found a common anti-pattern where an explicit loop is immediately followed by multiple `sum()` generator expressions iterating over the same list (`results` in `magic_rd_lab_autonomous_agents.py`). This causes redundant O(N) list traversals.
-**Action:** Combine calculations into the preceding explicit loop whenever possible to iterate over the data only once.
+## 2024-03-24 - [Optimize Campaign Analytics Calculation]
+**Learning:** `campaign.metrics.values()` iteration in `get_campaign_analytics` performs identical computations separately 5 times.
+**Action:** Replace multiple O(N) `sum` generator expressions over a dictionary with a single `for` loop aggregating all metrics in one iteration. This follows the codebase pattern of combining O(N) loops.
