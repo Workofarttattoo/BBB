@@ -15,7 +15,7 @@ Business models based on owned domains and real ECH0-PRIME ventures:
 
 import json
 from typing import Dict, List
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 
 
 @dataclass
