@@ -65,6 +65,12 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
+async def get_business_metrics(business_id: str, db: Session) -> dict:
+    """Get real-time business metrics."""
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, _get_business_metrics_sync, business_id, db)
+
+
 def _get_business_metrics_sync(business_id: str, db: Session) -> dict:
     """Synchronous implementation of get_business_metrics."""
     business = db.query(Business).filter(Business.id == business_id).first()
@@ -72,30 +78,18 @@ def _get_business_metrics_sync(business_id: str, db: Session) -> dict:
     if not business:
         return {"error": "Business not found"}
 
-    # Optimization: Use GROUP BY aggregation to efficiently calculate task statistics
-    # rather than multiple expensive func.sum(case(...)) statements which cause
-    # event loop blocks and sequentially scan rows.
-    task_status_counts = db.query(
+    # Get task statistics using optimized GROUP BY to prevent event loop blocking
+    task_stats = db.query(
         AgentTask.status, func.count(AgentTask.id)
     ).filter(AgentTask.business_id == business_id).group_by(AgentTask.status).all()
 
-    total_tasks = 0
-    completed_tasks = 0
-    pending_tasks = 0
-    failed_tasks = 0
+    # Process grouped results into dictionary
+    task_counts = {status: count for status, count in task_stats}
 
-    if task_status_counts:
-        for row in task_status_counts:
-            # Handle both mocked tuple returns and SQLAlchemy Row objects
-            status = row[0]
-            count = row[1]
-            total_tasks += count
-            if status == "completed":
-                completed_tasks = count
-            elif status == "pending":
-                pending_tasks = count
-            elif status == "failed":
-                failed_tasks = count
+    total_tasks = sum(task_counts.values())
+    completed_tasks = task_counts.get("completed", 0)
+    pending_tasks = task_counts.get("pending", 0)
+    failed_tasks = task_counts.get("failed", 0)
 
     # Get recent tasks
     recent_tasks = db.query(AgentTask).filter(
@@ -140,13 +134,6 @@ def _get_business_metrics_sync(business_id: str, db: Session) -> dict:
         ],
         "timestamp": datetime.utcnow().isoformat()
     }
-
-
-async def get_business_metrics(business_id: str, db: Session) -> dict:
-    """Get real-time business metrics.
-    Optimized: Removed run_in_executor to avoid SQLite thread-safety crashes,
-    and optimized query with group_by to prevent blocking the event loop."""
-    return _get_business_metrics_sync(business_id, db)
 
 
 async def get_agent_activity(business_id: str, db: Session) -> dict:
