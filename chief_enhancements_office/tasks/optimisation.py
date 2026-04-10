@@ -20,6 +20,13 @@ if TYPE_CHECKING:
     from ..meta_agent import EnhancementContext
 
 
+class ParentAddingVisitor(ast.NodeVisitor):
+    """Adds a parent attribute to all nodes in the AST."""
+    def generic_visit(self, node: ast.AST) -> None:
+        for child in ast.iter_child_nodes(node):
+            child.parent = node  # type: ignore
+            self.visit(child)
+
 class PerformanceAnalyzer:
     """Analyzes code for performance issues and optimization opportunities."""
 
@@ -42,6 +49,9 @@ class PerformanceAnalyzer:
                 tree = ast.parse(source, filename=str(py_file))
                 relative_path = str(py_file.relative_to(self.project_root))
 
+                # Inject parent references into the AST in O(N) time
+                ParentAddingVisitor().visit(tree)
+
                 # Check for common performance issues
                 for node in ast.walk(tree):
                     # Detect nested loops (O(n^2) or worse)
@@ -61,7 +71,8 @@ class PerformanceAnalyzer:
 
                     # Detect list comprehension that could be generator
                     if isinstance(node, ast.ListComp):
-                        parent = self._find_parent(tree, node)
+                        # ⚡ Bolt Optimization: Use injected parent reference instead of O(N^2) walk
+                        parent = getattr(node, 'parent', None)
                         if parent and isinstance(parent, (ast.For, ast.Call)):
                             opportunities.append({
                                 'file': relative_path,
@@ -103,14 +114,6 @@ class PerformanceAnalyzer:
             'total_issues': len(issues),
             'total_opportunities': len(opportunities)
         }
-
-    def _find_parent(self, tree: ast.AST, target: ast.AST) -> ast.AST | None:
-        """Find parent node of target in AST."""
-        for node in ast.walk(tree):
-            for child in ast.iter_child_nodes(node):
-                if child == target:
-                    return node
-        return None
 
 
 class CodeQualityAnalyzer:
