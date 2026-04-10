@@ -398,7 +398,13 @@ class AnthropicService:
             # But good practice is to raise or handle.
             if "api_key" in str(e).lower() or "authentication" in str(e).lower():
                 print(f"Anthropic API Warning: {e}")
-                return f"[Claude Simulation] {prompt[:100]}..."
+                if settings.FEATURES_SIMULATION_MODE:
+                    return f"[Claude Simulation] {prompt[:100]}..."
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                        detail="Anthropic API credentials not configured",
+                    )
 
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -445,8 +451,11 @@ class SendGridService:
         """Directly send email via API (Blocking)."""
         if not self.client:
             # If not configured, we just log and return True (simulation)
-            print(f"[SendGrid Simulation] Sending email to {to_email}")
-            return True
+            if settings.FEATURES_SIMULATION_MODE:
+                print(f"[SendGrid Simulation] Sending email to {to_email}")
+                return True
+            else:
+                raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="SendGrid API credentials not configured")
 
         try:
             message = Mail(
@@ -548,8 +557,11 @@ class TwilioService:
     def send_sms(self, to_number: str, message: str) -> bool:
         """Send an SMS via Twilio."""
         if not self.client:
-            print(f"[Twilio Simulation] Sending SMS to {to_number}: {message}")
-            return True
+            if settings.FEATURES_SIMULATION_MODE:
+                print(f"[Twilio Simulation] Sending SMS to {to_number}: {message}")
+                return True
+            else:
+                raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Twilio API credentials not configured")
 
         try:
             self.client.messages.create(body=message, from_=self.from_number, to=to_number)
@@ -585,8 +597,11 @@ class TwitterService:
     def post_tweet(self, text: str) -> bool:
         """Post a tweet via Twitter API v2."""
         if not self.client:
-            print(f"[Twitter Simulation] Posting tweet: {text}")
-            return True
+            if settings.FEATURES_SIMULATION_MODE:
+                print(f"[Twitter Simulation] Posting tweet: {text}")
+                return True
+            else:
+                raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Twitter API credentials not configured")
 
         try:
             # Note: For posting, you usually need Access Token and Secret as well
@@ -611,13 +626,16 @@ class BufferService:
         """Get user's Buffer profiles."""
         if not self.access_token:
             # If not configured, simulation
-            return [
-                {
-                    "id": "sim_profile_1",
-                    "service": "twitter",
-                    "formatted_username": "@SimulatedUser",
-                }
-            ]
+            if settings.FEATURES_SIMULATION_MODE:
+                return [
+                    {
+                        "id": "sim_profile_1",
+                        "service": "twitter",
+                        "formatted_username": "@SimulatedUser",
+                    }
+                ]
+            else:
+                raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Buffer API credentials not configured")
 
         try:
             if httpx:
@@ -677,7 +695,10 @@ class BufferService:
         """Create post directly via API."""
         if not self.access_token:
             # Simulation
-            return {"success": True, "id": "sim_post_id"}
+            if settings.FEATURES_SIMULATION_MODE:
+                return {"success": True, "id": "sim_post_id"}
+            else:
+                raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Buffer API credentials not configured")
 
         try:
             data = {

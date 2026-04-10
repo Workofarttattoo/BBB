@@ -35,8 +35,15 @@ class TestAnthropicService:
 
     def test_factory_method(self):
         """Test that IntegrationFactory returns an AnthropicService instance."""
-        service = self.IntegrationFactory.get_anthropic_service()
-        assert isinstance(service, self.AnthropicService)
+        with patch.dict('os.environ', {'LLM_PROVIDER': 'anthropic'}):
+            from blank_business_builder.config import settings
+            orig = settings.LLM_PROVIDER
+            settings.LLM_PROVIDER = "anthropic"
+            try:
+                service = self.IntegrationFactory.get_anthropic_service()
+                assert isinstance(service, self.AnthropicService)
+            finally:
+                settings.LLM_PROVIDER = orig
 
     def test_generate_content_mock(self):
         """Test generate_content with mocked client."""
@@ -55,8 +62,15 @@ class TestAnthropicService:
         service.client = MagicMock()
         service.client.messages.create.side_effect = Exception("Authentication error: api_key invalid")
 
-        response = service.generate_content("Test prompt")
-        assert "[Claude Simulation]" in response
+        try:
+            from blank_business_builder.config import settings
+            orig = settings.FEATURES_SIMULATION_MODE
+            settings.FEATURES_SIMULATION_MODE = True
+
+            response = service.generate_content("Test prompt")
+            assert "[Claude Simulation]" in response
+        finally:
+            settings.FEATURES_SIMULATION_MODE = orig
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
