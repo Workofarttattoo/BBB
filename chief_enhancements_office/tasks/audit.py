@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ast
 import json
+import logging
 import re
 import subprocess
 from collections import defaultdict
@@ -15,6 +16,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from .base import EnhancementTask
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from ..meta_agent import EnhancementContext
@@ -159,8 +162,8 @@ class CodeMetricsAnalyzer:
                     'metrics': {'lines_of_code': len(lines)}
                 })
                 results['rust']['totals']['lines_of_code'] += len(lines)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Error processing {rs_file}: {e}")
 
         return dict(results)
 
@@ -235,8 +238,8 @@ class SecurityScanner:
                         'line': self._find_line_number(content, 'api')
                     })
 
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Error processing {py_file}: {e}")
 
         return {
             'total_issues': len(issues),
