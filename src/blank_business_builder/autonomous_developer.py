@@ -53,7 +53,7 @@ class AutonomousDeveloper:
                     print(f"✅ DEV: Updated {target_file}")
                     
                     # Optional: Syntax check
-                    check = self.tools.run_shell_command(f"python3 -m py_compile {target_file}")
+                    check = self.tools.run_shell_command(["python3", "-m", "py_compile", target_file])
                     if check['returncode'] == 0:
                         print(f"✅ DEV: Syntax check passed for {target_file}")
                     else:
