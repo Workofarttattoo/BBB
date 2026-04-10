@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CRITICAL_FAILURE - 404</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700;800&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brutal: {
+                            black: "#050505",
+                            gray: "#1a1a1a",
+                            accent: "#ff003c", // Electric Red
+                            white: "#ffffff",
+                        }
+                    },
+                    fontFamily: {
+                        mono: ["'JetBrains Mono'", "monospace"],
+                        terminal: ["'Space Mono'", "monospace"],
+                    },
+                },
+            },
+        };
+    </script>
+<style type="text/tailwindcss">
+        @layer base {
+            body {
+                @apply bg-brutal-black text-white font-mono uppercase tracking-tighter;
+                background-image:
+                    linear-gradient(rgba(255, 0, 60, 0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 0, 60, 0.03) 1px, transparent 1px);
+                background-size: 20px 20px;
+            }
+        }
+        .terminal-panel {
+            @apply border-2 border-brutal-white/20 bg-brutal-gray/50 p-4 relative overflow-hidden;
+        }
+        .scanline {
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 0, 60, 0.1);
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 50;
+        }
+        .glitch-text {
+            text-shadow: 2px 0 #ff003c, -2px 0 #00ffff;
+        }
+        .crt-overlay {
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+        }
+        .circuit-bg {
+            background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.1) 1px, transparent 0);
+            background-size: 10px 10px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-brutal-accent selection:text-white">
+<div class="fixed inset-0 crt-overlay pointer-events-none z-[100]"></div>
+<header class="border-b-4 border-brutal-white bg-brutal-black sticky top-0 z-50">
+<div class="max-w-full mx-auto px-4 h-14 flex items-center justify-between">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 font-black text-xl tracking-tighter text-brutal-accent">
+<span class="material-symbols-outlined font-bold">terminal</span>
+<span>MAT-RES_CORE</span>
+</div>
+<nav class="hidden md:flex gap-6 text-[10px] font-bold">
+<a class="hover:bg-brutal-accent hover:text-white px-2 py-1 transition-colors" href="#">Databases</a>
+<a class="hover:bg-brutal-accent hover:text-white px-2 py-1 transition-colors" href="#">Publications</a>
+<a class="hover:bg-brutal-accent hover:text-white px-2 py-1 transition-colors" href="#">Tools</a>
+<a class="hover:bg-brutal-accent hover:text-white px-2 py-1 transition-colors" href="#">About</a>
+</nav>
+</div>
+<div class="flex items-center gap-4 text-[10px]">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-brutal-accent animate-pulse"></span>
+<span class="text-brutal-accent font-bold">SYSTEM_FAILURE_DETECTION</span>
+</div>
+<div class="h-6 w-px bg-brutal-white/20 mx-2"></div>
+<a class="hover:underline" href="#">Sign in</a>
+<a class="bg-brutal-white text-brutal-black px-3 py-1 font-black" href="#">Sign up</a>
+</div>
+</div>
+</header>
+<main class="flex-grow p-4 md:p-8 flex flex-col gap-4">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-grow">
+<aside class="lg:col-span-3 terminal-panel flex flex-col gap-4">
+<div class="text-[10px] text-brutal-accent font-bold mb-2">&gt;&gt; SYSTEM_LOG_OUTPUT</div>
+<div class="space-y-2 text-[9px] opacity-60 overflow-hidden font-terminal">
+<p>[0.000000] Initializing MAT-RES Kernel...</p>
+<p>[0.043122] Loading research_db.v4.04</p>
+<p>[0.089231] ERROR: Null Pointer in Path Resolver</p>
+<p>[0.102391] Segmentation Fault: Core Dumped</p>
+<p>[0.102392] <span class="bg-brutal-accent text-white px-1">FATAL</span> Attempting recovery...</p>
+<p>[0.102405] Recover failed. Redirecting to trap.</p>
+<p class="text-brutal-accent">&gt;&gt; RECURSION_LIMIT_EXCEEDED</p>
+<p class="animate-pulse">_</p>
+</div>
+<div class="mt-auto pt-4 border-t border-brutal-white/10">
+<div class="grid grid-cols-2 gap-2">
+<div class="h-20 bg-brutal-accent/10 border border-brutal-accent/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-brutal-accent text-3xl">warning</span>
+</div>
+<div class="h-20 bg-brutal-white/5 border border-brutal-white/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-3xl">analytics</span>
+</div>
+</div>
+</div>
+</aside>
+<section class="lg:col-span-6 terminal-panel flex flex-col justify-center items-center text-center p-8 border-brutal-white border-4">
+<div class="scanline"></div>
+<h1 class="text-[120px] md:text-[200px] font-black leading-none glitch-text mb-4 text-brutal-accent">404</h1>
+<div class="space-y-4 max-w-md">
+<p class="text-2xl md:text-3xl font-black bg-brutal-white text-brutal-black px-4 py-2 inline-block leading-tight">
+                        This material is still under research.
+                    </p>
+<p class="text-sm font-terminal opacity-80 border-l-2 border-brutal-accent pl-4 text-left">
+                        The phase you are looking for does not exist in our current database.
+                    </p>
+</div>
+<div class="mt-12 w-full max-w-sm h-32 border border-brutal-white/20 circuit-bg relative">
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="w-full h-px bg-brutal-accent/30"></div>
+<div class="w-px h-full bg-brutal-accent/30"></div>
+</div>
+<div class="absolute top-2 left-2 text-[8px] opacity-40">GRID_REF: 404-X-01</div>
+<div class="absolute bottom-2 right-2 flex gap-1">
+<div class="w-2 h-2 bg-brutal-accent"></div>
+<div class="w-2 h-2 bg-brutal-white/20"></div>
+<div class="w-2 h-2 bg-brutal-white/20"></div>
+</div>
+</div>
+</section>
+<aside class="lg:col-span-3 terminal-panel flex flex-col gap-6">
+<div>
+<div class="text-[10px] font-bold mb-4 flex justify-between">
+<span>COMPONENT_STATUS</span>
+<span class="text-brutal-accent">ERR</span>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center text-[10px]">
+<span>VACUUM_CHAMBER</span>
+<span class="h-1 w-20 bg-brutal-white/20 relative overflow-hidden">
+<span class="absolute left-0 top-0 h-full w-[40%] bg-brutal-accent"></span>
+</span>
+</div>
+<div class="flex justify-between items-center text-[10px]">
+<span>ELECTRON_BEAM</span>
+<span class="h-1 w-20 bg-brutal-white/20 relative overflow-hidden">
+<span class="absolute left-0 top-0 h-full w-[0%] bg-brutal-accent"></span>
+</span>
+</div>
+<div class="flex justify-between items-center text-[10px]">
+<span>SPECTROMETER</span>
+<span class="h-1 w-20 bg-brutal-white/20 relative overflow-hidden">
+<span class="absolute left-0 top-0 h-full w-[85%] bg-brutal-white"></span>
+</span>
+</div>
+</div>
+</div>
+<div class="flex-grow flex flex-col justify-end">
+<div class="border-2 border-brutal-accent p-3 text-[10px] bg-brutal-accent/5">
+<span class="block font-black text-brutal-accent mb-1">CRITICAL_WARNING</span>
+                        UNIDENTIFIED PHASE DETECTED IN SECTOR 7G. ABORT ALL QUERIES.
+                    </div>
+</div>
+</aside>
+</div>
+<section class="terminal-panel !bg-brutal-white/10">
+<div class="max-w-4xl mx-auto py-4">
+<h2 class="text-xs font-black mb-4 text-center tracking-[0.2em]">Find research, projects, or scientists:</h2>
+<form class="flex border-4 border-brutal-white">
+<input class="flex-grow bg-transparent border-none focus:ring-0 text-lg px-4 py-4 placeholder:text-white/30 font-terminal uppercase" placeholder="e.g. Graphene conductivity, Quantum structures..." type="text"/>
+<button class="bg-brutal-white text-brutal-black px-10 font-black text-xl hover:bg-brutal-accent hover:text-white transition-colors" type="submit">
+                        SEARCH
+                    </button>
+</form>
+<div class="mt-6 flex flex-wrap justify-center gap-x-8 gap-y-4 text-[10px] font-bold">
+<a class="hover:text-brutal-accent flex items-center gap-2 border-b-2 border-transparent hover:border-brutal-accent py-1" href="#">
+<span class="material-symbols-outlined text-sm">support_agent</span> Contact Lab Support
+                    </a>
+<a class="hover:text-brutal-accent flex items-center gap-2 border-b-2 border-transparent hover:border-brutal-accent py-1" href="#">
+<span class="material-symbols-outlined text-sm">dns</span> Server Status
+                    </a>
+<a class="hover:text-brutal-accent flex items-center gap-2 border-b-2 border-transparent hover:border-brutal-accent py-1" href="#">
+<span class="material-symbols-outlined text-sm">help_outline</span> Help Documentation
+                    </a>
+</div>
+</div>
+</section>
+</main>
+<footer class="bg-brutal-gray border-t-4 border-brutal-white p-8 md:p-12">
+<div class="max-w-full mx-auto">
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-12 mb-12">
+<div class="col-span-2">
+<div class="flex items-center gap-2 font-black text-2xl tracking-tighter text-brutal-white mb-6">
+<span class="material-symbols-outlined text-4xl text-brutal-accent">biotech</span>
+<span>MAT-RES</span>
+</div>
+<p class="text-white/60 text-xs mb-6 max-w-xs leading-relaxed font-terminal">
+                        Subscribe to our research newsletter for the latest breakthroughs in material science, twice a month.
+                    </p>
+<div class="flex border-2 border-brutal-white">
+<input class="bg-transparent border-none focus:ring-0 text-sm w-full px-3 py-2 text-white placeholder:text-white/20" placeholder="Email address" type="email"/>
+<button class="bg-brutal-white text-brutal-black px-4 py-2 text-xs font-black hover:bg-brutal-accent hover:text-white transition-colors">JOIN</button>
+</div>
+</div>
+<div>
+<h3 class="font-black text-brutal-accent mb-6 text-xs border-b border-brutal-white/10 pb-2">Research</h3>
+<ul class="space-y-4 text-[10px] font-bold">
+<li><a class="hover:text-brutal-accent" href="#">Nano-materials</a></li>
+<li><a class="hover:text-brutal-accent" href="#">Quantum Dots</a></li>
+<li><a class="hover:text-brutal-accent" href="#">Superconductors</a></li>
+<li><a class="hover:text-brutal-accent" href="#">Polymers</a></li>
+<li><a class="hover:text-brutal-accent" href="#">Bio-materials</a></li>
+</ul>
+</div>
+<div>
+<h3 class="font-black text-brutal-accent mb-6 text-xs border-b border-brutal-white/10 pb-2">Resources</h3>
+<ul class="space-y-4 text-[10px] font-bold">
+<li><a class="hover:text-brutal-accent" href="#">API Access</a></li>
+<li><a class="hover:text-brutal-accent" href="#">Open Data</a></li>
+<li><a class="hover:text-brutal-accent" href="#">Education</a></li>
+<li><a class="hover:text-brutal-accent" href="#">Case Studies</a></li>
+<li><a class="hover:text-brutal-accent" href="#">Mobile App</a></li>
+</ul>
+</div>
+<div>
+<h3 class="font-black text-brutal-accent mb-6 text-xs border-b border-brutal-white/10 pb-2">Support</h3>
+<ul class="space-y-4 text-[10px] font-bold">
+<li><a class="hover:text-brutal-accent" href="#">Docs</a></li>
+<li><a class="hover:text-brutal-accent" href="#">Forum</a></li>
+<li><a class="hover:text-brutal-accent" href="#">Expert Consult</a></li>
+<li><a class="hover:text-brutal-accent" href="#">Skills</a></li>
+<li><a class="hover:text-brutal-accent" href="#">Status</a></li>
+</ul>
+</div>
+<div>
+<h3 class="font-black text-brutal-accent mb-6 text-xs border-b border-brutal-white/10 pb-2">Company</h3>
+<ul class="space-y-4 text-[10px] font-bold">
+<li><a class="hover:text-brutal-accent" href="#">About Us</a></li>
+<li><a class="hover:text-brutal-accent" href="#">Careers</a></li>
+<li><a class="hover:text-brutal-accent" href="#">Newsroom</a></li>
+<li><a class="hover:text-brutal-accent" href="#">Inclusion</a></li>
+<li><a class="hover:text-brutal-accent" href="#">Social Impact</a></li>
+</ul>
+</div>
+</div>
+<div class="flex flex-col md:flex-row justify-between items-center border-t border-brutal-white/20 pt-8 gap-6">
+<div class="flex gap-6 text-[9px] font-bold text-white/40">
+<span>© 2024 Mat-Res Research Institute</span>
+<a class="hover:text-white" href="#">Terms</a>
+<a class="hover:text-white" href="#">Privacy</a>
+<a class="hover:text-white" href="#">Sitemap</a>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex gap-4 text-white/40">
+<a class="hover:text-brutal-accent" href="#"><span class="material-symbols-outlined text-xl">public</span></a>
+<a class="hover:text-brutal-accent" href="#"><span class="material-symbols-outlined text-xl">podcasts</span></a>
+<a class="hover:text-brutal-accent" href="#"><span class="material-symbols-outlined text-xl">terminal</span></a>
+</div>
+<div class="relative inline-block text-[10px] font-bold text-white/40">
+<button class="flex items-center gap-1 hover:text-white border border-white/20 px-2 py-1">
+<span class="material-symbols-outlined text-sm">language</span> English <span class="material-symbols-outlined text-xs">expand_more</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</footer>
+
+</body></html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Qulab Discovery Workflow Visualizer</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#25d1f4",
+                        "background-light": "#f5f8f8",
+                        "background-dark": "#101f22",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .workflow-dot {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background-color: #25d1f4;
+            border-radius: 50%;
+            filter: blur(1px);
+        }
+        .cosmic-bg {
+            background: radial-gradient(circle at center, rgba(37, 209, 244, 0.05) 0%, rgba(16, 31, 34, 1) 70%);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display selection:bg-primary/30">
+<div class="relative flex h-screen w-full flex-col overflow-hidden">
+<!-- Top Navigation -->
+<header class="flex items-center justify-between border-b border-primary/10 bg-background-dark/80 backdrop-blur-md px-8 py-3 z-50">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3 text-primary">
+<div class="size-8 flex items-center justify-center bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined">biotech</span>
+</div>
+<h2 class="text-xl font-bold tracking-tight">Qulab <span class="text-slate-100">AIOS</span></h2>
+</div>
+<nav class="hidden lg:flex items-center gap-8">
+<a class="text-primary text-sm font-medium border-b-2 border-primary pb-1" href="#">Workflows</a>
+<a class="text-slate-400 hover:text-primary transition-colors text-sm font-medium" href="#">Materials</a>
+<a class="text-slate-400 hover:text-primary transition-colors text-sm font-medium" href="#">Simulations</a>
+<a class="text-slate-400 hover:text-primary transition-colors text-sm font-medium" href="#">Patents</a>
+<a class="text-slate-400 hover:text-primary transition-colors text-sm font-medium" href="#">Settings</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<label class="hidden md:flex items-center bg-primary/5 border border-primary/20 rounded-lg px-3 py-1.5 focus-within:border-primary/50 transition-all">
+<span class="material-symbols-outlined text-primary text-lg mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm placeholder:text-slate-500 w-48 lg:w-64" placeholder="Search discoveries..." type="text"/>
+</label>
+<button class="flex items-center gap-2 bg-primary text-background-dark px-4 py-2 rounded-lg font-bold text-sm hover:brightness-110 transition-all">
+<span class="material-symbols-outlined text-lg">add_circle</span>
+<span>New Discovery</span>
+</button>
+<div class="size-10 rounded-full border-2 border-primary/30 bg-cover bg-center" data-alt="User profile avatar experimental scientist" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB7incuZr4E8Uy0F352UItoBxBrhHCUYTWzts5z08d2xi0n2K66Svbgv0dYf6LWhWAeHYXGBQxzVaROS201O510QF756fZ72BLduWU9RTbnoxF2su1wNx70NIHX2Sb0FthNLOBFnXYUDDOEzRfWFapgw_N6YgA3DSyw5jsg8lyMbDK13B2RgPqHfR-YjH_mLoBFzj9XmC_07NoWn-037QWF2tTQy-WBXcBecpZAzw7Sq-Il9b1JzmqpU4Yr3PGaT8PTUd-zWwx2hD8')"></div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- Side Navigation -->
+<aside class="w-64 border-r border-primary/10 bg-background-dark/50 p-4 flex flex-col justify-between z-40">
+<div class="flex flex-col gap-6">
+<div class="flex items-center gap-3 p-2 rounded-xl bg-primary/5 border border-primary/10">
+<div class="size-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">all_inclusive</span>
+</div>
+<div>
+<h3 class="text-sm font-bold">Infinite-Materials</h3>
+<p class="text-[10px] text-primary/70 uppercase tracking-widest">Discovery OS</p>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-primary/5 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary border border-primary/20" href="#">
+<span class="material-symbols-outlined text-[20px]">account_tree</span>
+<span class="text-sm font-medium">Logic Map</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-primary/5 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]">hub</span>
+<span class="text-sm font-medium">Neural Net</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-primary/5 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]">inventory_2</span>
+<span class="text-sm font-medium">Library</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-primary/5 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]">science</span>
+<span class="text-sm font-medium">Synthesis</span>
+</a>
+</div>
+</div>
+<div class="p-4 rounded-xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/10">
+<p class="text-xs text-slate-400 mb-2 font-medium">System Health</p>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-4/5"></div>
+</div>
+<p class="text-[10px] mt-2 text-primary">82% Processing Efficiency</p>
+</div>
+</aside>
+<!-- Main Content Area (Visualizer) -->
+<main class="flex-1 relative cosmic-bg flex flex-col">
+<!-- Page Title & Controls -->
+<div class="p-8 pb-4 flex items-center justify-between relative z-10">
+<div>
+<div class="flex items-center gap-2 text-primary/60 text-xs font-medium uppercase tracking-widest mb-1">
+<span>Projects</span>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span class="text-primary">Material Synthesis Pipeline</span>
+</div>
+<h1 class="text-4xl font-black text-slate-100 tracking-tight">Discovery Workflow <span class="text-primary">Visualizer</span></h1>
+<p class="text-slate-400 text-sm mt-1">Real-time molecular assembly and automated legal drafting pipeline.</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 border border-primary/20 bg-background-dark/60 text-slate-200 px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary/5 transition-all">
+<span class="material-symbols-outlined text-lg">download</span>
+                            Export Data
+                        </button>
+<button class="flex items-center gap-2 bg-primary/20 text-primary border border-primary/50 px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary/30 transition-all">
+<span class="material-symbols-outlined text-lg">videocam</span>
+                            Record Simulation
+                        </button>
+</div>
+</div>
+<!-- Node-Based Visualization Layer -->
+<div class="flex-1 relative p-8 overflow-hidden">
+<!-- Decorative Connection Lines (SVG) -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
+<path d="M 150 300 Q 300 300 450 300" fill="none" stroke="#25d1f4" stroke-dasharray="8 8" stroke-width="1.5"></path>
+<path d="M 450 300 Q 600 300 750 300" fill="none" stroke="#25d1f4" stroke-dasharray="8 8" stroke-width="1.5"></path>
+<path d="M 750 300 Q 900 300 1050 300" fill="none" stroke="#25d1f4" stroke-dasharray="8 8" stroke-width="1.5"></path>
+<circle cx="150" cy="300" fill="#25d1f4" r="4"></circle>
+<circle cx="450" cy="300" fill="#25d1f4" r="4"></circle>
+<circle cx="750" cy="300" fill="#25d1f4" r="4"></circle>
+<circle cx="1050" cy="300" fill="#25d1f4" r="4"></circle>
+</svg>
+<!-- Pipeline Nodes -->
+<div class="flex items-center justify-around h-full relative z-20">
+<!-- Node 1: Raw Data -->
+<div class="flex flex-col items-center gap-4 group">
+<div class="relative">
+<div class="absolute inset-0 bg-primary/40 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="relative size-24 rounded-full bg-background-dark border-4 border-primary/20 flex items-center justify-center text-primary cursor-pointer hover:border-primary transition-all hover:scale-110 shadow-[0_0_30px_rgba(37,209,244,0.1)]">
+<span class="material-symbols-outlined text-4xl">database</span>
+</div>
+<div class="absolute -top-12 -right-16 bg-background-dark/90 border border-primary/30 p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all pointer-events-none translate-y-2 group-hover:translate-y-0">
+<div class="text-[10px] text-primary font-bold uppercase">Streaming</div>
+<div class="text-xs text-white">5.2 TB / Sec</div>
+</div>
+</div>
+<div class="text-center">
+<h4 class="font-bold text-slate-100">Raw Data Input</h4>
+<p class="text-xs text-primary font-medium tracking-wide">PHASE 01</p>
+</div>
+</div>
+<!-- Node 2: AI Optimization -->
+<div class="flex flex-col items-center gap-4 group">
+<div class="relative">
+<div class="absolute inset-0 bg-primary/40 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="relative size-32 rounded-full bg-background-dark border-4 border-primary flex items-center justify-center text-primary cursor-pointer hover:scale-110 transition-all shadow-[0_0_50px_rgba(37,209,244,0.3)]">
+<span class="material-symbols-outlined text-5xl">memory</span>
+<div class="absolute -bottom-2 -right-2 size-10 rounded-full bg-primary flex items-center justify-center text-background-dark animate-pulse">
+<span class="material-symbols-outlined text-xl">bolt</span>
+</div>
+</div>
+<div class="absolute -top-16 left-1/2 -translate-x-1/2 w-48 bg-background-dark/90 border border-primary/30 p-3 rounded-lg opacity-0 group-hover:opacity-100 transition-all pointer-events-none">
+<div class="flex justify-between items-center mb-1">
+<span class="text-[10px] text-slate-400">Optimization</span>
+<span class="text-[10px] text-primary">98.4%</span>
+</div>
+<div class="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[98%]"></div>
+</div>
+<div class="text-[10px] mt-2 text-slate-300 italic">Gradient Descent Active</div>
+</div>
+</div>
+<div class="text-center">
+<h4 class="font-bold text-slate-100 text-lg">AI Optimization</h4>
+<p class="text-xs text-primary font-medium tracking-wide">PHASE 02 · PROCESSING</p>
+</div>
+</div>
+<!-- Node 3: Material Synthesis -->
+<div class="flex flex-col items-center gap-4 group">
+<div class="relative">
+<div class="absolute inset-0 bg-primary/40 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="relative size-24 rounded-full bg-background-dark border-4 border-primary/20 flex items-center justify-center text-primary cursor-pointer hover:border-primary transition-all hover:scale-110 shadow-[0_0_30px_rgba(37,209,244,0.1)]">
+<span class="material-symbols-outlined text-4xl">matter</span>
+</div>
+<div class="absolute -top-12 -left-16 bg-background-dark/90 border border-primary/30 p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all pointer-events-none translate-y-2 group-hover:translate-y-0">
+<div class="text-[10px] text-primary font-bold uppercase">Assembly</div>
+<div class="text-xs text-white">4.2M Bonds/s</div>
+</div>
+</div>
+<div class="text-center">
+<h4 class="font-bold text-slate-100">Material Synthesis</h4>
+<p class="text-xs text-primary font-medium tracking-wide">PHASE 03</p>
+</div>
+</div>
+<!-- Node 4: Patent Gen -->
+<div class="flex flex-col items-center gap-4 group">
+<div class="relative">
+<div class="absolute inset-0 bg-primary/40 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="relative size-24 rounded-full bg-background-dark border-4 border-primary/20 flex items-center justify-center text-primary cursor-pointer hover:border-primary transition-all hover:scale-110 shadow-[0_0_30px_rgba(37,209,244,0.1)]">
+<span class="material-symbols-outlined text-4xl">description</span>
+</div>
+</div>
+<div class="text-center">
+<h4 class="font-bold text-slate-100">Patent Generation</h4>
+<p class="text-xs text-primary font-medium tracking-wide">PHASE 04 · QUEUED</p>
+</div>
+</div>
+</div>
+<!-- Bottom Floating Stats Bar -->
+<div class="absolute bottom-4 left-8 right-8 flex justify-between gap-6 z-30">
+<div class="flex-1 bg-background-dark/80 backdrop-blur-xl border border-primary/20 rounded-xl p-4 flex items-center gap-6">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">network_ping</span>
+</div>
+<div>
+<p class="text-[10px] text-slate-400 uppercase font-bold">Inference Latency</p>
+<p class="text-lg font-bold text-slate-100">0.04 ms</p>
+</div>
+</div>
+<div class="h-10 w-px bg-primary/10"></div>
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">dynamic_form</span>
+</div>
+<div>
+<p class="text-[10px] text-slate-400 uppercase font-bold">New Discoveries Today</p>
+<p class="text-lg font-bold text-slate-100">1,248</p>
+</div>
+</div>
+<div class="h-10 w-px bg-primary/10"></div>
+<div class="flex-1">
+<p class="text-[10px] text-slate-400 uppercase font-bold mb-1">Compute Distribution</p>
+<div class="flex gap-1 h-2">
+<div class="bg-primary h-full w-[60%] rounded-full"></div>
+<div class="bg-primary/40 h-full w-[25%] rounded-full"></div>
+<div class="bg-primary/10 h-full w-[15%] rounded-full"></div>
+</div>
+</div>
+</div>
+<div class="bg-primary/10 border border-primary/30 rounded-xl p-4 flex items-center gap-4 text-primary">
+<span class="material-symbols-outlined text-2xl">sensors</span>
+<div class="whitespace-nowrap">
+<p class="text-[10px] uppercase font-bold">Link Active</p>
+<p class="text-sm font-bold">OS/Core-X1</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Footer Particle Effect Container (Visual placeholder) -->
+<div class="absolute inset-0 pointer-events-none overflow-hidden z-0">
+<div class="workflow-dot" style="top: 20%; left: 10%;"></div>
+<div class="workflow-dot" style="top: 80%; left: 30%;"></div>
+<div class="workflow-dot" style="top: 40%; left: 70%;"></div>
+<div class="workflow-dot" style="top: 15%; left: 90%;"></div>
+<div class="workflow-dot" style="top: 60%; left: 50%;"></div>
+<div class="workflow-dot" style="top: 90%; left: 80%;"></div>
+<div class="workflow-dot" style="top: 5%; left: 20%;"></div>
+</div>
+</div>
+</body></html>

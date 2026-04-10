@@ -1,0 +1,329 @@
+<html class="dark"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#25d1f4",
+                        "secondary": "#a855f7",
+                        "background-light": "#f5f8f8",
+                        "background-dark": "#0a1112",
+                        "panel-dark": "#162529",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(22, 37, 41, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(37, 209, 244, 0.1);
+        }
+        .quantum-gradient {
+            background: radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.15) 0%, rgba(37, 209, 244, 0.05) 50%, transparent 100%);
+        }
+        .circuit-bg {
+            background-image: radial-gradient(circle at 2px 2px, rgba(37, 209, 244, 0.05) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen selection:bg-primary/30">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden circuit-bg">
+<!-- Background Glows -->
+<div class="fixed inset-0 pointer-events-none quantum-gradient"></div>
+<!-- Top Navigation -->
+<header class="sticky top-0 z-50 flex items-center justify-between border-b border-primary/10 bg-background-dark/80 backdrop-blur-md px-8 py-3">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3 text-primary">
+<div class="size-8 bg-primary/10 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">hub</span>
+</div>
+<h2 class="text-slate-100 text-xl font-bold tracking-tight">AIOS.is | <span class="text-secondary font-medium">Quantum Lab</span></h2>
+</div>
+<div class="hidden lg:flex items-center gap-1 bg-panel-dark/50 rounded-lg p-1 border border-primary/5">
+<span class="material-symbols-outlined text-primary/60 px-2 text-sm">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-64 placeholder:text-slate-500" placeholder="Search quantum nodes..." type="text"/>
+</div>
+</div>
+<nav class="flex items-center gap-8">
+<div class="hidden xl:flex items-center gap-6">
+<a class="text-slate-400 hover:text-primary text-sm font-medium transition-colors" href="#">Lab Dashboard</a>
+<a class="text-primary text-sm font-semibold border-b-2 border-primary py-1" href="#">Webhooks</a>
+<a class="text-slate-400 hover:text-primary text-sm font-medium transition-colors" href="#">Teleportation</a>
+<a class="text-slate-400 hover:text-primary text-sm font-medium transition-colors" href="#">Analytics</a>
+</div>
+<div class="h-6 w-px bg-primary/10 mx-2"></div>
+<button class="flex items-center gap-2 rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-bold transition-transform active:scale-95 shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-sm">settings_input_component</span>
+<span>Connect QPU</span>
+</button>
+<div class="size-10 rounded-full border-2 border-secondary/30 p-0.5">
+<div class="w-full h-full rounded-full bg-cover bg-center" data-alt="User avatar with neon abstract background" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCX2glibbSh3OcluVBRFeagGa53pZ7bLZIYVbr_od60qefcVEdFGo5G1bxI5PQ1dBV_AiEj0cLJmDlSfMwITPnutc_-34EarZmgM15ZS7hzNRyVE8nmftWnLdJheuaIKwvVF1bWaHe06tTlkbUI8uEcZVZuzUVVYKc8bVNtYwviWhzKVbcovQdde18boLd1XBVeub58THNy6qDLittKqr0Q5rKUOfZxhceyCzeSidUugCy6qiOsqfbEB0eAyqb3zyJfI6eTIatwUoM")'></div>
+</div>
+</nav>
+</header>
+<main class="flex-1 flex flex-col p-8 max-w-[1600px] mx-auto w-full gap-8 z-10">
+<!-- Hero Stats Section -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="glass-panel p-5 rounded-xl">
+<div class="flex justify-between items-start mb-2">
+<span class="text-xs font-bold uppercase tracking-widest text-slate-500">Qubit Coherence</span>
+<span class="material-symbols-outlined text-primary text-sm">pulse_alert</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-bold text-slate-100">99.98</span>
+<span class="text-primary text-xs font-medium">μs</span>
+</div>
+<div class="mt-3 w-full bg-primary/5 h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[90%] shadow-[0_0_8px_rgba(37,209,244,0.5)]"></div>
+</div>
+</div>
+<div class="glass-panel p-5 rounded-xl border-l-2 border-l-secondary">
+<div class="flex justify-between items-start mb-2">
+<span class="text-xs font-bold uppercase tracking-widest text-slate-500">Entanglement Rate</span>
+<span class="material-symbols-outlined text-secondary text-sm">link</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-bold text-slate-100">1.2k</span>
+<span class="text-secondary text-xs font-medium">epr/s</span>
+</div>
+<div class="mt-3 w-full bg-secondary/5 h-1 rounded-full overflow-hidden">
+<div class="bg-secondary h-full w-[75%] shadow-[0_0_8px_rgba(168,85,247,0.5)]"></div>
+</div>
+</div>
+<div class="glass-panel p-5 rounded-xl">
+<div class="flex justify-between items-start mb-2">
+<span class="text-xs font-bold uppercase tracking-widest text-slate-500">Error Rate</span>
+<span class="material-symbols-outlined text-red-400 text-sm">warning</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-bold text-slate-100">10⁻⁷</span>
+<span class="text-red-400 text-xs font-medium">per gate</span>
+</div>
+<div class="mt-3 w-full bg-red-400/5 h-1 rounded-full overflow-hidden">
+<div class="bg-red-400 h-full w-[12%]"></div>
+</div>
+</div>
+<div class="glass-panel p-5 rounded-xl">
+<div class="flex justify-between items-start mb-2">
+<span class="text-xs font-bold uppercase tracking-widest text-slate-500">System State</span>
+<span class="material-symbols-outlined text-green-400 text-sm">verified</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-2xl font-bold text-slate-100 tracking-tight">CRYOGENIC OK</span>
+</div>
+<div class="mt-3 text-[10px] font-mono text-slate-500 uppercase tracking-tighter">Current Temp: 15mK</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Webhooks Section -->
+<div class="lg:col-span-1 flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<h3 class="text-xl font-bold text-slate-100 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">dynamic_feed</span>
+                            Quantum Webhooks
+                        </h3>
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">LIVE SDK</span>
+</div>
+<div class="space-y-4">
+<!-- Qiskit Card -->
+<div class="glass-panel p-5 rounded-xl group hover:border-primary/30 transition-all duration-300">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700">
+<span class="material-symbols-outlined text-blue-400">api</span>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-100">IBM Qiskit</p>
+<div class="flex items-center gap-1.5">
+<span class="size-1.5 rounded-full bg-green-500 animate-pulse"></span>
+<p class="text-[10px] text-slate-500 uppercase tracking-wider">Ready to Connect</p>
+</div>
+</div>
+</div>
+<button class="text-[10px] font-bold text-primary px-3 py-1 rounded bg-primary/10 border border-primary/20 hover:bg-primary hover:text-background-dark transition-colors uppercase">Configure</button>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] text-slate-500 uppercase font-bold tracking-widest px-1">Personal API Key</label>
+<div class="relative">
+<input class="w-full bg-background-dark/50 border border-primary/10 rounded-lg py-2 px-3 text-sm focus:ring-1 focus:ring-primary focus:border-primary transition-all text-slate-300" placeholder="••••••••••••••••" type="password"/>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-slate-600 text-sm cursor-pointer hover:text-primary transition-colors">visibility</span>
+</div>
+</div>
+</div>
+<!-- PennyLane Card -->
+<div class="glass-panel p-5 rounded-xl group hover:border-secondary/30 transition-all duration-300">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700">
+<span class="material-symbols-outlined text-secondary">waves</span>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-100">PennyLane</p>
+<div class="flex items-center gap-1.5">
+<span class="size-1.5 rounded-full bg-slate-600"></span>
+<p class="text-[10px] text-slate-500 uppercase tracking-wider">Standby</p>
+</div>
+</div>
+</div>
+<button class="text-[10px] font-bold text-secondary px-3 py-1 rounded bg-secondary/10 border border-secondary/20 hover:bg-secondary hover:text-background-dark transition-colors uppercase">Connect</button>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] text-slate-500 uppercase font-bold tracking-widest px-1">Personal API Key</label>
+<input class="w-full bg-background-dark/50 border border-secondary/10 rounded-lg py-2 px-3 text-sm focus:ring-1 focus:ring-secondary focus:border-secondary transition-all text-slate-300" placeholder="••••••••••••••••" type="password"/>
+</div>
+</div>
+<!-- D-Wave Card -->
+<div class="glass-panel p-5 rounded-xl group hover:border-red-400/30 transition-all duration-300 opacity-80 grayscale hover:grayscale-0 hover:opacity-100">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700">
+<span class="material-symbols-outlined text-red-400">grid_view</span>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-100">D-Wave</p>
+<div class="flex items-center gap-1.5">
+<span class="size-1.5 rounded-full bg-red-500"></span>
+<p class="text-[10px] text-slate-500 uppercase tracking-wider">Disconnected</p>
+</div>
+</div>
+</div>
+<button class="text-[10px] font-bold text-red-400 px-3 py-1 rounded bg-red-400/10 border border-red-400/20 hover:bg-red-400 hover:text-background-dark transition-colors uppercase">Reconnect</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Teleportation Monitor Section -->
+<div class="lg:col-span-2 flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<h3 class="text-xl font-bold text-slate-100 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">auto_mode</span>
+                            Teleportation Testing
+                        </h3>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="size-2 rounded-full bg-primary shadow-[0_0_8px_#25d1f4]"></span>
+<span class="text-[10px] font-mono text-slate-400 uppercase">Emitter A-01</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="size-2 rounded-full bg-secondary shadow-[0_0_8px_#a855f7]"></span>
+<span class="text-[10px] font-mono text-slate-400 uppercase">Collector B-42</span>
+</div>
+</div>
+</div>
+<div class="glass-panel flex-1 rounded-2xl relative overflow-hidden min-h-[500px] border-primary/20 flex flex-col">
+<!-- 3D Visualization Placeholder -->
+<div class="absolute inset-0 z-0 bg-slate-950/50">
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="relative size-80 flex items-center justify-center">
+<div class="absolute inset-0 border-[0.5px] border-primary/20 rounded-full animate-pulse"></div>
+<div class="absolute inset-8 border-[0.5px] border-secondary/20 rounded-full animate-ping"></div>
+<div class="absolute inset-16 border-[0.5px] border-primary/10 rounded-full"></div>
+<!-- Entangled Particles Simulation -->
+<div class="absolute left-0 size-6 bg-primary rounded-full blur-[2px] shadow-[0_0_20px_#25d1f4] opacity-80"></div>
+<div class="absolute right-0 size-6 bg-secondary rounded-full blur-[2px] shadow-[0_0_20px_#a855f7] opacity-80"></div>
+<!-- Particle Connection Lines -->
+<div class="h-[1px] w-64 bg-gradient-to-r from-primary via-white to-secondary opacity-30"></div>
+<!-- Central Core -->
+<div class="size-12 rounded-full bg-white blur-[8px] opacity-20"></div>
+</div>
+</div>
+<!-- Background Grid Overlay -->
+<div class="absolute inset-0 opacity-20" style="background-image: linear-gradient(#25d1f4 1px, transparent 1px), linear-gradient(90deg, #25d1f4 1px, transparent 1px); background-size: 50px 50px;"></div>
+</div>
+<!-- UI Overlays -->
+<div class="relative z-10 flex-1 flex flex-col justify-between p-6">
+<div class="flex justify-between items-start">
+<div class="glass-panel px-4 py-2 rounded-lg border-primary/10">
+<p class="text-[10px] font-bold text-primary tracking-widest uppercase mb-1">State Transfer Progress</p>
+<div class="flex items-center gap-4">
+<span class="text-2xl font-mono text-slate-100">84.2%</span>
+<div class="w-24 h-2 bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[84%]"></div>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-2 glass-panel px-3 py-1.5 rounded border-secondary/10">
+<span class="material-symbols-outlined text-secondary text-sm">settings_ethernet</span>
+<span class="text-[10px] font-mono text-slate-300">Entanglement Fidelity: 0.9992</span>
+</div>
+<div class="flex items-center gap-2 glass-panel px-3 py-1.5 rounded border-primary/10">
+<span class="material-symbols-outlined text-primary text-sm">database</span>
+<span class="text-[10px] font-mono text-slate-300">Phase Error: 0.0001 rad</span>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-end">
+<div class="space-y-3">
+<div class="flex flex-col gap-1">
+<span class="text-[10px] font-bold text-slate-500 tracking-widest uppercase">Real-time Stream</span>
+<div class="font-mono text-[9px] text-primary/70 leading-relaxed max-w-[200px]">
+                                            [TIMESTAMP: 14:22:01.034] <br/>
+                                            &gt;&gt; Initializing Bell State Pair <br/>
+                                            &gt;&gt; Alice applying H-gate... <br/>
+                                            &gt;&gt; Bob measurement synced. <br/>
+                                            &gt;&gt; Transfering qubit ψ...
+                                        </div>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="bg-background-dark/80 border border-slate-700 p-2 rounded-lg hover:border-primary/50 transition-colors">
+<span class="material-symbols-outlined text-slate-400">pause</span>
+</button>
+<button class="bg-secondary text-background-dark font-bold px-6 py-2 rounded-lg flex items-center gap-2 shadow-lg shadow-secondary/20 hover:brightness-110 transition-all">
+<span class="material-symbols-outlined text-sm">bolt</span>
+<span>Initialize Transfer</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Detailed Teleportation Metrics Footer -->
+<div class="glass-panel rounded-xl p-4 flex flex-wrap gap-8 items-center justify-between border-primary/5">
+<div class="flex items-center gap-4">
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Active Channels</span>
+<div class="flex -space-x-2">
+<div class="size-6 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-[8px] font-bold text-primary">CH1</div>
+<div class="size-6 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-[8px] font-bold text-primary">CH2</div>
+<div class="size-6 rounded-full bg-secondary/20 border border-secondary/40 flex items-center justify-center text-[8px] font-bold text-secondary">CH3</div>
+</div>
+</div>
+<div class="h-8 w-px bg-slate-800"></div>
+<div class="flex items-center gap-4">
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Quantum Gate Time</span>
+<span class="text-sm font-mono text-slate-200">12.4ns <span class="text-primary text-[10px]">avg</span></span>
+</div>
+<div class="h-8 w-px bg-slate-800"></div>
+<div class="flex items-center gap-4">
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">System Entropy</span>
+<span class="text-sm font-mono text-slate-200">0.042 S/kB</span>
+</div>
+<div class="ml-auto flex items-center gap-3">
+<span class="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/10 text-green-500 border border-green-500/20 text-[10px] font-bold uppercase tracking-wider">
+<span class="size-1.5 rounded-full bg-green-500"></span>
+                        Stable
+                    </span>
+<button class="text-slate-500 hover:text-white transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+</div>
+</main>
+</div>
+</body></html>
