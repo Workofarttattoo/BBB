@@ -751,12 +751,19 @@
                     if (i >= logs.length) {
                         clearInterval(interval);
                         progress.style.width = '100%';
-                        setTimeout(() => {
-                            // Pass recommendations directly if available, else fetch
-                            if (data.recommendations) {
-                                renderRecommendations(data.recommendations);
-                            } else {
-                                loadRecommendations();
+                        setTimeout(async () => {
+                            try {
+                                // Pass recommendations directly if available, else fetch
+                                if (data.recommendations && data.recommendations.length > 0) {
+                                    renderRecommendations(data.recommendations);
+                                } else {
+                                    await loadRecommendations();
+                                }
+                            } catch (err) {
+                                console.error('Failed to load recommendations:', err);
+                                document.getElementById('recommendations-list').innerHTML =
+                                    '<p style="text-align:center;color:var(--secondary);">⚠️ Could not load recommendations. Please restart the analysis.</p>';
+                                document.getElementById('btn-research').disabled = false;
                             }
                             nextStep(5);
                         }, 1000);
@@ -776,15 +783,32 @@
 
         // Step 5: Recommendations
         async function loadRecommendations() {
-            const res = await fetch(`${API}/recommendations`);
-            const ideas = await res.json();
-            renderRecommendations(ideas);
+            try {
+                const res = await fetch(`${API}/recommendations`);
+                if (!res.ok) throw new Error(`Server returned ${res.status}`);
+                const ideas = await res.json();
+                renderRecommendations(ideas);
+            } catch (err) {
+                console.error('loadRecommendations failed:', err);
+                throw err; // re-throw so caller can handle
+            }
         }
 
         function renderRecommendations(ideas) {
             const container = document.getElementById('recommendations-list');
-            container.innerHTML = ideas.map(idea => `
-                <div class="business-option" onclick="selectBusiness(this, '${idea.name}')">
+            if (!ideas || ideas.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding: 2rem;">
+                        <p style="font-size: 1.2rem; margin-bottom: 1rem;">🔍 No matching businesses found for your criteria.</p>
+                        <p style="color: var(--text-dim);">Try adjusting your budget, hours, or industry preference.</p>
+                    </div>`;
+                return;
+            }
+            container.innerHTML = ideas.map(idea => {
+                // Escape name for safe use in onclick attribute
+                const safeName = idea.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                return `
+                <div class="business-option" onclick="selectBusiness(this, '${safeName}')">
                     <h3 style="color: var(--primary)">${idea.name}</h3>
                     <p style="font-size: 0.9rem; color: var(--text-dim);">${idea.industry}</p>
                     <p style="margin: 0.5rem 0;">${idea.description}</p>
@@ -793,8 +817,8 @@
                         <span>🚀 Cost: $${idea.startup_cost}</span>
                         <span>⏱ ${idea.time_commitment_hours_per_week}h/week</span>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         }
 
         function selectBusiness(el, name) {
