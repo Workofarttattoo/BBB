@@ -90,6 +90,7 @@ class User(Base):
     businesses = relationship("Business", back_populates="user", cascade="all, delete-orphan")
     subscriptions = relationship("Subscription", back_populates="user", cascade="all, delete-orphan")
     api_integrations = relationship("APIIntegration", back_populates="user", cascade="all, delete-orphan")
+    payment_transactions = relationship("PaymentTransaction", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email}, tier={self.subscription_tier})>"
@@ -234,6 +235,27 @@ class AuditLog(Base):
 
     def __repr__(self):
         return f"<AuditLog(id={self.id}, action={self.action}, timestamp={self.timestamp})>"
+
+
+class PaymentTransaction(Base):
+    """Payment transaction model"""
+    __tablename__ = 'payment_transactions'
+
+    id = Column(UUIDType(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUIDType(), ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    stripe_payment_intent_id = Column(String(255), unique=True, index=True, nullable=False)
+    amount = Column(Numeric(12, 2), nullable=False)
+    currency = Column(String(10), nullable=False)
+    status = Column(String(50), default='pending')  # pending, succeeded, failed
+    description = Column(Text, nullable=True)
+    transaction_metadata = Column(JSONType(), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", back_populates="payment_transactions")
+
+    def __repr__(self):
+        return f"<PaymentTransaction(id={self.id}, user_id={self.user_id}, amount={self.amount}, status={self.status})>"
 
 
 class Subscription(Base):
