@@ -246,22 +246,17 @@ class MagicRDLab:
         if not customer:
             raise ValueError(f"Customer {customer_id} not found")
 
-        # ⚡ Bolt Optimization: Replace multiple list comprehensions with single O(N) concurrent pass
-        total_sessions = 0
-        active_sessions = []
-        completed_sessions = 0
+        customer_sessions = [s for s in self.sessions if s.customer_email == customer.email]
+        active_sessions = [s for s in customer_sessions if s.status == "active"]
+        completed_sessions = [s for s in customer_sessions if s.status == "completed"]
+
+        # ⚡ Bolt Optimization: Calculate totals in a single O(N) pass
+        # instead of multiple generator expressions to improve dashboard load time
         total_hours = 0
         total_computations = 0
-
-        for s in self.sessions:
-            if s.customer_email == customer.email:
-                total_sessions += 1
-                total_hours += PACKAGE_PRICING[s.package]["hours"]
-                total_computations += len(s.results)
-                if s.status == "active":
-                    active_sessions.append(s)
-                elif s.status == "completed":
-                    completed_sessions += 1
+        for s in customer_sessions:
+            total_hours += PACKAGE_PRICING[s.package]["hours"]
+            total_computations += len(s.results)
 
         return {
             "customer_id": customer.customer_id,
@@ -272,14 +267,14 @@ class MagicRDLab:
             "member_since": customer.created_at.isoformat(),
             "total_spent": float(customer.total_spent),
             "sessions": {
-                "total": total_sessions,
+                "total": len(customer_sessions),
                 "active": len(active_sessions),
-                "completed": completed_sessions
+                "completed": len(completed_sessions)
             },
             "usage": {
                 "total_hours_purchased": total_hours,
                 "total_computations": total_computations,
-                "avg_computations_per_session": total_computations / max(1, total_sessions)
+                "avg_computations_per_session": total_computations / max(1, len(customer_sessions))
             },
             "active_sessions": [
                 {
@@ -352,29 +347,24 @@ class MagicRDLab:
 
     def get_business_metrics(self) -> Dict[str, Any]:
         """Get business performance metrics."""
-        # ⚡ Bolt Optimization: Replace multiple list comprehensions with single O(N) concurrent pass
-        active_sessions = 0
-        completed_sessions = 0
-        package_dist = {package.value: 0 for package in RentalPackage}
-        total_computations = 0
+        active_sessions = [s for s in self.sessions if s.status == "active"]
+        completed_sessions = [s for s in self.sessions if s.status == "completed"]
 
-        for s in self.sessions:
-            if s.status == "active":
-                active_sessions += 1
-            elif s.status == "completed":
-                completed_sessions += 1
-            package_dist[s.package.value] += 1
-            total_computations += len(s.results)
+        # Package distribution
+        package_dist = {}
+        for package in RentalPackage:
+            count = len([s for s in self.sessions if s.package == package])
+            package_dist[package.value] = count
 
         return {
             "total_revenue": float(self.revenue),
             "total_customers": len(self.customers),
             "total_sessions": len(self.sessions),
-            "active_sessions": active_sessions,
-            "completed_sessions": completed_sessions,
+            "active_sessions": len(active_sessions),
+            "completed_sessions": len(completed_sessions),
             "package_distribution": package_dist,
             "avg_revenue_per_customer": float(self.revenue / max(1, len(self.customers))),
-            "total_computations": total_computations
+            "total_computations": sum(len(s.results) for s in self.sessions)
         }
 
 

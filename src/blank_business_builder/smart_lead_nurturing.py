@@ -89,22 +89,22 @@ class SmartLeadScorer:
         if not interactions:
             return 0.0
 
-        # ⚡ Bolt Optimization: Calculate all interaction counts in a single O(N) pass
-        # instead of using 4 separate sum() generators
+        # ⚡ Bolt Optimization: Tally all interaction types simultaneously
+        # in a single O(N) iteration instead of making 4 separate passes over the list
         email_opens = 0
         email_clicks = 0
         page_views = 0
         demo_requests = 0
 
         for i in interactions:
-            interaction_type = i.get('type')
-            if interaction_type == 'email_open':
+            t = i.get('type')
+            if t == 'email_open':
                 email_opens += 1
-            elif interaction_type == 'email_click':
+            elif t == 'email_click':
                 email_clicks += 1
-            elif interaction_type == 'page_view':
+            elif t == 'page_view':
                 page_views += 1
-            elif interaction_type == 'demo_request':
+            elif t == 'demo_request':
                 demo_requests += 1
 
         # Weighted scoring
