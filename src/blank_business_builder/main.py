@@ -212,7 +212,7 @@ async def health_check():
 
 
 # Authentication endpoints
-@app.post("/api/auth/register", response_model=TokenResponse)
+@app.post("/api/v1/auth/register", response_model=TokenResponse)
 async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """Register a new user."""
     # Check if user exists
@@ -261,7 +261,7 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     )
 
 
-@app.post("/api/auth/login", response_model=TokenResponse)
+@app.post("/api/v1/auth/login", response_model=TokenResponse)
 async def login(credentials: UserLogin, db: Session = Depends(get_db)):
     """Login user."""
     user = db.query(User).filter(User.email == credentials.email).first()
@@ -292,7 +292,7 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
     )
 
 
-@app.get("/api/auth/me")
+@app.get("/api/v1/auth/me")
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
     """Get current user information."""
     return {
@@ -309,7 +309,7 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
 
 
 # Business endpoints
-@app.post("/api/businesses")
+@app.post("/api/v1/businesses")
 async def create_business(
     business_data: BusinessCreate,
     current_user: User = Depends(require_license_access),
@@ -349,7 +349,7 @@ async def create_business(
     }
 
 
-@app.get("/api/businesses")
+@app.get("/api/v1/businesses")
 async def list_businesses(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -370,7 +370,7 @@ async def list_businesses(
 
 
 # AI-powered endpoints
-@app.post("/api/ai/generate-business-plan")
+@app.post("/api/v1/ai/generate-business-plan")
 @rate_limit(max_requests=10, window_seconds=3600)
 async def generate_business_plan(
     request_data: BusinessPlanGenerate,
@@ -420,7 +420,7 @@ async def generate_business_plan(
     }
 
 
-@app.post("/api/ai/generate-marketing-copy")
+@app.post("/api/v1/ai/generate-marketing-copy")
 @rate_limit(max_requests=20, window_seconds=3600)
 async def generate_marketing_copy(
     request_data: MarketingCopyGenerate,
@@ -456,7 +456,7 @@ async def generate_marketing_copy(
     }
 
 
-@app.post("/api/ai/generate-email-campaign")
+@app.post("/api/v1/ai/generate-email-campaign")
 @rate_limit(max_requests=10, window_seconds=3600)
 async def generate_email_campaign(
     request_data: EmailCampaignGenerate,
@@ -489,7 +489,7 @@ async def generate_email_campaign(
 
 
 # Payment endpoints
-@app.post("/api/payments/create-checkout-session")
+@app.post("/api/v1/payments/create-checkout-session")
 async def create_checkout_session(
     plan_name: str,
     current_user: User = Depends(get_current_user),
@@ -529,7 +529,7 @@ async def create_checkout_session(
     return {"checkout_url": session.url}
 
 
-@app.post("/api/payments/create-portal-session")
+@app.post("/api/v1/payments/create-portal-session")
 async def create_portal_session(
     current_user: User = Depends(require_license_access),
     db: Session = Depends(get_db)
@@ -549,7 +549,7 @@ async def create_portal_session(
     return {"portal_url": session.url}
 
 
-@app.post("/api/webhooks/stripe")
+@app.post("/api/v1/webhooks/stripe")
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     """Handle Stripe webhooks."""
     payload = await request.body()
@@ -605,7 +605,7 @@ app.include_router(premium_router)
 
 
 # License endpoints
-@app.get("/api/license/status")
+@app.get("/api/v1/license/status")
 async def license_status(current_user: User = Depends(get_current_user)):
     """Return current license status for authenticated user."""
     return {
@@ -618,7 +618,7 @@ async def license_status(current_user: User = Depends(get_current_user)):
     }
 
 
-@app.post("/api/license/accept-revenue-share")
+@app.post("/api/v1/license/accept-revenue-share")
 async def accept_revenue_share(
     request: RevenueShareAcceptRequest,
     current_user: User = Depends(get_current_user),
@@ -650,7 +650,7 @@ async def accept_revenue_share(
     }
 
 
-@app.post("/api/license/activate")
+@app.post("/api/v1/license/activate")
 async def activate_license(
     request: LicenseActivateRequest,
     current_user: User = Depends(get_current_user),

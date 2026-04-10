@@ -120,7 +120,7 @@ async function loadUserData() {
 async function loadBusinesses() {
     showMainLoader(true);
     try {
-        const response = await Auth.fetchWithAuth('/api/businesses');
+        const response = await Auth.fetchWithAuth('/api/v1/businesses');
         if (response.ok) {
             State.businesses = await response.json();
             renderBusinessList();
@@ -448,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            const response = await Auth.fetchWithAuth('/api/businesses', {
+            const response = await Auth.fetchWithAuth('/api/v1/businesses', {
                 method: 'POST',
                 body: JSON.stringify(payload)
             });
@@ -483,7 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setLoadingState(btn, true, '');
 
         try {
-            const response = await Auth.fetchWithAuth('/api/ai/generate-business-plan', {
+            const response = await Auth.fetchWithAuth('/api/v1/ai/generate-business-plan', {
                 method: 'POST',
                 body: JSON.stringify({
                     business_id: State.activeBusinessId,
@@ -515,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setLoadingState(btn, true, '');
 
         try {
-            const response = await Auth.fetchWithAuth('/api/ai/generate-marketing-copy', {
+            const response = await Auth.fetchWithAuth('/api/v1/ai/generate-marketing-copy', {
                 method: 'POST',
                 body: JSON.stringify({
                     business_id: State.activeBusinessId,
@@ -553,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const keyPointsRaw = document.getElementById('ai-email-points').value;
             const keyPoints = keyPointsRaw ? keyPointsRaw.split(',').map(p => p.trim()) : [];
 
-            const response = await Auth.fetchWithAuth('/api/ai/generate-email-campaign', {
+            const response = await Auth.fetchWithAuth('/api/v1/ai/generate-email-campaign', {
                 method: 'POST',
                 body: JSON.stringify({
                     business_id: State.activeBusinessId,

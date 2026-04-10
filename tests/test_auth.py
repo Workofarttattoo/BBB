@@ -58,7 +58,7 @@ class TestAuthentication:
     def test_register_user(self):
         """Test user registration."""
         response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "email": "test@example.com",
                 "password": "testpass123",
@@ -76,7 +76,7 @@ class TestAuthentication:
         """Test registration with duplicate email."""
         # First registration
         client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "email": "test@example.com",
                 "password": "testpass123"
@@ -85,7 +85,7 @@ class TestAuthentication:
 
         # Duplicate registration
         response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "email": "test@example.com",
                 "password": "testpass456"
@@ -99,7 +99,7 @@ class TestAuthentication:
         """Test successful login."""
         # Register user
         client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "email": "test@example.com",
                 "password": "testpass123"
@@ -108,7 +108,7 @@ class TestAuthentication:
 
         # Login
         response = client.post(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             json={
                 "email": "test@example.com",
                 "password": "testpass123"
@@ -124,7 +124,7 @@ class TestAuthentication:
         """Test login with invalid password."""
         # Register user
         client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "email": "test@example.com",
                 "password": "testpass123"
@@ -133,7 +133,7 @@ class TestAuthentication:
 
         # Login with wrong password
         response = client.post(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             json={
                 "email": "test@example.com",
                 "password": "wrongpassword"
@@ -146,7 +146,7 @@ class TestAuthentication:
     def test_login_nonexistent_user(self):
         """Test login with nonexistent user."""
         response = client.post(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             json={
                 "email": "nonexistent@example.com",
                 "password": "testpass123"
@@ -159,7 +159,7 @@ class TestAuthentication:
         """Test getting current user information."""
         # Register and get token
         register_response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "email": "test@example.com",
                 "password": "testpass123",
@@ -170,7 +170,7 @@ class TestAuthentication:
 
         # Get user info
         response = client.get(
-            "/api/auth/me",
+            "/api/v1/auth/me",
             headers={"Authorization": f"Bearer {token}"}
         )
 
@@ -183,7 +183,7 @@ class TestAuthentication:
     def test_get_current_user_invalid_token(self):
         """Test getting user with invalid token."""
         response = client.get(
-            "/api/auth/me",
+            "/api/v1/auth/me",
             headers={"Authorization": "Bearer invalid_token"}
         )
 
@@ -333,7 +333,7 @@ class TestLicensingFlows:
     def test_accept_revenue_share_unlocks_access(self):
         """New users can accept revenue share to leave trial mode."""
         register_response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "email": "share@example.com",
                 "password": "testpass123",
@@ -343,7 +343,7 @@ class TestLicensingFlows:
         token = register_response.json()["access_token"]
 
         accept_response = client.post(
-            "/api/license/accept-revenue-share",
+            "/api/v1/license/accept-revenue-share",
             headers={"Authorization": f"Bearer {token}"},
             json={"percentage": 50.0}
         )
@@ -354,7 +354,7 @@ class TestLicensingFlows:
         assert data["revenue_share_percentage"] == 50.0
 
         status_response = client.get(
-            "/api/license/status",
+            "/api/v1/license/status",
             headers={"Authorization": f"Bearer {token}"}
         )
         assert status_response.status_code == 200
@@ -363,7 +363,7 @@ class TestLicensingFlows:
     def test_quantum_endpoints_require_pro_tier(self):
         """Quantum API should reject Starter/trial users."""
         register_response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "email": "quantum@example.com",
                 "password": "testpass123"
@@ -372,7 +372,7 @@ class TestLicensingFlows:
         token = register_response.json()["access_token"]
 
         response = client.get(
-            "/api/quantum/status",
+            "/api/v1/quantum/status",
             headers={"Authorization": f"Bearer {token}"}
         )
         assert response.status_code == 403
@@ -381,7 +381,7 @@ class TestLicensingFlows:
     def test_activate_license_promotes_subscription(self):
         """Users can activate paid licenses and change subscription tier."""
         register_response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "email": "pro@example.com",
                 "password": "testpass123"
@@ -390,7 +390,7 @@ class TestLicensingFlows:
         token = register_response.json()["access_token"]
 
         activate_response = client.post(
-            "/api/license/activate",
+            "/api/v1/license/activate",
             headers={"Authorization": f"Bearer {token}"},
             json={"tier": "pro"}
         )
@@ -400,7 +400,7 @@ class TestLicensingFlows:
         assert data["subscription_tier"] == "pro"
 
         status_response = client.get(
-            "/api/license/status",
+            "/api/v1/license/status",
             headers={"Authorization": f"Bearer {token}"}
         )
         assert status_response.status_code == 200

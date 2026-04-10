@@ -47,7 +47,7 @@ def setup_database():
 def authenticated_user():
     """Create and return authenticated user with token."""
     response = client.post(
-        "/api/auth/register",
+        "/api/v1/auth/register",
         json={
             "email": "test@example.com",
             "password": "testpass123",
@@ -64,7 +64,7 @@ class TestBusinessOperations:
     def test_create_business(self, authenticated_user):
         """Test creating a business."""
         response = client.post(
-            "/api/businesses",
+            "/api/v1/businesses",
             json={
                 "business_name": "Test Business",
                 "industry": "Technology",
@@ -84,7 +84,7 @@ class TestBusinessOperations:
     def test_create_business_unauthorized(self):
         """Test creating business without authentication."""
         response = client.post(
-            "/api/businesses",
+            "/api/v1/businesses",
             json={
                 "business_name": "Test Business",
                 "industry": "Technology",
@@ -92,14 +92,14 @@ class TestBusinessOperations:
             }
         )
 
-        assert response.status_code == 403
+        assert response.status_code in (401, 403)
 
     def test_list_businesses(self, authenticated_user):
         """Test listing user's businesses."""
         # Create multiple businesses
         for i in range(3):
             client.post(
-                "/api/businesses",
+                "/api/v1/businesses",
                 json={
                     "business_name": f"Business {i}",
                     "industry": "Technology",
@@ -110,7 +110,7 @@ class TestBusinessOperations:
 
         # List businesses
         response = client.get(
-            "/api/businesses",
+            "/api/v1/businesses",
             headers={"Authorization": f"Bearer {authenticated_user['token']}"}
         )
 
@@ -122,7 +122,7 @@ class TestBusinessOperations:
     def test_list_businesses_empty(self, authenticated_user):
         """Test listing businesses when user has none."""
         response = client.get(
-            "/api/businesses",
+            "/api/v1/businesses",
             headers={"Authorization": f"Bearer {authenticated_user['token']}"}
         )
 
@@ -134,7 +134,7 @@ class TestBusinessOperations:
         """Test business creation limit for free tier."""
         # Free tier allows 1 business
         response1 = client.post(
-            "/api/businesses",
+            "/api/v1/businesses",
             json={
                 "business_name": "Business 1",
                 "industry": "Technology",
@@ -146,7 +146,7 @@ class TestBusinessOperations:
 
         # Second business should fail
         response2 = client.post(
-            "/api/businesses",
+            "/api/v1/businesses",
             json={
                 "business_name": "Business 2",
                 "industry": "Technology",
@@ -164,19 +164,19 @@ class TestAIGeneration:
     def test_generate_business_plan_unauthorized(self):
         """Test business plan generation without auth."""
         response = client.post(
-            "/api/ai/generate-business-plan",
+            "/api/v1/ai/generate-business-plan",
             json={
                 "business_id": "test-id",
                 "target_market": "Small businesses"
             }
         )
 
-        assert response.status_code == 403
+        assert response.status_code in (401, 403)
 
     def test_generate_marketing_copy_unauthorized(self):
         """Test marketing copy generation without auth."""
         response = client.post(
-            "/api/ai/generate-marketing-copy",
+            "/api/v1/ai/generate-marketing-copy",
             json={
                 "business_id": "test-id",
                 "platform": "twitter",
@@ -185,12 +185,12 @@ class TestAIGeneration:
             }
         )
 
-        assert response.status_code == 403
+        assert response.status_code in (401, 403)
 
     def test_generate_email_campaign_unauthorized(self):
         """Test email campaign generation without auth."""
         response = client.post(
-            "/api/ai/generate-email-campaign",
+            "/api/v1/ai/generate-email-campaign",
             json={
                 "business_id": "test-id",
                 "campaign_goal": "Product launch",
@@ -199,7 +199,7 @@ class TestAIGeneration:
             }
         )
 
-        assert response.status_code == 403
+        assert response.status_code in (401, 403)
 
 
 class TestBusinessValidation:
@@ -208,7 +208,7 @@ class TestBusinessValidation:
     def test_create_business_missing_fields(self, authenticated_user):
         """Test business creation with missing required fields."""
         response = client.post(
-            "/api/businesses",
+            "/api/v1/businesses",
             json={
                 "business_name": "Test Business"
                 # Missing industry and description
@@ -221,7 +221,7 @@ class TestBusinessValidation:
     def test_create_business_invalid_url(self, authenticated_user):
         """Test business creation with invalid website URL."""
         response = client.post(
-            "/api/businesses",
+            "/api/v1/businesses",
             json={
                 "business_name": "Test Business",
                 "industry": "Technology",

@@ -68,7 +68,7 @@ const Auth = {
     // Login API Call
     login: async (email, password) => {
         try {
-            const response = await fetch('/api/auth/login', {
+            const response = await fetch('/api/v1/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -92,7 +92,7 @@ const Auth = {
     // Register API Call
     register: async (fullName, email, password) => {
         try {
-            const response = await fetch('/api/auth/register', {
+            const response = await fetch('/api/v1/auth/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -120,7 +120,7 @@ const Auth = {
     // Get current user info
     getMe: async () => {
         try {
-            const response = await Auth.fetchWithAuth('/api/auth/me');
+            const response = await Auth.fetchWithAuth('/api/v1/auth/me');
             if (!response.ok) throw new Error('Failed to fetch user');
             return await response.json();
         } catch (error) {

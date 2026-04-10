@@ -195,13 +195,13 @@ async def get_gui():
         return JSONResponse({"error": "GUI file not found"}, status_code=404)
     return FileResponse(html_path)
 
-@app.post("/api/onboarding")
+@app.post("/api/v1/onboarding")
 async def save_profile(profile: ProfileModel):
     """Save user profile from onboarding wizard."""
     update_app_state("profile", profile.model_dump())
     return {"status": "success", "message": "Profile saved"}
 
-@app.get("/api/research")
+@app.get("/api/v1/research")
 async def run_research():
     """Perform REAL analysis of business ideas against user profile."""
     state = get_app_state()
@@ -220,7 +220,7 @@ async def run_research():
     # without needing a second fetch (which caused a race condition / silent hang)
     return {"logs": result["logs"], "recommendations": result["recommendations"]}
 
-@app.get("/api/recommendations")
+@app.get("/api/v1/recommendations")
 async def get_recommendations():
     """Return the results of the research phase."""
     state = get_app_state()
@@ -233,18 +233,18 @@ async def get_recommendations():
 
     return recs
 
-@app.post("/api/select-business")
+@app.post("/api/v1/select-business")
 async def select_business(selection: BusinessSelection):
     """Save the selected business concept."""
     update_app_state("selected_business", selection.business_name)
     return {"status": "success", "selected": selection.business_name}
 
-@app.get("/api/license")
+@app.get("/api/v1/license")
 async def get_license_status():
     """Get current license info."""
     return fiduciary.get_license_info()
 
-@app.post("/api/license")
+@app.post("/api/v1/license")
 async def set_license(request: LicenseRequest):
     """Set the license tier (Partner vs Paid)."""
     try:
@@ -258,7 +258,7 @@ async def set_license(request: LicenseRequest):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.post("/api/admin-bypass")
+@app.post("/api/v1/admin-bypass")
 async def admin_bypass(request: BypassRequest):
     """Apply admin code to unlock features."""
     success = fiduciary.apply_admin_bypass(request.code)
@@ -266,7 +266,7 @@ async def admin_bypass(request: BypassRequest):
         return {"status": "success", "message": "Admin bypass applied"}
     raise HTTPException(status_code=403, detail="Invalid admin code")
 
-@app.get("/api/dashboard")
+@app.get("/api/v1/dashboard")
 async def get_dashboard():
     """Get simulated dashboard metrics."""
     state = get_app_state()
@@ -293,7 +293,7 @@ async def get_dashboard():
         "license": license_info
     }
 
-@app.post("/api/chat")
+@app.post("/api/v1/chat")
 async def chat_with_echo(request: ChatRequest):
     """Chat with Echo via Ollama."""
     try:
