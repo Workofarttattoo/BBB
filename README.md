@@ -1,137 +1,188 @@
 # Better Business Builder (BBB)
 
 **Turn-Key Autonomous Business Platform** - Onboard once, collect passive income forever.
+Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
 
 Better Business Builder deploys **Level 6 Autonomous AI Agents** that run your business completely hands-off. You onboard, the AI handles EVERYTHING, you get paid.
 
-## 🤖 Fully Autonomous Operation
+## Architecture Overview
 
-BBB agents handle:
+```ascii
++-------------------+       +--------------------+       +----------------------+
+|                   |       |                    |       |                      |
+|  Client / Browser +------->  Nginx (Reverse    +------->  FastAPI Application |
+|                   | HTTPS |  Proxy / SSL)      | HTTP  |  (uvicorn workers)   |
++-------------------+       +--------------------+       +----------------------+
+                                  |                             |
+                                  |                             |
+                                  v                             v
+                         +--------------------+       +----------------------+
+                         |                    |       |                      |
+                         |  Grafana (Metrics) |<------+  PostgreSQL 15 (DB)  |
+                         |                    |       |                      |
+                         +--------------------+       +----------------------+
+                                  ^                             |
+                                  |                             v
+                         +--------------------+       +----------------------+
+                         |                    |       |                      |
+                         |  Prometheus        |       |  Redis 7 (Cache &    |
+                         |  (Time Series DB)  |       |  Message Broker)     |
+                         |                    |       +----------------------+
+                         +--------------------+                 |
+                                                                |
+                                                                v
+                         +--------------------+       +----------------------+
+                         |                    |       |                      |
+                         |  Flower (Celery    |<------+  Celery Workers &    |
+                         |  Monitor Dashboard)|       |  Celery Beat         |
+                         +--------------------+       +----------------------+
+```
 
-- ✅ **Research & Market Analysis** - Identify opportunities, track competitors, analyze trends
-- ✅ **Content Creation & Marketing** - SEO blogs, social media, email campaigns, Google Ads
-- ✅ **Lead Generation** - Find prospects, qualify leads, nurture relationships
-- ✅ **Sales & Closing** - Cold outreach, discovery calls, proposals, deal closing
-- ✅ **Fulfillment** - Deliver products/services with quality assurance
-- ✅ **Customer Support** - 24/7 email/chat support, issue resolution, retention
-- ✅ **Financial Management** - Invoicing, payment processing, revenue tracking, reporting
+### Services & Roles
+- **Nginx**: Reverse proxy, SSL termination, static file caching, and rate-limiting.
+- **FastAPI**: Core backend application handling REST APIs and websockets.
+- **PostgreSQL 15**: Primary relational database for user data, business metrics, etc.
+- **Redis 7**: Caching layer and message broker for background task queues.
+- **Celery Worker**: Executes asynchronous background tasks (e.g., email sending, AI model calls).
+- **Celery Beat**: Scheduler for periodic background tasks.
+- **Flower**: Web-based monitoring tool for Celery workers.
+- **Prometheus**: Time-series database that scrapes metrics from the API and other services.
+- **Grafana**: Dashboard visualization for metrics stored in Prometheus.
 
-## 💰 Passive Income Model
+## Quick Start (Development)
 
-1. **Onboard** (15 minutes): Answer a few questions about your preferences
-2. **Deploy Agents** (Instant): Level 6 AI agents activate and start working
-3. **Monitor** (Optional): Check your dashboard to see revenue growth
-4. **Get Paid** (Automatic): Agents generate revenue, you collect checks
+Requires Python 3.9+ and Docker Desktop.
 
-Target: **$20,000+ per quarter** in passive income.
+1. **Clone the repository and install dependencies:**
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   pip install --upgrade pip
+   pip install -e .
+   ```
 
-## Quick Start
+2. **Copy environment variables:**
+   ```bash
+   cp .env.example .env
+   ```
 
-> Requires Python 3.9 or later.
+3. **Start services using Make:**
+   ```bash
+   make up
+   ```
 
+4. **Run database migrations:**
+   ```bash
+   make migrate
+   ```
+
+5. **Access the application:**
+   - API Docs: `http://localhost:8000/docs`
+   - Flower Monitor: `http://localhost:5555`
+   - Grafana Dashboard: `http://localhost:3000`
+
+## Production Deployment Guide
+
+### 1. Server Setup
+Provision a Linux server (Ubuntu 22.04 recommended) with Docker and Docker Compose installed.
+
+### 2. Domain & SSL
+Point your domain to your server's IP. Place your SSL certificates in the `./certs` directory:
+- `./certs/fullchain.pem`
+- `./certs/privkey.pem`
+
+### 3. Environment Configuration
+Copy the production environment template:
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install --upgrade pip
-pip install -e .
+cp .env.production.example .env.production
 ```
-
-### Option 1: Launch Beautiful GUI
-
+Fill out `.env.production` carefully. **Important:** Generate secure secret keys:
 ```bash
-bbb --gui
+python -c "import secrets; print(secrets.token_urlsafe(64))"
 ```
 
-Opens interactive web interface with:
-- Onboarding wizard
-- Business idea explorer (32+ businesses across 11 industries)
-- Quantum optimization results
-- Financial projections
-- Business plan export (Markdown/JSON)
-
-### Option 2: Deploy Autonomous Business (Level 6 Agents)
-
+### 4. Deploy
+Use the provided deployment script to pull the latest code, build images, restart containers, and run migrations:
 ```bash
-bbb --autonomous --business "AI Chatbot Integration Service" --duration 24
+chmod +x scripts/deploy.sh
+./scripts/deploy.sh
 ```
 
-Deploys Level 6 autonomous agents that:
-- Run your business 24/7 completely hands-off
-- Handle research, marketing, sales, fulfillment, support, finance
-- Generate revenue while you sleep
-- Report metrics to your dashboard
-
-### Option 3: CLI Interview
-
+Alternatively, manually using the production override:
 ```bash
-bbb
+make prod-up
+make migrate
 ```
 
-Interactive command-line onboarding that produces:
-1. Personalized business recommendations targeting $20K/quarter
-2. Action steps including IRS EIN enrollment
-3. Financial projections and optimization scores
+## Environment Variables Reference
 
-### Programmatic Usage
+| Variable | Description | Required | Example |
+|----------|-------------|----------|---------|
+| `SECRET_KEY` | Core application secret key | Yes | `v2...` |
+| `JWT_SECRET_KEY` | Secret for JWT auth tokens | Yes | `a3...` |
+| `DATABASE_URL` | PostgreSQL connection string | Yes | `postgresql://user:pass@host:5432/db` |
+| `REDIS_URL` | Redis connection string | Yes | `redis://redis:6379/0` |
+| `OPENAI_API_KEY` | OpenAI API Key (or Anthropic/Ollama) | Yes | `sk-...` |
+| `STRIPE_SECRET_KEY` | Payment processing secret key | Yes* | `sk_live_...` |
+| `CORS_ORIGINS` | Allowed CORS origins | Yes | `https://yourdomain.com` |
 
-```python
-from blank_business_builder import OnboardingAssistant
-from blank_business_builder.autonomous_business import launch_autonomous_business
-import asyncio
+*(Required for revenue features)*
 
-# Traditional onboarding
-assistant = OnboardingAssistant()
-outcome = assistant.run()
-print(outcome["plan"][0])
+## API Documentation
 
-# Launch autonomous business
-async def main():
-    metrics = await launch_autonomous_business(
-        business_concept="AI Chatbot Integration Service",
-        founder_name="Your Name",
-        duration_hours=24.0
-    )
-    print(f"Revenue generated: ${metrics['metrics']['revenue']['total']}")
+The FastAPI application provides interactive documentation accessible at `/docs` or `/redoc` when running.
 
-asyncio.run(main())
+### Example: Create a new user
+```bash
+curl -X 'POST' \
+  'https://yourdomain.com/api/v1/users/' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "email": "user@example.com",
+  "password": "securepassword",
+  "full_name": "Jane Doe"
+}'
 ```
 
-## How the Quantum Forecast Works
+### Example: Launch Autonomous Business
+```bash
+curl -X 'POST' \
+  'https://yourdomain.com/api/v1/business/launch' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer <your_jwt_token>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "concept": "AI Chatbot Integration Service",
+  "duration_hours": 24
+}'
+```
 
-The `QuantumOptimizer` converts projected quarterly profits into probability amplitudes (squared amplitudes sum to one). Concepts with stronger profit signals receive higher measurement probabilities. The optimizer:
+## Testing & Development
 
-1. Projects three-month profit, modelling ramp-up months before full revenue.
-2. Filters out ideas that fail the $4,500/month floor when alternatives exist.
-3. Flags whether the $20,000 quarterly target is met so you can iterate if the bar is not hit.
+Run the test suite using Make:
+```bash
+make test
+```
 
-This is intentionally lightweight—no external quantum SDK is required—yet the amplitude model keeps the selection logic explainable.
+Run linting:
+```bash
+make lint
+```
 
-## Jiminy Cricket Oversight
+Create a new database migration:
+```bash
+make migration m="Description of changes"
+```
 
-The assistant instantiates a mini Jiminy Cricket guardian each run. It:
+Open a bash shell inside the API container:
+```bash
+make shell
+```
 
-- Verifies that a LICENSE file exists (if absent, you are reminded to add one).
-- Emits reminders about regulatory compliance and manual verification steps.
-- Wraps the intake session inside a conscience context so you receive completion cues.
+## Monitoring Setup
 
-Add your own checks by passing a custom `JiminyCricket` instance into `OnboardingAssistant`.
-
-## Extending Business Ideas
-
-Additional business templates can be appended to `src/blank_business_builder/business_data.py`. For each idea specify:
-
-- `startup_cost`
-- `expected_monthly_revenue`
-- `expected_monthly_expenses`
-- `time_commitment_hours_per_week`
-- `ramp_up_months`
-
-The optimizer instantly reevaluates the new portfolio during the next run.
-
-## Roadmap
-
-- Optional HTTP integration to validate government portal uptime with retries.
-- Export onboarding plans to Markdown or Notion for follow-up tracking.
-- Integrate additional compliance checkpoints per state.
-
-Operate ethically, confirm each regulatory step manually, and use the IRS portal above for official EIN issuance.
+The project includes a robust monitoring stack configured out of the box:
+- **Prometheus** scrapes metrics from the FastAPI app and infrastructure.
+- **Grafana** connects to Prometheus to visualize these metrics. You can access Grafana at port `3000` (or via reverse proxy). Use the `GRAFANA_PASSWORD` set in your environment to login.
+- **Flower** monitors Celery task queues and workers, accessible at port `5555` (or `/flower/` in production). Note: Consider securing this endpoint with authentication if exposed publicly.
