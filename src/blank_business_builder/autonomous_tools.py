@@ -29,25 +29,53 @@ class AutonomousTools:
             print(f"[ERROR] Web search failed: {e}")
         return results
 
-    @staticmethod
-    def run_shell_command(command: str, cwd: str = ".") -> Dict:
-        """Run a shell command and return output."""
+    # Allowlisted commands that autonomous agents may execute
+    ALLOWED_COMMANDS = frozenset({
+        "git", "python", "python3", "pip", "node", "npm", "ls", "cat",
+        "head", "tail", "wc", "grep", "find", "curl", "wget",
+    })
+
+    @classmethod
+    def run_shell_command(cls, command: str, cwd: str = ".") -> Dict:
+        """Run a shell command and return output.
+
+        Security: uses ``shell=False`` with an explicit allowlist to
+        prevent shell-injection attacks.  Only the first token (the
+        executable) is checked against the allowlist.
+        """
+        import shlex
+
+        try:
+            parts = shlex.split(command)
+        except ValueError as e:
+            return {"error": f"Invalid command syntax: {e}", "returncode": -1}
+
+        if not parts:
+            return {"error": "Empty command", "returncode": -1}
+
+        executable = os.path.basename(parts[0])
+        if executable not in cls.ALLOWED_COMMANDS:
+            return {
+                "error": f"Command '{executable}' is not in the allowlist",
+                "returncode": -1,
+            }
+
         try:
             result = subprocess.run(
-                command,
-                shell=True,
+                parts,
+                shell=False,
                 cwd=cwd,
                 capture_output=True,
                 text=True,
-                timeout=60
+                timeout=60,
             )
             return {
                 "stdout": result.stdout,
                 "stderr": result.stderr,
-                "returncode": result.returncode
+                "returncode": result.returncode,
             }
         except subprocess.TimeoutExpired:
-            return {"error": "Command time out", "returncode": -1}
+            return {"error": "Command timed out", "returncode": -1}
         except Exception as e:
             return {"error": str(e), "returncode": -1}
 

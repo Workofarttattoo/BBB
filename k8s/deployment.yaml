@@ -197,3 +197,108 @@ spec:
         value: 4
         periodSeconds: 15
       selectPolicy: Max
+---
+# ═══════════════════════════════════════════════════════════════════════
+# Celery Worker — executes autonomous operation tasks
+# ═══════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bbb-celery-worker
+  namespace: bbb-production
+  labels:
+    app: bbb
+    component: celery-worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: bbb
+      component: celery-worker
+  template:
+    metadata:
+      labels:
+        app: bbb
+        component: celery-worker
+    spec:
+      containers:
+      - name: celery-worker
+        image: ghcr.io/workofarttattoo/bbb:latest
+        command:
+          - celery
+          - -A
+          - blank_business_builder.tasks
+          - worker
+          - --loglevel=info
+          - --concurrency=4
+        envFrom:
+          - secretRef:
+              name: bbb-secrets
+          - configMapRef:
+              name: bbb-config
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+        livenessProbe:
+          exec:
+            command:
+              - celery
+              - -A
+              - blank_business_builder.tasks
+              - inspect
+              - ping
+          initialDelaySeconds: 30
+          periodSeconds: 60
+          timeoutSeconds: 10
+      restartPolicy: Always
+---
+# ═══════════════════════════════════════════════════════════════════════
+# Celery Beat — schedule-driven heartbeat for autonomous operations
+# ═══════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bbb-celery-beat
+  namespace: bbb-production
+  labels:
+    app: bbb
+    component: celery-beat
+spec:
+  replicas: 1   # Must be exactly 1 to avoid duplicate scheduling
+  selector:
+    matchLabels:
+      app: bbb
+      component: celery-beat
+  template:
+    metadata:
+      labels:
+        app: bbb
+        component: celery-beat
+    spec:
+      containers:
+      - name: celery-beat
+        image: ghcr.io/workofarttattoo/bbb:latest
+        command:
+          - celery
+          - -A
+          - blank_business_builder.tasks
+          - beat
+          - --loglevel=info
+          - --scheduler=celery.beat:PersistentScheduler
+        envFrom:
+          - secretRef:
+              name: bbb-secrets
+          - configMapRef:
+              name: bbb-config
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      restartPolicy: Always
