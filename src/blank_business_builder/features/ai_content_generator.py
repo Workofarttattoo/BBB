@@ -12,6 +12,8 @@ from enum import Enum
 import asyncio
 import logging
 
+logger = logging.getLogger(__name__)
+
 try:
     from openai import OpenAI
 except ImportError:

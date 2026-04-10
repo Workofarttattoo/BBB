@@ -13,8 +13,10 @@ services:
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    # Ports only exposed to internal network; remove or override in
+    # docker-compose.override.yml for local development.
+    expose:
+      - "5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U bbbuser"]
       interval: 10s
@@ -24,12 +26,13 @@ services:
   # Redis (Cache + Task Queue)
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    expose:
+      - "6379"
     volumes:
       - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-changeme}
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-changeme}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -41,7 +44,7 @@ services:
       - .env.production
     environment:
       DATABASE_URL: postgresql://bbbuser:${DATABASE_PASSWORD}@postgres:5432/bbb_production
-      REDIS_URL: redis://redis:6379/0
+      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379/0
     ports:
       - "8000:8000"
     depends_on:
@@ -49,64 +52,68 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    volumes:
-      - ./src:/app/src
+    # No host volume mounts in production — use the built image.
     restart: unless-stopped
 
   # Celery Worker (Background Tasks)
   celery:
     build: .
-    command: celery -A blank_business_builder.tasks worker --loglevel=info
+    command: celery -A blank_business_builder.tasks worker --loglevel=info --concurrency=4
     env_file:
       - .env.production
     environment:
       DATABASE_URL: postgresql://bbbuser:${DATABASE_PASSWORD}@postgres:5432/bbb_production
-      REDIS_URL: redis://redis:6379/0
+      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379/0
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
-  # Celery Beat (Scheduled Tasks)
+  # Celery Beat (Scheduled Tasks — runs autonomous ops on schedule)
   celery-beat:
     build: .
-    command: celery -A blank_business_builder.tasks beat --loglevel=info
+    command: celery -A blank_business_builder.tasks beat --loglevel=info --scheduler=celery.beat:PersistentScheduler
     env_file:
       - .env.production
     environment:
       DATABASE_URL: postgresql://bbbuser:${DATABASE_PASSWORD}@postgres:5432/bbb_production
-      REDIS_URL: redis://redis:6379/0
+      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379/0
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
-  # Flower (Celery Monitoring)
+  # Flower (Celery Monitoring) — bind only to localhost in production
   flower:
     build: .
-    command: celery -A blank_business_builder.tasks flower --port=5555
+    command: celery -A blank_business_builder.tasks flower --port=5555 --basic-auth=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-changeme}
     ports:
-      - "5555:5555"
+      - "127.0.0.1:5555:5555"
     environment:
-      REDIS_URL: redis://redis:6379/0
+      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379/0
     depends_on:
       - redis
     restart: unless-stopped
 
-  # Prometheus (Metrics)
+  # Prometheus (Metrics) — localhost-only in production
   prometheus:
     image: prom/prometheus:latest
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
     restart: unless-stopped
 
-  # Grafana (Dashboards)
+  # Grafana (Dashboards) — localhost-only in production
   grafana:
     image: grafana/grafana:latest
     environment:
@@ -114,10 +121,10 @@ services:
       GF_INSTALL_PLUGINS: grafana-clock-panel
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
-      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       - prometheus
     restart: unless-stopped

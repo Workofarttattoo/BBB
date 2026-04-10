@@ -284,7 +284,7 @@ class MarketingCampaign(Base):
 def get_db_engine(database_url: Optional[str] = None):
     """Create database engine"""
     if database_url is None:
-        database_url = os.environ.get("DATABASE_URL", "postgresql://bbbuser:password@localhost:5432/bbb_production")
+        database_url = os.environ.get("DATABASE_URL", "sqlite:///./business_builder.db")
 
     return create_engine(
         database_url,

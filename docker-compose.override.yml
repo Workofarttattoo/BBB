@@ -1,0 +1,34 @@
+# docker-compose.override.yml — LOCAL DEVELOPMENT OVERRIDES
+# This file is automatically merged on `docker compose up` and provides
+# developer-friendly defaults.  It is NOT used in production.
+#
+# Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved.
+
+version: '3.8'
+
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  api:
+    volumes:
+      - ./src:/app/src          # live-reload during development
+    environment:
+      LOG_LEVEL: DEBUG
+
+  prometheus:
+    ports:
+      - "9090:9090"
+
+  grafana:
+    ports:
+      - "3000:3000"
+
+  flower:
+    ports:
+      - "5555:5555"
