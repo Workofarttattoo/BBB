@@ -50,8 +50,9 @@ class TestIntegrationsQueue(unittest.TestCase):
             self.assertEqual(payload['to_email'], "test@example.com")
 
     def test_buffer_create_post_queues_task(self):
+        import asyncio
         service = BufferService()
-        result = service.create_post("profile_123", "Hello World")
+        result = asyncio.run(service.create_post("profile_123", "Hello World"))
         self.assertTrue(result['success'])
 
         # Check queue
