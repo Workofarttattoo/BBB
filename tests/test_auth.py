@@ -407,3 +407,138 @@ class TestLicensingFlows:
         status_data = status_response.json()
         assert status_data["subscription_tier"] == "pro"
         assert status_data["license_status"] == "licensed"
+
+from blank_business_builder.auth import Auth0Service
+from unittest.mock import patch, MagicMock
+
+class TestAuth0Service:
+    def test_verify_auth0_token_not_configured(self):
+        """Test HTTP 501 when Auth0 is not configured."""
+        service = Auth0Service()
+        service.enabled = False
+
+        with pytest.raises(HTTPException) as exc_info:
+            service.verify_auth0_token("dummy_token")
+
+        assert exc_info.value.status_code == 501
+        assert exc_info.value.detail == "Auth0 not configured"
+
+    @patch('requests.get')
+    @patch('jose.jwt.get_unverified_header')
+    @patch('jose.jwt.decode')
+    def test_verify_auth0_token_success(self, mock_decode, mock_get_unverified_header, mock_requests_get):
+        """Test successful token verification."""
+        service = Auth0Service()
+        service.domain = "test.auth0.com"
+        service.client_id = "dummy_client_id"
+        service.audience = "dummy_audience"
+        service.enabled = True
+
+        # Mock JWKS response
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "keys": [{
+                "kty": "RSA",
+                "kid": "test_kid",
+                "use": "sig",
+                "n": "dummy_n",
+                "e": "dummy_e"
+            }]
+        }
+        mock_requests_get.return_value = mock_response
+
+        # Mock token header
+        mock_get_unverified_header.return_value = {"kid": "test_kid"}
+
+        # Mock decoded payload
+        expected_payload = {"sub": "user123"}
+        mock_decode.return_value = expected_payload
+
+        payload = service.verify_auth0_token("dummy_token")
+
+        assert payload == expected_payload
+        mock_requests_get.assert_called_once_with('https://test.auth0.com/.well-known/jwks.json')
+        mock_get_unverified_header.assert_called_once_with("dummy_token")
+        mock_decode.assert_called_once()
+
+    @patch('requests.get')
+    @patch('jose.jwt.get_unverified_header')
+    def test_verify_auth0_token_key_not_found(self, mock_get_unverified_header, mock_requests_get):
+        """Test HTTP 401 when the token kid is not in JWKS."""
+        service = Auth0Service()
+        service.domain = "test.auth0.com"
+        service.client_id = "dummy_client_id"
+        service.enabled = True
+
+        # Mock JWKS response
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "keys": [{
+                "kid": "other_kid"
+            }]
+        }
+        mock_requests_get.return_value = mock_response
+
+        # Mock token header
+        mock_get_unverified_header.return_value = {"kid": "test_kid"}
+
+        with pytest.raises(HTTPException) as exc_info:
+            service.verify_auth0_token("dummy_token")
+
+        assert exc_info.value.status_code == 401
+        assert "Unable to find appropriate key" in exc_info.value.detail
+
+    @patch('requests.get')
+    @patch('jose.jwt.get_unverified_header')
+    @patch('jose.jwt.decode')
+    def test_verify_auth0_token_decode_error(self, mock_decode, mock_get_unverified_header, mock_requests_get):
+        """Test HTTP 401 when token decoding fails."""
+        service = Auth0Service()
+        service.domain = "test.auth0.com"
+        service.client_id = "dummy_client_id"
+        service.enabled = True
+
+        # Mock JWKS response
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "keys": [{
+                "kty": "RSA",
+                "kid": "test_kid",
+                "use": "sig",
+                "n": "dummy_n",
+                "e": "dummy_e"
+            }]
+        }
+        mock_requests_get.return_value = mock_response
+
+        # Mock token header
+        mock_get_unverified_header.return_value = {"kid": "test_kid"}
+
+        # Mock decode exception
+        mock_decode.side_effect = Exception("Signature verification failed")
+
+        with pytest.raises(HTTPException) as exc_info:
+            service.verify_auth0_token("dummy_token")
+
+        assert exc_info.value.status_code == 401
+        assert "Auth0 verification failed: Signature verification failed" in exc_info.value.detail
+
+    @patch('requests.get')
+    def test_verify_auth0_token_network_error(self, mock_requests_get):
+        """Test HTTP 401 when JWKS fetch fails."""
+        service = Auth0Service()
+        service.domain = "test.auth0.com"
+        service.client_id = "dummy_client_id"
+        service.enabled = True
+
+        # Mock network failure
+        mock_requests_get.side_effect = Exception("Connection error")
+
+        with pytest.raises(HTTPException) as exc_info:
+            service.verify_auth0_token("dummy_token")
+
+        assert exc_info.value.status_code == 401
+        assert "Auth0 verification failed: Connection error" in exc_info.value.detail
+
+from blank_business_builder.auth import Auth0Service
+from unittest.mock import patch, MagicMock
