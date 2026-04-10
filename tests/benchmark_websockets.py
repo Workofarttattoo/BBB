@@ -4,7 +4,6 @@ import sys
 import os
 from unittest.mock import MagicMock
 from sqlalchemy.orm import Session
-from unittest.mock import patch
 
 # Add src to path if needed
 sys.path.append(os.path.join(os.getcwd(), 'src'))
@@ -22,9 +21,6 @@ class MockQuery:
         return self
 
     def order_by(self, *args, **kwargs):
-        return self
-
-    def group_by(self, *args, **kwargs):
         return self
 
     def limit(self, *args, **kwargs):
@@ -71,22 +67,11 @@ def create_mock_session():
 
     mock_metrics = MagicMock(spec=MetricsHistory)
 
-    def side_effect(*args):
-        try:
-            model = args[0]
-            if model == Business or getattr(model, "__name__", "") == "Business":
-                return MockQuery(delay=0.1, result=mock_business)
-            elif model == AgentTask or getattr(model, "__name__", "") == "AgentTask":
-                return MockQuery(delay=0.1, result=mock_task)
-            elif model == MetricsHistory or getattr(model, "__name__", "") == "MetricsHistory":
-                return MockQuery(delay=0.1, result=mock_metrics)
-        except Exception:
-            pass
-        return MockQuery(delay=0.1, result=("completed", 100)) # Default return a tuple to prevent crashes on func.count()
+    def query_mock(*models):
+        # We don't care about the args for the mock, just return a query object
+        return MockQuery(delay=0.1, result=mock_business if models and models[0] == Business else (mock_task if models and models[0] == AgentTask else (mock_metrics if models and models[0] == MetricsHistory else (1,1,1,1))))
 
-    # The issue might be from db.query() checking args, but let's patch _get_business_metrics_sync
-    # instead if we need to
-    session.query.side_effect = side_effect
+    session.query = MagicMock(side_effect=query_mock)
     return session
 
 async def heartbeat(interval=0.01):
