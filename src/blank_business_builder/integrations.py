@@ -55,16 +55,23 @@ if openai is None:  # pragma: no cover
         def __init__(self, content: str):
             self.message = type("Message", (), {"content": content})
 
-    class _OpenAIChatCompletion:
+    class _OpenAIChatCompletions:
         @staticmethod
         def create(**kwargs):
             prompt = kwargs.get("messages", [{}])[-1].get("content", "Default response")
             fallback = json.dumps({"raw_content": prompt})
             return type("Completion", (), {"choices": [_OpenAIChatChoice(fallback)]})
 
+    class _OpenAIChat:
+        completions = _OpenAIChatCompletions()
+
+    class _OpenAIClientStub:
+        def __init__(self, api_key: str = ""):
+            self.api_key = api_key
+            self.chat = _OpenAIChat()
+
     class _OpenAIStub:
-        api_key = ""
-        ChatCompletion = _OpenAIChatCompletion
+        OpenAI = _OpenAIClientStub
 
     openai = _OpenAIStub()
 
@@ -132,7 +139,6 @@ class OpenAIService:
 
     def __init__(self):
         self.api_key = os.getenv("OPENAI_API_KEY", "")
-        openai.api_key = self.api_key
         self.model = os.getenv("OPENAI_MODEL", "gpt-4")
 
     def generate_business_plan(
@@ -169,7 +175,8 @@ class OpenAIService:
         )
 
         try:
-            response = openai.ChatCompletion.create(
+            client = openai.OpenAI(api_key=self.api_key)
+            response = client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -230,7 +237,8 @@ class OpenAIService:
         )
 
         try:
-            response = openai.ChatCompletion.create(
+            client = openai.OpenAI(api_key=self.api_key)
+            response = client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -276,7 +284,8 @@ class OpenAIService:
         )
 
         try:
-            response = openai.ChatCompletion.create(
+            client = openai.OpenAI(api_key=self.api_key)
+            response = client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -325,7 +334,8 @@ class OpenAIService:
         user_content = json.dumps({"competitor_name": competitor_name, "industry": industry})
 
         try:
-            response = openai.ChatCompletion.create(
+            client = openai.OpenAI(api_key=self.api_key)
+            response = client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
