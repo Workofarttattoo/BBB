@@ -24,7 +24,7 @@ class UUIDType(TypeDecorator):
     def load_dialect_impl(self, dialect):
         if dialect.name == "sqlite":
             return dialect.type_descriptor(String(36))
-        return dialect.type_descriptor(UUIDType())
+        return dialect.type_descriptor(UUID(as_uuid=True))
 
     def process_bind_param(self, value, dialect):
         if value is None:
