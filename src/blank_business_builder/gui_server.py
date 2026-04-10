@@ -7,6 +7,7 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 import asyncio
 import json
 import logging
+import os
 import random
 from dataclasses import asdict
 from pathlib import Path
@@ -32,10 +33,17 @@ app = FastAPI(title="Business Builder API")
 # Initialize Services
 ech0 = ECH0Service()
 
-# Allow CORS for development
+# CORS configuration
+cors_origins_str = os.getenv("CORS_ORIGINS", "")
+if cors_origins_str:
+    allow_origins = [origin.strip() for origin in cors_origins_str.split(",") if origin.strip()]
+else:
+    allow_origins = []
+
+# Allow CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
