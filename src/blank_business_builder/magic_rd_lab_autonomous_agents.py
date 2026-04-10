@@ -407,6 +407,10 @@ class MagicRDLabOrchestrator(AutonomousBusinessOrchestrator):
 
             if calling_tasks:
                 results = await asyncio.gather(*calling_tasks)
+                total_calls = 0
+                total_closed = 0
+                total_revenue = 0.0
+
                 for result in results:
                     self.magic_metrics.cold_calls_made += result['calls_made']
                     self.magic_metrics.demo_calls_scheduled += result['demos_scheduled']
@@ -417,9 +421,10 @@ class MagicRDLabOrchestrator(AutonomousBusinessOrchestrator):
                     self.metrics.total_revenue += float(revenue)
                     self.metrics.monthly_revenue += float(revenue)
 
-                total_calls = sum(r['calls_made'] for r in results)
-                total_closed = sum(r['sessions_closed'] for r in results)
-                total_revenue = sum(r['revenue'] for r in results)
+                    # ⚡ Bolt Optimization: Calculate totals within the existing loop to avoid redundant O(N) iterations
+                    total_calls += result['calls_made']
+                    total_closed += result['sessions_closed']
+                    total_revenue += float(revenue)
 
                 logger.info(
                     f"📞 Cold Calling: {total_calls} calls → "

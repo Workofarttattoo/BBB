@@ -398,7 +398,10 @@ class MultiChannelCampaignOrchestrator:
         if not campaign:
             return {}
 
-        # ⚡ Bolt Optimization: Replace 5 separate generators with a single O(N) pass
+        # Aggregate metrics across all channels
+        # BOLT OPTIMIZATION: Replaced 5 separate O(N) list comprehensions/sum generators
+        # with a single O(N) loop that calculates all five metrics simultaneously,
+        # preventing redundant dictionary iterations.
         total_impressions = 0
         total_clicks = 0
         total_conversions = 0

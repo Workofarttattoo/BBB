@@ -679,25 +679,31 @@ class DisasterRecoveryOrchestrator:
 
     async def get_recovery_metrics(self) -> Dict:
         """Get disaster recovery metrics and status."""
-        # Performance optimization: Compute backup metrics in a single pass O(N)
+
+        # Performance optimization:
+        # Calculate multiple aggregate metrics in a single O(N) loop to avoid
+        # redundant passes over the historical arrays. Cache `now` to avoid
+        # calling datetime.utcnow() in every iteration.
+        now = datetime.utcnow()
+
+        # Backup metrics
         total_backups = len(self.backup_engine.backup_history)
         recent_backups_count = 0
         total_backup_size = 0
         total_compression = 0.0
-        encrypted_backups_count = 0
+        encrypted_backups = 0
 
-        now = datetime.utcnow()
         for b in self.backup_engine.backup_history:
             if (now - b.timestamp).days <= 7:
                 recent_backups_count += 1
             total_backup_size += b.size_bytes
             total_compression += b.compression_ratio
             if b.encryption_enabled:
-                encrypted_backups_count += 1
+                encrypted_backups += 1
 
         avg_compression = total_compression / total_backups if total_backups > 0 else 0.0
 
-        # Performance optimization: Compute failover metrics in a single pass O(N)
+        # Failover metrics
         total_failovers = len(self.failover.failover_history)
         successful_failovers = 0
         total_failover_time = 0.0
@@ -721,7 +727,7 @@ class DisasterRecoveryOrchestrator:
                 "recent_backups_7d": recent_backups_count,
                 "total_size_bytes": total_backup_size,
                 "average_compression_ratio": avg_compression,
-                "encrypted_backups": encrypted_backups_count
+                "encrypted_backups": encrypted_backups
             },
             "failover_metrics": {
                 "total_failovers": total_failovers,

@@ -43,7 +43,6 @@ class TaskQueue:
                     last_error TEXT
                 )
             """)
-            # Optimization: Add index for faster queries
             conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_status_created ON tasks (status, created_at)")
 
     def register_handler(self, task_type: str, handler: Callable):

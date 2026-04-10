@@ -168,7 +168,7 @@ class ChromaDBStore(VectorStore):
             except Exception as e:
                 logger.warning(f"Could not create collection for {domain.value}: {e}")
 
-        # Initialize shared thread pool for parallel searches
+        # Thread pool for parallel searches
         self.executor = ThreadPoolExecutor(max_workers=10)
 
     def add_documents(self, documents: List[KnowledgeDocument]) -> None:
@@ -229,7 +229,8 @@ class ChromaDBStore(VectorStore):
         # If searching multiple domains (global search), parallelize using threads
         # ChromaDB operations are IO-bound (database access), so threads work well.
         if len(domains_to_search) > 1:
-            # Reuse existing thread pool
+            # Use shared executor to avoid overhead of creating new threads
+            # map returns an iterator, iterating it waits for results
             futures = self.executor.map(search_collection, domains_to_search)
             for res in futures:
                 results.extend(res)
