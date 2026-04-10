@@ -22,6 +22,7 @@ from .business_data import BusinessIdea, default_ideas
 from .fiduciary import FiduciaryManager
 from .features.market_research import MarketResearch
 from .ech0_service import ECH0Service
+from .config import settings
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -35,7 +36,7 @@ ech0 = ECH0Service()
 # Allow CORS for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
