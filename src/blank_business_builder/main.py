@@ -585,9 +585,13 @@ app.middleware("http")(metrics_middleware)
 # Quantum endpoints require Pro tier or higher
 from .api_quantum_features import router as quantum_router
 from .api_licensing import router as licensing_router
+from .api_features import router as features_router
+from .api_premium import router as premium_router
 
 app.include_router(quantum_router)
 app.include_router(licensing_router)
+app.include_router(features_router)
+app.include_router(premium_router)
 
 
 # License endpoints
