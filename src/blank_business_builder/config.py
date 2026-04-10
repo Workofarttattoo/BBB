@@ -53,8 +53,13 @@ class Config:
 
     # Database
     DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./business_builder.db")
-
     # Security
+    ALLOWED_ORIGINS = [
+        origin.strip() for origin in os.getenv(
+            "ALLOWED_ORIGINS",
+            "http://localhost:3000,http://localhost:8000"
+        ).split(",") if origin.strip()
+    ]
     SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-please-change-in-production")
     ALGORITHM = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
