@@ -208,7 +208,9 @@ async def run_research():
     update_app_state("analysis_results", result["recommendations"])
     update_app_state("research_logs", result["logs"])
 
-    return {"logs": result["logs"]}
+    # Return both logs AND recommendations so the frontend can render immediately
+    # without needing a second fetch (which caused a race condition / silent hang)
+    return {"logs": result["logs"], "recommendations": result["recommendations"]}
 
 @app.get("/api/recommendations")
 async def get_recommendations():
