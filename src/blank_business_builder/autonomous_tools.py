@@ -10,7 +10,8 @@ Tools for the autonomous agents to interact with the world:
 import os
 import subprocess
 import glob
-from typing import List, Dict, Optional
+import shlex
+from typing import List, Dict, Optional, Union
 from duckduckgo_search import DDGS
 
 class AutonomousTools:
@@ -30,12 +31,15 @@ class AutonomousTools:
         return results
 
     @staticmethod
-    def run_shell_command(command: str, cwd: str = ".") -> Dict:
+    def run_shell_command(command: Union[str, List[str]], cwd: str = ".") -> Dict:
         """Run a shell command and return output."""
         try:
+            if isinstance(command, str):
+                command = shlex.split(command)
+
             result = subprocess.run(
                 command,
-                shell=True,
+                shell=False,
                 cwd=cwd,
                 capture_output=True,
                 text=True,
