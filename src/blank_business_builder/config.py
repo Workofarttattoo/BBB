@@ -54,6 +54,9 @@ class Config:
     # Database
     DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./business_builder.db")
 
+    # Redis
+    REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+
     # Security
     SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-please-change-in-production")
     ALGORITHM = "HS256"
