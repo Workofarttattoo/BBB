@@ -20,3 +20,6 @@
 ## 2026-03-04 - Optimize WebSocket Metrics Gathering
 **Learning:** In `_get_business_metrics_sync` (used heavily by periodic websocket connections), multiple `func.sum(case(...))` clauses within a single SQLAlchemy `.query()` can be slow and put unnecessary load on the DB engine due to table scanning. It's an anti-pattern when pulling segmented aggregates.
 **Action:** When gathering status counts across an entire associated table, use a much more efficient `GROUP BY` query (`group_by(AgentTask.status)`) combined with a simple Python iteration mapping the output. This greatly mitigates event loop blocking risks from synchronous IO delays under load.
+## 2026-04-11 - Database Connection Pooling Optimization
+**Learning:** In FastAPI, defining `engine = create_engine()` inside a dependency `yield` function like `get_db()` causes the application to create a new database connection pool on every single request. This is a severe performance anti-pattern that exhausts database connections and slows down all routes.
+**Action:** Always instantiate SQLAlchemy engines and session makers globally or lazily cache them so they are reused across requests.
