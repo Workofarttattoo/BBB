@@ -881,6 +881,8 @@ class AutonomousBusinessOrchestrator:
         self.founder_name = founder_name
         self.agents: Dict[str, Level6BusinessAgent] = {}
         self.task_queue: List[AutonomousTask] = []
+        self.task_map: Dict[str, AutonomousTask] = {}
+        self.in_progress_tasks: set[str] = set()
         self.pending_tasks: deque[AutonomousTask] = deque()
         self.completed_task_ids: Set[str] = set()
         self.task_transition_counts: Dict[str, int] = {}
@@ -907,8 +909,11 @@ class AutonomousBusinessOrchestrator:
     def add_task(self, task: AutonomousTask) -> None:
         """Add a new task to the queue."""
         self.task_queue.append(task)
+        self.task_map[task.task_id] = task
         self.pending_tasks.append(task)
         self.task_status_counts[task.status] += 1
+        if task.status == TaskStatus.IN_PROGRESS:
+            self.in_progress_tasks.add(task.task_id)
 
     def _identify_required_roles(self, business_concept: str) -> List[AgentRole]:
         """Identify which roles are needed for this business."""
@@ -1272,6 +1277,12 @@ class AutonomousBusinessOrchestrator:
         self.task_status_counts[task.status] -= 1
         self.task_status_counts[status] += 1
 
+        # Manage in_progress_tasks set
+        if task.status == TaskStatus.IN_PROGRESS:
+            self.in_progress_tasks.discard(task.task_id)
+        if status == TaskStatus.IN_PROGRESS:
+            self.in_progress_tasks.add(task.task_id)
+
         # Track transition
         transition_key = f"{task.status.value}_to_{status.value}"
         self.task_transition_counts[transition_key] = (
@@ -1297,16 +1308,13 @@ class AutonomousBusinessOrchestrator:
         """
         Check for IN_PROGRESS tasks assigned to inactive/missing agents and requeue them.
         """
-        # We can't iterate efficiently over just IN_PROGRESS without a separate list,
-        # but iterating task_queue is unavoidable unless we index it.
-        # However, we only care about 'IN_PROGRESS' which should be small.
-        # Let's iterate task_queue for now, but in a real massive system we'd want a set of in_progress tasks.
-        # For optimization, let's skip if count is 0
-        if self.task_status_counts[TaskStatus.IN_PROGRESS] == 0:
+        if not self.in_progress_tasks:
             return
 
-        for task in self.task_queue:
-            if task.status == TaskStatus.IN_PROGRESS:
+        # Iterate over a copy since _set_task_status modifies the set
+        for task_id in list(self.in_progress_tasks):
+            task = self.task_map.get(task_id)
+            if task and task.status == TaskStatus.IN_PROGRESS:
                 agent = self.agents.get(task.assigned_to)
                 if not agent or not agent.active:
                     logger.warning(
@@ -1329,7 +1337,7 @@ class AutonomousBusinessOrchestrator:
         """Execute all in-progress tasks in parallel."""
         # Requeue stale in-progress tasks before execution to avoid deadlocks.
         self._reconcile_orphaned_in_progress_tasks()
-        in_progress = [t for t in self.task_queue if t.status == TaskStatus.IN_PROGRESS]
+        in_progress = [self.task_map[tid] for tid in self.in_progress_tasks if tid in self.task_map]
 
         if not in_progress:
             return []
