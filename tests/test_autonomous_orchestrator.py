@@ -7,6 +7,10 @@ import os
 
 # Add src to path
 sys.path.append(os.getcwd())
+sys.modules['requests'] = MagicMock()
+sys.modules['httpx'] = MagicMock()
+sys.modules['openai'] = MagicMock()
+sys.modules['fastapi'] = MagicMock()
 
 from src.blank_business_builder.autonomous_business import AutonomousBusinessOrchestrator, AutonomousTask, AgentRole, TaskStatus
 
@@ -48,6 +52,8 @@ class TestAutonomousOrchestrator(unittest.IsolatedAsyncioTestCase):
         # But add_task adds to pending_tasks. If status is COMPLETED, _assign_tasks logic should handle removing it.
         # Let's use add_task for consistency, but note that add_task adds to pending.
         orchestrator.add_task(task1)
+        if getattr(orchestrator, "in_progress_tasks", None) is not None:
+            orchestrator.in_progress_tasks.discard("t1")
         # Ensure consistency: if completed, it should be in the set
         orchestrator.completed_task_ids.add("t1")
 
@@ -137,6 +143,8 @@ class TestAutonomousOrchestrator(unittest.IsolatedAsyncioTestCase):
         # Manually mark T1 as completed to simulate execution finishing
         task1.status = TaskStatus.COMPLETED
         orchestrator.completed_task_ids.add("t1")
+        if getattr(orchestrator, "in_progress_tasks", None) is not None:
+            orchestrator.in_progress_tasks.discard("t1")
 
         # 3. Assign again - T2 should be picked up (unblocked)
         await orchestrator._assign_tasks()
