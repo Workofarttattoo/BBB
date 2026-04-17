@@ -461,10 +461,18 @@ class WhiteLabelPlatform:
         accounts = await self._get_sub_accounts(agency_id)
 
         # Calculate metrics
-        total_mrr = sum(acc.agency_profit for acc in accounts if acc.status == "active")
+        # ⚡ Bolt Optimization: Replace multiple generator/list comprehensions with a single O(N) loop
+        total_mrr = 0.0
+        active_clients = 0
+        trial_clients = 0
         total_clients = len(accounts)
-        active_clients = len([acc for acc in accounts if acc.status == "active"])
-        trial_clients = len([acc for acc in accounts if acc.status == "trial"])
+
+        for acc in accounts:
+            if acc.status == "active":
+                total_mrr += acc.agency_profit
+                active_clients += 1
+            elif acc.status == "trial":
+                trial_clients += 1
 
         # Churn analysis
         churn_risk_accounts = await self._identify_churn_risk(accounts)
