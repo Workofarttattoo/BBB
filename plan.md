@@ -1,38 +1,17 @@
-1. **Create `src/blank_business_builder/features/__init__.py`**
-   - Import and export all feature classes from the feature modules (`AIContentGenerator`, `AIWorkflowBuilder`, `EmailService`, `MarketResearch`, `MarketingAutomationSuite`, `PaymentProcessor`, `SocialMedia`, `WhiteLabelPlatform`).
-   - Ensure the copyright header is present.
-
-2. **Create `src/blank_business_builder/premium_workflows/__init__.py`**
-   - Import and export all premium classes from the premium modules (`GhostWritingAgent`, `MarketingAgencyAgent`, `NoCodeAppAgent`, `QuantumOptimizer`).
-   - Ensure the copyright header is present.
-
-3. **Create `src/blank_business_builder/api_features.py`**
-   - Create a new FastAPI `APIRouter(prefix="/api/features", tags=["Features"])`.
-   - Add routes that map to each feature class.
-   - For `ai_content_generator`: `POST /content/generate`, `GET /content/templates`
-   - For `ai_workflow_builder`: `POST /workflows/create`, `GET /workflows`
-   - For `email_service`: `POST /email/send`, `POST /email/campaign`
-   - For `market_research`: `POST /research/analyze`, `GET /research/trends`
-   - For `marketing_automation`: `POST /marketing/automate`, `GET /marketing/campaigns`
-   - For `payment_processor`: `POST /payments/process`
-   - For `social_media`: `POST /social/post`, `GET /social/analytics`
-   - For `white_label_platform`: `POST /whitelabel/create`, `GET /whitelabel/config`
-   - Use `Depends(get_current_user)` or `require_license_access` for auth.
-   - Define necessary Pydantic models for these endpoints.
-
-4. **Create `src/blank_business_builder/api_premium.py`**
-   - Create a new FastAPI `APIRouter(prefix="/api/premium", tags=["Premium Workflows"])`.
-   - Add routes that map to each premium workflow class.
-   - E.g., for `ghost_writing_agent`: `POST /ghostwriting/order`, `GET /ghostwriting/status`
-   - E.g., for `marketing_agency_agent`: `POST /marketing-agency/campaign`
-   - E.g., for `nocode_app_agent`: `POST /nocode/build`
-   - E.g., for `quantum_optimizer`: `POST /quantum/optimize`
-   - Define necessary Pydantic models for these endpoints.
-   - Use `Depends(get_current_user)` for auth.
-
-5. **Update `src/blank_business_builder/main.py`**
-   - Import the routers from `api_features.py` and `api_premium.py`.
-   - Call `app.include_router()` for both.
-
-6. **Pre-commit step**
-   - Run `pre_commit_instructions` to ensure proper testing, verifications, reviews, and reflections are done.
+1. **Optimize `manage_marketing_campaigns` in `src/blank_business_builder/level6_agent.py`**
+   - Currently, it fetches all active businesses and iterates over them, making an N+1 database query in `_needs_marketing_campaign` to check if a marketing campaign was created in the last 30 days.
+   - I will replace this N+1 query loop with a single `LEFT OUTER JOIN` and `GROUP BY` query to efficiently fetch all businesses without recent campaigns in one shot.
+2. **Verify changes to `src/blank_business_builder/level6_agent.py`**
+   - Run `python -m py_compile src/blank_business_builder/level6_agent.py` to ensure syntax is correct.
+3. **Update `_map_task_to_domain` in `src/blank_business_builder/expert_integration.py`**
+   - The current implementation uses sequential `any()` keyword searches which is inefficient O(N*M).
+   - I will optimize it by defining a module-level `DOMAIN_KEYWORD_MAPPING` constant and using a short-circuiting nested loop, achieving significant performance gains.
+4. **Verify changes to `src/blank_business_builder/expert_integration.py`**
+   - Run `python -m py_compile src/blank_business_builder/expert_integration.py` to ensure syntax is correct.
+5. **Run Tests**
+   - Run `PYTHONPATH=src python -m pytest tests/test_expert_integration.py` to ensure `expert_integration.py` changes are correct and haven't introduced regressions. Since there is no `test_level6_agent.py`, the compilation test in Step 2 is the primary test for that file.
+6. **Complete pre-commit steps**
+   - Complete pre-commit steps to ensure proper testing, verification, review, and reflection are done.
+7. **Create PR & Submit**
+   - Use `run_in_bash_session` to execute `git checkout -b bolt-optimizations`, `git add .`, `git commit -m "⚡ Bolt: N+1 queries & O(N) optimizations"`, and `gh pr create --title "⚡ Bolt: N+1 queries & O(N) optimizations" --body "Performance optimization"` to create a PR.
+   - Call the `submit` tool to finish.
