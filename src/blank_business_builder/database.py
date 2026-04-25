@@ -363,12 +363,18 @@ def drop_db(database_url: Optional[str] = None):
     return engine
 
 
+_engine = None
+_SessionLocal = None
+
 # Dependency for FastAPI
 def get_db():
     """FastAPI dependency for database sessions"""
-    engine = get_db_engine()
-    Session = get_session_maker(engine)
-    session = Session()
+    global _engine, _SessionLocal
+    if _engine is None:
+        _engine = get_db_engine()
+        _SessionLocal = get_session_maker(_engine)
+
+    session = _SessionLocal()
     try:
         yield session
     finally:

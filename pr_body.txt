@@ -1,3 +1,13 @@
-🎯 **What:** Adds unit tests for the asynchronous `run_autonomous_loop` and `launch_magic_rd_lab_business` functions in `magic_rd_lab_autonomous_agents.py`. The infinite loop and sleeping functionality are mocked to allow fast, deterministic tests without running into timeout issues.
-📊 **Coverage:** Covered loop entry, loop exit conditions via mocked exceptions, agent deployments, invocation of underlying methods, and ensuring metrics sum exactly appropriately after 1 pass through the loop.
-✨ **Result:** Enhanced test coverage that protects core async loop functionality from regressions.
+💡 What:
+Cached the SQLAlchemy engine and session maker instances as module-level globals in `src/blank_business_builder/database.py`. The FastAPI dependency `get_db()` now lazily initializes and reuses these instances instead of creating new ones on every request.
+
+🎯 Why:
+The previous implementation of `get_db()` called `get_db_engine()` and `get_session_maker()` on every single request. This completely defeats SQLAlchemy's built-in connection pooling, as a new connection pool is created each time. Under high load, this causes severe performance regressions and exhausts database connections.
+
+📊 Impact:
+- **Reduces database connection overhead** to nearly zero per request after initial setup.
+- **Prevents database connection exhaustion** by properly utilizing SQLAlchemy's connection pool.
+- **Improves overall request latency** for any endpoint interacting with the database.
+
+🔬 Measurement:
+To verify the improvement, you can monitor the active database connections using `pg_stat_activity` while load testing endpoints that use the `get_db` dependency. The number of connections should remain stable (capped by `pool_size` + `max_overflow`), whereas previously it would spike significantly.
