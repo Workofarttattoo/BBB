@@ -1182,10 +1182,15 @@
                         <p style="margin-top:0.75rem;color:var(--text-dim);">${tools.bland.outreach_goal}</p>
                     </div>
                     <div class="setup-card">
-                        <h3>Website + Delivery</h3>
+                        <h3>Website</h3>
                         <div class="status-chip">${tools.website.status}</div>
-                        <div class="status-chip">${tools.delivery.status}</div>
-                        <p style="margin-top:0.75rem;color:var(--text-dim);">${tools.delivery.delivery_path}</p>
+                        <p style="margin-top:0.75rem;color:var(--text-dim);">${tools.website.pages_url || 'GitHub Pages URL pending'}</p>
+                    </div>
+                    <div class="setup-card">
+                        <h3>BBB + Echo Delivery</h3>
+                        <div class="status-chip">${tools.marketing.status}</div>
+                        <p style="margin-top:0.75rem;color:var(--text-dim);">${tools.marketing.handoff}</p>
+                        <p style="margin-top:0.5rem;color:var(--text-dim);">Delivery: ${tools.delivery.status} - ${tools.delivery.delivery_path}</p>
                     </div>
                 </div>
                 <ol class="pipeline-list">
