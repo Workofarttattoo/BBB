@@ -71,6 +71,12 @@ class Config:
     BLAND_API_KEY = os.getenv("BLAND_API_KEY", "")
     BLAND_WEBHOOK_SECRET = os.getenv("BLAND_WEBHOOK_SECRET", "")
     BLAND_BASE_URL = os.getenv("BLAND_BASE_URL", "https://api.bland.ai")
+    BBB_PERSONA_ID = os.getenv("BBB_PERSONA_ID", "")
+    BLAND_FROM_NUMBER = os.getenv("BLAND_FROM_NUMBER", "")
+    BLAND_DEFAULT_LANGUAGE = os.getenv("BLAND_DEFAULT_LANGUAGE", "en-US")
+    BLAND_MAX_DURATION_MINUTES = int(os.getenv("BLAND_MAX_DURATION_MINUTES", "8"))
+    BLAND_WAIT_FOR_GREETING = os.getenv("BLAND_WAIT_FOR_GREETING", "true").lower() == "true"
+    BLAND_RECORD_CALLS = os.getenv("BLAND_RECORD_CALLS", "true").lower() == "true"
 
     APOLLO_API_KEY = os.getenv("APOLLO_API_KEY", "")
     APOLLO_BASE_URL = os.getenv("APOLLO_BASE_URL", "https://api.apollo.io")
