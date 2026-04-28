@@ -29,6 +29,7 @@ RUN pip install --upgrade pip && \
 COPY src/ ./src/
 COPY static/ ./static/
 COPY data/ ./data/
+RUN mkdir -p ./docs/architecture
 COPY docs/architecture/PHASE_2_COMPLETE.md ./docs/architecture/PHASE_2_COMPLETE.md
 COPY pyproject.toml .
 COPY README.md .

@@ -28,11 +28,9 @@ spec:
         - containerPort: 6379
           name: redis
         command:
-        - redis-server
-        - --appendonly
-        - "yes"
-        - --requirepass
-        - "$(REDIS_PASSWORD)"
+        - /bin/sh
+        - -c
+        - exec redis-server --appendonly yes --requirepass "$REDIS_PASSWORD"
         env:
         - name: REDIS_PASSWORD
           valueFrom:
@@ -49,19 +47,17 @@ spec:
         livenessProbe:
           exec:
             command:
-            - redis-cli
-            - -a
-            - $(REDIS_PASSWORD)
-            - ping
+            - /bin/sh
+            - -c
+            - redis-cli -a "$REDIS_PASSWORD" ping
           initialDelaySeconds: 30
           periodSeconds: 10
         readinessProbe:
           exec:
             command:
-            - redis-cli
-            - -a
-            - $(REDIS_PASSWORD)
-            - ping
+            - /bin/sh
+            - -c
+            - redis-cli -a "$REDIS_PASSWORD" ping
           initialDelaySeconds: 5
           periodSeconds: 5
         volumeMounts:
