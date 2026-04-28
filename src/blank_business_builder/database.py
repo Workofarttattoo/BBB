@@ -281,27 +281,6 @@ class Subscription(Base):
         return f"<Subscription(id={self.id}, user_id={self.user_id}, plan={self.plan_name}, status={self.status})>"
 
 
-class PaymentTransaction(Base):
-    """Payment transaction records"""
-    __tablename__ = 'payment_transactions'
-
-    id = Column(UUIDType(), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUIDType(), ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
-    stripe_payment_intent_id = Column(String(255), index=True)
-    amount = Column(Numeric(12, 2))
-    currency = Column(String(10))
-    status = Column(String(50))
-    description = Column(String(255), nullable=True)
-    transaction_metadata = Column(JSONType(), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    # Relationships
-    user = relationship("User", back_populates="payment_transactions")
-
-    def __repr__(self):
-        return f"<PaymentTransaction(id={self.id}, user_id={self.user_id}, status={self.status})>"
-
-
 class MarketingCampaign(Base):
     """Marketing campaign records"""
     __tablename__ = 'marketing_campaigns'
@@ -321,6 +300,124 @@ class MarketingCampaign(Base):
 
     def __repr__(self):
         return f"<MarketingCampaign(id={self.id}, business_id={self.business_id}, name={self.campaign_name}, status={self.status})>"
+
+
+class LeadRecord(Base):
+    """Prospect lead records discovered via Apollo or other providers."""
+    __tablename__ = "leads"
+
+    id = Column(UUIDType(), primary_key=True, default=uuid.uuid4)
+    business_id = Column(
+        UUIDType(), ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    external_id = Column(String(255), nullable=True, index=True)
+    source = Column(String(100), default="apollo")
+    first_name = Column(String(255), nullable=True)
+    last_name = Column(String(255), nullable=True)
+    full_name = Column(String(255), nullable=True)
+    company = Column(String(255), nullable=True)
+    title = Column(String(255), nullable=True)
+    email = Column(String(255), nullable=True, index=True)
+    phone = Column(String(50), nullable=True, index=True)
+    status = Column(String(50), default="new", index=True)
+    department = Column(String(50), nullable=True, index=True)
+    outreach_priority = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<LeadRecord(id={self.id}, company={self.company}, status={self.status})>"
+
+
+class LeadEnrichment(Base):
+    """Provider enrichment snapshots for a lead."""
+    __tablename__ = "lead_enrichments"
+
+    id = Column(UUIDType(), primary_key=True, default=uuid.uuid4)
+    lead_id = Column(UUIDType(), ForeignKey("leads.id", ondelete="CASCADE"), nullable=False, index=True)
+    provider = Column(String(100), default="apollo", index=True)
+    payload = Column(JSONType(), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    def __repr__(self):
+        return f"<LeadEnrichment(id={self.id}, lead_id={self.lead_id}, provider={self.provider})>"
+
+
+class OutreachAttempt(Base):
+    """Queue/work items for outbound attempts."""
+    __tablename__ = "outreach_attempts"
+
+    id = Column(UUIDType(), primary_key=True, default=uuid.uuid4)
+    lead_id = Column(UUIDType(), ForeignKey("leads.id", ondelete="CASCADE"), nullable=False, index=True)
+    channel = Column(String(50), default="voice")
+    provider = Column(String(50), default="bland")
+    status = Column(String(50), default="queued", index=True)
+    task = Column(Text, nullable=True)
+    script = Column(Text, nullable=True)
+    scheduled_for = Column(DateTime, nullable=True, index=True)
+    completed_at = Column(DateTime, nullable=True)
+    next_action = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    def __repr__(self):
+        return f"<OutreachAttempt(id={self.id}, lead_id={self.lead_id}, status={self.status})>"
+
+
+class CallSession(Base):
+    """Call session lifecycle for a provider call."""
+    __tablename__ = "call_sessions"
+
+    id = Column(UUIDType(), primary_key=True, default=uuid.uuid4)
+    outreach_attempt_id = Column(
+        UUIDType(), ForeignKey("outreach_attempts.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    provider = Column(String(50), default="bland", index=True)
+    provider_call_id = Column(String(255), unique=True, index=True, nullable=False)
+    direction = Column(String(50), default="outbound")
+    status = Column(String(50), default="initiated", index=True)
+    transcript = Column(Text, nullable=True)
+    outcome = Column(String(255), nullable=True)
+    duration_seconds = Column(Integer, nullable=True)
+    summary = Column(Text, nullable=True)
+    raw_payload = Column(JSONType(), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<CallSession(provider_call_id={self.provider_call_id}, status={self.status})>"
+
+
+class ProviderEvent(Base):
+    """Raw webhook/provider events for traceability."""
+    __tablename__ = "provider_events"
+
+    id = Column(UUIDType(), primary_key=True, default=uuid.uuid4)
+    provider = Column(String(50), nullable=False, index=True)
+    event_type = Column(String(100), nullable=True, index=True)
+    external_id = Column(String(255), nullable=True, index=True)
+    payload = Column(JSONType(), nullable=True)
+    received_at = Column(DateTime, default=datetime.utcnow, index=True)
+    processed = Column(Boolean, default=False, index=True)
+    processed_at = Column(DateTime, nullable=True)
+
+    def __repr__(self):
+        return f"<ProviderEvent(provider={self.provider}, event_type={self.event_type})>"
+
+
+class DepartmentRoute(Base):
+    """Maps departmental routing decisions to Slack channels."""
+    __tablename__ = "department_routes"
+
+    id = Column(UUIDType(), primary_key=True, default=uuid.uuid4)
+    department = Column(String(50), unique=True, nullable=False, index=True)
+    slack_channel_id = Column(String(255), nullable=False)
+    owner = Column(String(255), nullable=True)
+    is_active = Column(Boolean, default=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<DepartmentRoute(department={self.department}, channel={self.slack_channel_id})>"
 
 
 # Database connection helpers

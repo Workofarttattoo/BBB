@@ -16,6 +16,7 @@ Coordinates multiple autonomous agents across:
 import json
 import time
 import logging
+import os
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
@@ -132,6 +133,32 @@ class HiveMindCoordinator:
 
         # Auto-initialize ECH0 as overseer
         self._initialize_ech0_overseer()
+
+    @staticmethod
+    def resolve_department_channel_id(department: str) -> Optional[str]:
+        """
+        Resolve department routing to a concrete Slack channel ID.
+        Uses fixed channel IDs from environment variables rather than names.
+        """
+        # Prefer SlackService routing map to keep behavior aligned with integration layer.
+        try:
+            from .integrations import IntegrationFactory
+
+            channel = IntegrationFactory.get_slack_service().resolve_channel(department)
+            if channel:
+                return channel
+        except Exception:
+            # Fallback to direct env lookup below.
+            pass
+
+        routing = {
+            "sales": os.getenv("SLACK_CHANNEL_SALES"),
+            "marketing": os.getenv("SLACK_CHANNEL_MARKETING"),
+            "ops": os.getenv("SLACK_CHANNEL_OPS"),
+            "exec": os.getenv("SLACK_CHANNEL_EXEC"),
+            "support": os.getenv("SLACK_CHANNEL_SUPPORT"),
+        }
+        return routing.get(department.lower())
 
     def _load_config(self, config_path: str) -> Dict:
         """Load configuration"""
