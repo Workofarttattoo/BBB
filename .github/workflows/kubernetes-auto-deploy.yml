@@ -153,6 +153,7 @@ jobs:
           SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
           SENDGRID_FROM_EMAIL: ${{ vars.SENDGRID_FROM_EMAIL || 'noreply@betterbusinessbuilder.com' }}
           BUFFER_ACCESS_TOKEN: ${{ secrets.BUFFER_ACCESS_TOKEN }}
+          ECH0_LLM_API_KEY: ${{ secrets.ECH0_LLM_API_KEY }}
           AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
           AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
           AUTH0_CLIENT_SECRET: ${{ secrets.AUTH0_CLIENT_SECRET }}
@@ -175,6 +176,7 @@ jobs:
             --from-literal=SENDGRID_API_KEY="${SENDGRID_API_KEY}" \
             --from-literal=SENDGRID_FROM_EMAIL="${SENDGRID_FROM_EMAIL}" \
             --from-literal=BUFFER_ACCESS_TOKEN="${BUFFER_ACCESS_TOKEN}" \
+            --from-literal=ECH0_LLM_API_KEY="${ECH0_LLM_API_KEY}" \
             --from-literal=AUTH0_DOMAIN="${AUTH0_DOMAIN}" \
             --from-literal=AUTH0_CLIENT_ID="${AUTH0_CLIENT_ID}" \
             --from-literal=AUTH0_CLIENT_SECRET="${AUTH0_CLIENT_SECRET}" \
@@ -273,9 +275,16 @@ jobs:
         run: |
           set -euo pipefail
           kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/echo-prime.yaml
           kubectl set image deployment/bbb-api \
             api="${IMAGE_NAME}:${GITHUB_SHA}" \
             -n "${K8S_NAMESPACE}"
+          kubectl set image deployment/echo-prime \
+            echo-prime="${IMAGE_NAME}:${GITHUB_SHA}" \
+            -n "${K8S_NAMESPACE}"
+          kubectl rollout status deployment/echo-prime \
+            -n "${K8S_NAMESPACE}" \
+            --timeout=10m
           kubectl rollout status deployment/bbb-api \
             -n "${K8S_NAMESPACE}" \
             --timeout=10m

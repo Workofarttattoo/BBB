@@ -55,6 +55,8 @@ spec:
           value: "echo_prime"
         - name: ECHO_PRIME_MODE
           value: "cluster"
+        - name: ECHO_BASE_URL
+          value: ""
         - name: ECH0_LLM_API_KEY
           valueFrom:
             secretKeyRef:

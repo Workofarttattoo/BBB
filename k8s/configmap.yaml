@@ -16,7 +16,8 @@ data:
   # API settings
   API_HOST: "0.0.0.0"
   API_PORT: "8000"
-  ECHO_BASE_URL: "http://echo-prime-service:8000"
+  ECHO_BASE_URL: "http://echo-prime-service:8001"
+  ECHO_PRIME_BASE_URL: "http://echo-prime-service:8001"
 
   # CORS settings
   CORS_ORIGINS: "*"
@@ -30,5 +31,7 @@ data:
   ENABLE_AUTH0: "false"
   ENABLE_MONITORING: "true"
   ENABLE_WEBSOCKETS: "true"
-  ECH0_LLM_PROVIDER: "huggingface"
-  ECH0_LLM_ENDPOINT: "https://workofarttattoo-echo-prime-agi.hf.space/api/predict"
+  ECH0_LLM_PROVIDER: "ollama"
+  ECH0_LLM_ENDPOINT: ""
+  ECH0_LLM_TIMEOUT_SECONDS: "180"
+  OLLAMA_MODEL: "ech0-fine-tuned-v2:latest"
