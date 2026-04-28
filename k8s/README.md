@@ -44,6 +44,10 @@ Or apply the template (after replacing CHANGEME values):
 kubectl apply -f k8s/secrets.yaml
 ```
 
+Postgres and Redis credentials are intentionally created separately from
+`k8s/postgres.yaml` and `k8s/redis.yaml` so updating the data-service manifests
+does not overwrite real passwords.
+
 ### 3. Apply ConfigMap
 
 ```bash
@@ -71,13 +75,16 @@ kubectl run -it --rm migrations \
   --image=bbb/api:latest \
   --restart=Never \
   --namespace=bbb-production \
-  --env="DATABASE_URL=$(kubectl get secret bbb-secrets -n bbb-production -o jsonpath='{.data.DATABASE_URL}' | base64 -d)" \
+  --env="DATABASE_URL=postgresql://bbbuser:$(kubectl get secret postgres-credentials -n bbb-production -o jsonpath='{.data.password}' | base64 -d)@postgres:5432/bbb_production" \
   -- alembic upgrade head
 ```
+
+Use the same image tag here that you deploy in `k8s/deployment.yaml`.
 
 ### 6. Deploy Application
 
 ```bash
+kubectl apply -f k8s/echo-prime.yaml
 kubectl apply -f k8s/deployment.yaml
 ```
 
@@ -117,6 +124,7 @@ kubectl get ingress -n bbb-production
 
 # View logs
 kubectl logs -f deployment/bbb-api -n bbb-production
+kubectl logs -f deployment/echo-prime -n bbb-production
 
 # Check HPA status
 kubectl get hpa -n bbb-production
@@ -146,11 +154,11 @@ kubectl get hpa bbb-api-hpa -n bbb-production --watch
 
 ```bash
 # Build and push new image
-docker build -t bbb/api:v1.1.0 .
-docker push bbb/api:v1.1.0
+docker build -t <registry>/bbb-api:v1.1.0 .
+docker push <registry>/bbb-api:v1.1.0
 
 # Update deployment
-kubectl set image deployment/bbb-api api=bbb/api:v1.1.0 -n bbb-production
+kubectl set image deployment/bbb-api api=<registry>/bbb-api:v1.1.0 -n bbb-production
 
 # Monitor rollout
 kubectl rollout status deployment/bbb-api -n bbb-production
@@ -161,6 +169,39 @@ kubectl rollout status deployment/bbb-api -n bbb-production
 ```bash
 kubectl rollout undo deployment/bbb-api -n bbb-production
 ```
+
+## Automatic GitHub Actions Deployment
+
+The `Kubernetes Auto Deploy` workflow builds the Docker image, pushes it to
+GitHub Container Registry, applies the Kubernetes manifests, runs database
+migrations, updates the `bbb-api` Deployment image, and waits for rollout.
+
+Required repository secrets:
+
+| Secret | Description |
+| --- | --- |
+| `KUBE_CONFIG_PRODUCTION` | Base64-encoded kubeconfig with access to the production cluster. |
+| `KUBE_CONFIG_STAGING` | Base64-encoded kubeconfig for manual staging deploys, if used. |
+| `BBB_JWT_SECRET_KEY` | JWT signing secret for the API. |
+| `POSTGRES_PASSWORD` | Password for the in-cluster `postgres-credentials` secret. |
+| `REDIS_PASSWORD` | Password for the in-cluster `redis-credentials` secret. |
+| `STRIPE_SECRET_KEY` | Stripe secret key. |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret. |
+| `OPENAI_API_KEY` | OpenAI API key. |
+| `SENDGRID_API_KEY` | SendGrid API key. |
+| `BUFFER_ACCESS_TOKEN` | Buffer API token. |
+| `ENCRYPTION_KEY` | Application encryption key. |
+| `GHCR_PULL_TOKEN` | Optional token with package read access if the cluster cannot pull with the workflow token. |
+
+Optional repository variables:
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `OPENAI_MODEL` | `gpt-4` | Model name stored in `bbb-secrets`. |
+| `SENDGRID_FROM_EMAIL` | `noreply@betterbusinessbuilder.com` | Sender email stored in `bbb-secrets`. |
+
+Run automatically on pushes to `main`, or manually from GitHub Actions via
+`workflow_dispatch`.
 
 ### Update ConfigMap or Secrets
 

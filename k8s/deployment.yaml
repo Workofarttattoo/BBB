@@ -40,30 +40,33 @@ spec:
         - containerPort: 8000
           name: http
           protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: bbb-config
         env:
-        # From ConfigMap
-        - name: APP_NAME
+        - name: DATABASE_PASSWORD
           valueFrom:
-            configMapKeyRef:
-              name: bbb-config
-              key: APP_NAME
-        - name: LOG_LEVEL
+            secretKeyRef:
+              name: postgres-credentials
+              key: password
+        - name: REDIS_PASSWORD
           valueFrom:
-            configMapKeyRef:
-              name: bbb-config
-              key: LOG_LEVEL
-        - name: API_PORT
-          valueFrom:
-            configMapKeyRef:
-              name: bbb-config
-              key: API_PORT
-
-        # From Secrets
+            secretKeyRef:
+              name: redis-credentials
+              key: password
         - name: DATABASE_URL
+          value: "postgresql://bbbuser:$(DATABASE_PASSWORD)@postgres:5432/bbb_production"
+        - name: REDIS_URL
+          value: "redis://:$(REDIS_PASSWORD)@redis:6379/0"
+        - name: SECRET_KEY
           valueFrom:
             secretKeyRef:
               name: bbb-secrets
-              key: DATABASE_URL
+              key: JWT_SECRET_KEY
+        - name: ECHO_BASE_URL
+          value: "http://echo-prime-service:8001"
+
+        # From Secrets
         - name: JWT_SECRET_KEY
           valueFrom:
             secretKeyRef:
