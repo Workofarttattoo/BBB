@@ -445,23 +445,27 @@ class Level6Agent:
         decisions = []
 
         # Auto-generate marketing campaigns for businesses without recent campaigns
-        businesses = db.query(Business).filter(Business.status == "active").all()
+        from sqlalchemy import func
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+
+        # ⚡ Bolt Optimization: Replace N+1 query loop with a single LEFT OUTER JOIN and GROUP BY
+        businesses = db.query(Business).outerjoin(
+            MarketingCampaign,
+            (Business.id == MarketingCampaign.business_id) &
+            (MarketingCampaign.created_at > thirty_days_ago)
+        ).filter(
+            Business.status == "active"
+        ).group_by(
+            Business.id
+        ).having(
+            func.count(MarketingCampaign.id) == 0
+        ).all()
 
         for business in businesses:
-            if self._needs_marketing_campaign(business, db):
-                decision = await self._create_auto_campaign(business, db)
-                decisions.append(decision)
+            decision = await self._create_auto_campaign(business, db)
+            decisions.append(decision)
 
         return decisions
-
-    def _needs_marketing_campaign(self, business: Business, db: Session) -> bool:
-        """Check if business needs a new marketing campaign."""
-        recent_campaigns = db.query(MarketingCampaign).filter(
-            MarketingCampaign.business_id == business.id,
-            MarketingCampaign.created_at > datetime.utcnow() - timedelta(days=30)
-        ).count()
-
-        return recent_campaigns == 0
 
     async def _create_auto_campaign(self, business: Business, db: Session) -> AgentDecision:
         """Automatically create marketing campaign for business."""
