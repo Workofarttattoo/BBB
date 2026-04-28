@@ -478,6 +478,7 @@
                 <div class="step-indicator" id="ind-5">5</div>
                 <div class="step-indicator" id="ind-6">6</div>
                 <div class="step-indicator" id="ind-7">7</div>
+                <div class="step-indicator" id="ind-8">8</div>
             </div>
 
             <!-- Step 1: Profile -->
@@ -681,13 +682,13 @@
                 </div>
             </div>
 
-            <!-- Step 7: Headhunter Launch -->
+            <!-- Step 7: Lead Generation -->
             <div class="step-content" id="step-7">
                 <div class="card">
-                    <h2>🎧 Headhunter Client Acquisition</h2>
-                    <p>Link Apollo.io, Bland, GitHub Pages, and Google delivery so BBB can start finding clients for the selected business.</p>
+                    <h2>🎯 Headhunter Lead Generation</h2>
+                    <p>Configure Apollo.io lead search and enrichment for the first business clients choose.</p>
                     <br>
-                    <form id="acquisitionForm">
+                    <form id="leadGenerationForm">
                         <div class="setup-grid">
                             <div class="setup-card">
                                 <h3>Headhunter / Apollo.io</h3>
@@ -702,11 +703,46 @@
                             </div>
 
                             <div class="setup-card">
+                                <h3>Qualification Rules</h3>
+                                <p style="color: var(--text-dim);">Define what makes a lead ready for outreach.</p>
+                                <br>
+                                <label>Minimum Fit Signal</label>
+                                <select id="qualificationSignal">
+                                    <option value="owner_or_founder">Owner or founder title</option>
+                                    <option value="active_hiring">Actively hiring</option>
+                                    <option value="recent_funding">Recent funding or growth</option>
+                                    <option value="local_operator">Local operator in target state</option>
+                                </select>
+                                <label style="margin-top: 1rem;">Lead Batch Size</label>
+                                <input type="number" id="leadBatchSize" value="25" min="1" max="100">
+                            </div>
+                        </div>
+                        <button type="button" class="btn" onclick="nextStep(8)" style="font-size: 1.05rem;">Next: Marketing Outreach →</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Step 8: Marketing Outreach -->
+            <div class="step-content" id="step-8">
+                <div class="card">
+                    <h2>📣 Marketing + Fulfillment Launch</h2>
+                    <p>Connect Bland calling, GitHub Pages, Google delivery, and the BBB/Echo product generation loop.</p>
+                    <br>
+                    <form id="acquisitionForm">
+                        <div class="setup-grid">
+                            <div class="setup-card">
                                 <h3>Bland Cold Outreach</h3>
-                                <p style="color: var(--text-dim);">Telephony setup for qualified lead call campaigns.</p>
+                                <p style="color: var(--text-dim);">Telephony and cold-call campaign setup for qualified leads.</p>
                                 <br>
                                 <label>Service/Product Offer</label>
                                 <input type="text" id="serviceOffer" value="AI automation setup package" required>
+                                <label style="margin-top: 1rem;">Marketing Channel</label>
+                                <select id="marketingChannel">
+                                    <option value="cold_call_email_followup">Cold call + email follow-up</option>
+                                    <option value="cold_call_only">Cold call only</option>
+                                    <option value="email_first">Email first, call qualified replies</option>
+                                    <option value="linkedin_email_call">LinkedIn + email + call</option>
+                                </select>
                                 <label style="margin-top: 1rem;">Bland API Key</label>
                                 <input type="password" id="blandApiKey" placeholder="Stored only in this server process">
                                 <label style="margin-top: 1rem;">Bland Webhook URL</label>
@@ -726,8 +762,22 @@
                                 <label style="margin-top: 1rem;">Google Drive Folder URL</label>
                                 <input type="url" id="googleDriveFolderUrl" placeholder="https://drive.google.com/drive/folders/...">
                             </div>
+
+                            <div class="setup-card">
+                                <h3>BBB + Echo Delivery</h3>
+                                <p style="color: var(--text-dim);">Once a client orders, generate and deliver the product automatically.</p>
+                                <br>
+                                <label>Fulfillment Mode</label>
+                                <select id="fulfillmentMode">
+                                    <option value="email_and_drive">Email + Google Drive link</option>
+                                    <option value="drive_only">Google Drive delivery only</option>
+                                    <option value="email_only">Email attachment/content only</option>
+                                </select>
+                                <label style="margin-top: 1rem;">Delivery Template</label>
+                                <input type="text" id="deliveryTemplate" value="Thanks for your order -- BBB/Echo generated your deliverable here: {drive_link}">
+                            </div>
                         </div>
-                        <button type="submit" class="btn" id="btn-acquisition" style="font-size: 1.05rem;">🚀 Start Headhunter Pipeline</button>
+                        <button type="submit" class="btn" id="btn-acquisition" style="font-size: 1.05rem;">🚀 Start Marketing + Headhunter Pipeline</button>
                     </form>
                     <div id="acquisition-result" class="console-log" style="display:none; margin-top: 1rem; height: 150px;"></div>
                 </div>
@@ -986,18 +1036,20 @@
             nextStep(6);
         }
 
-        // Step 7: Client acquisition setup
+        // Step 8: Marketing + acquisition launch
         document.getElementById('acquisitionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-acquisition');
             const originalText = btn.innerText;
             btn.disabled = true;
-            btn.innerText = 'Launching Headhunter...';
+            btn.innerText = 'Launching Marketing...';
 
             const payload = {
                 target_customer: document.getElementById('targetCustomer').value,
                 lead_keywords: document.getElementById('leadKeywords').value,
                 service_offer: document.getElementById('serviceOffer').value,
+                campaign_angle: `Market ${document.getElementById('serviceOffer').value} to ${document.getElementById('targetCustomer').value}`,
+                marketing_channels: [document.getElementById('marketingChannel').value],
                 github_repo_url: document.getElementById('githubRepoUrl').value || null,
                 github_pages_url: document.getElementById('githubPagesUrl').value || null,
                 google_workspace_email: document.getElementById('googleWorkspaceEmail').value || null,

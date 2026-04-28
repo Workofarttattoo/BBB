@@ -78,6 +78,8 @@ class AcquisitionSetupRequest(BaseModel):
     target_customer: str
     lead_keywords: str
     service_offer: str
+    campaign_angle: Optional[str] = None
+    marketing_channels: List[str] = []
     github_repo_url: Optional[str] = None
     github_pages_url: Optional[str] = None
     google_workspace_email: Optional[str] = None
@@ -219,6 +221,8 @@ def _build_acquisition_run(state: Dict[str, Any], setup: Dict[str, Any]) -> Dict
     target_customer = setup["target_customer"]
     lead_keywords = setup["lead_keywords"]
     service_offer = setup["service_offer"]
+    campaign_angle = setup.get("campaign_angle") or f"Show how {selected_business} solves urgent customer problems"
+    marketing_channels = setup.get("marketing_channels") or ["cold_call"]
 
     return {
         "business_name": selected_business,
@@ -237,6 +241,13 @@ def _build_acquisition_run(state: Dict[str, Any], setup: Dict[str, Any]) -> Dict
                 "outreach_goal": f"Book discovery calls for {service_offer}",
                 "webhook_url": setup.get("bland_webhook_url") or "/api/webhooks/bland/post-call",
             },
+            "marketing": {
+                "provider": "BBB + Echo AI",
+                "status": "running",
+                "campaign_angle": campaign_angle,
+                "channels": marketing_channels,
+                "handoff": "Generate proposals, service/product deliverables, and follow-up email copy",
+            },
             "website": {
                 "provider": "GitHub Pages",
                 "status": "ready" if env_status["github_pages_configured"] else "needs_github_pages_url",
@@ -253,7 +264,8 @@ def _build_acquisition_run(state: Dict[str, Any], setup: Dict[str, Any]) -> Dict
         },
         "pipeline": [
             "Search and enrich prospects with Headhunter/Apollo",
-            "Qualify leads and queue Bland cold-call outreach",
+            "Qualify leads and queue selected marketing channels",
+            "Run Bland cold-call outreach when qualified phone leads are available",
             "Send qualified prospects to BBB/Echo for proposal and product generation",
             "Deliver ordered products by email and Google Drive link",
             "Repeat this acquisition run for each newly selected business",
@@ -358,6 +370,8 @@ async def setup_acquisition(request: AcquisitionSetupRequest):
         "target_customer": request.target_customer,
         "lead_keywords": request.lead_keywords,
         "service_offer": request.service_offer,
+        "campaign_angle": request.campaign_angle,
+        "marketing_channels": request.marketing_channels,
         "github_repo_url": request.github_repo_url,
         "github_pages_url": request.github_pages_url,
         "google_workspace_email": request.google_workspace_email,

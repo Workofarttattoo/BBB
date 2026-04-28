@@ -109,6 +109,8 @@ def test_acquisition_setup_after_owner_tier_does_not_persist_keys():
         "target_customer": "small business owners",
         "lead_keywords": "founder owner operator",
         "service_offer": "AI automation setup package",
+        "campaign_angle": "Automate back-office work for local operators",
+        "marketing_channels": ["cold_call_email_followup"],
         "github_repo_url": "https://github.com/example/no-code-agency",
         "github_pages_url": "https://example.github.io/no-code-agency",
         "google_workspace_email": "sales@example.com",
@@ -125,6 +127,7 @@ def test_acquisition_setup_after_owner_tier_does_not_persist_keys():
     assert data["run"]["business_name"] == "No-Code App Development Agency"
     assert data["run"]["toolchain"]["headhunter"]["status"] == "ready"
     assert data["run"]["toolchain"]["bland"]["status"] == "ready"
+    assert data["run"]["toolchain"]["marketing"]["channels"] == ["cold_call_email_followup"]
     assert data["run"]["toolchain"]["delivery"]["status"] == "ready"
 
     state = get_app_state()
