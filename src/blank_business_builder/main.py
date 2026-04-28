@@ -90,14 +90,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+PACKAGE_DIR = Path(__file__).resolve().parent
+REPO_ROOT = PACKAGE_DIR.parents[1]
+STATIC_DIR = REPO_ROOT / "static"
+
+
+# Mount static files using an absolute path so the app starts reliably from the
+# Docker image working directory and local development shells.
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 @app.get("/")
 async def root():
     """Serve the main admin dashboard SPA."""
-    return FileResponse("static/index.html")
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.on_event("startup")
@@ -118,23 +124,20 @@ async def stop_self_healing():
     if task:
         task.cancel()
 
-PACKAGE_DIR = Path(__file__).resolve().parent
-REPO_ROOT = PACKAGE_DIR.parents[2]
 LAB_PAGES = {
     "business-builder": PACKAGE_DIR / "business_builder_gui.html",
     "dashboard": PACKAGE_DIR / "dashboard.html",
     "quantum-features": PACKAGE_DIR / "quantum_features_dashboard.html",
-    "bbb-realtime": REPO_ROOT / "bbb_realtime_dashboard.html",
-    "bbb-unified-library": REPO_ROOT / "bbb_unified_library_dashboard.html",
-    "disaster-recovery": REPO_ROOT / "disaster_recovery_dashboard.html",
-    "quantum-analysis": REPO_ROOT / "quantum_analysis_dashboard.html",
-    "test-dashboard": REPO_ROOT / "test_dashboard.html",
-    "website-status": REPO_ROOT / "website_status_dashboard.html",
-    "zero-touch-businesses": REPO_ROOT / "zero_touch_businesses_dashboard.html",
+    "bbb-realtime": PACKAGE_DIR / "bbb_realtime_dashboard.html",
+    "bbb-unified-library": PACKAGE_DIR / "bbb_unified_library_dashboard.html",
+    "disaster-recovery": PACKAGE_DIR / "disaster_recovery_dashboard.html",
+    "quantum-analysis": PACKAGE_DIR / "quantum_analysis_dashboard.html",
+    "website-status": PACKAGE_DIR / "website_status_dashboard.html",
+    "zero-touch-businesses": PACKAGE_DIR / "zero_touch_businesses_dashboard.html",
 }
 LAB_ASSETS = {
-    "quantum_optimization_results.json": REPO_ROOT / "quantum_optimization_results.json",
-    "PHASE_2_COMPLETE.md": REPO_ROOT / "PHASE_2_COMPLETE.md",
+    "quantum_optimization_results.json": REPO_ROOT / "data" / "quantum_optimization_results.json",
+    "PHASE_2_COMPLETE.md": REPO_ROOT / "docs" / "architecture" / "PHASE_2_COMPLETE.md",
 }
 
 

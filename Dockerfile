@@ -27,6 +27,9 @@ RUN pip install --upgrade pip && \
 
 # Copy application code
 COPY src/ ./src/
+COPY static/ ./static/
+COPY data/ ./data/
+COPY docs/architecture/PHASE_2_COMPLETE.md ./docs/architecture/PHASE_2_COMPLETE.md
 COPY pyproject.toml .
 COPY README.md .
 

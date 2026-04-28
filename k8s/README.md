@@ -71,9 +71,11 @@ kubectl run -it --rm migrations \
   --image=bbb/api:latest \
   --restart=Never \
   --namespace=bbb-production \
-  --env="DATABASE_URL=$(kubectl get secret bbb-secrets -n bbb-production -o jsonpath='{.data.DATABASE_URL}' | base64 -d)" \
+  --env="DATABASE_URL=postgresql://bbbuser:$(kubectl get secret postgres-credentials -n bbb-production -o jsonpath='{.data.password}' | base64 -d)@postgres:5432/bbb_production" \
   -- alembic upgrade head
 ```
+
+Use the same image tag here that you deploy in `k8s/deployment.yaml`.
 
 ### 6. Deploy Application
 
@@ -146,11 +148,11 @@ kubectl get hpa bbb-api-hpa -n bbb-production --watch
 
 ```bash
 # Build and push new image
-docker build -t bbb/api:v1.1.0 .
-docker push bbb/api:v1.1.0
+docker build -t <registry>/bbb-api:v1.1.0 .
+docker push <registry>/bbb-api:v1.1.0
 
 # Update deployment
-kubectl set image deployment/bbb-api api=bbb/api:v1.1.0 -n bbb-production
+kubectl set image deployment/bbb-api api=<registry>/bbb-api:v1.1.0 -n bbb-production
 
 # Monitor rollout
 kubectl rollout status deployment/bbb-api -n bbb-production
