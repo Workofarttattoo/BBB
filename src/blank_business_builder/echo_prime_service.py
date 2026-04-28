@@ -13,6 +13,7 @@ from typing import Any, Dict, Optional
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from .ech0_service import ECH0Service
 from .echo_master_brain import EchoMasterBrain
 
 
@@ -29,6 +30,13 @@ class OutreachDecisionRequest(BaseModel):
 
 class PostCallDecisionRequest(BaseModel):
     call_event: Dict[str, Any]
+
+
+class ChatRequest(BaseModel):
+    message: str
+
+
+ech0_service = ECH0Service()
 
 
 def _clamp_priority(priority: int) -> int:
@@ -144,3 +152,10 @@ async def post_call_decision(request: PostCallDecisionRequest) -> Dict[str, Any]
         "department": department,
         "slack_summary": summary,
     }
+
+
+@app.post("/v1/chat")
+async def chat(request: ChatRequest) -> Dict[str, str]:
+    """Private operational chat endpoint for cluster checks and future tools."""
+    response = await ech0_service.chat(request.message)
+    return {"response": response}

@@ -16,6 +16,7 @@ data:
   # API settings
   API_HOST: "0.0.0.0"
   API_PORT: "8000"
+  ECHO_BASE_URL: "http://echo-prime-service:8001"
 
   # CORS settings
   CORS_ORIGINS: "*"
@@ -31,4 +32,5 @@ data:
   ENABLE_WEBSOCKETS: "true"
 
   # Internal ECH0 Prime steering service
-  ECHO_BASE_URL: "http://echo-prime:8001"
+  ECH0_LLM_PROVIDER: "huggingface"
+  ECH0_LLM_ENDPOINT: "https://workofarttattoo-echo-prime-agi.hf.space/api/predict"
