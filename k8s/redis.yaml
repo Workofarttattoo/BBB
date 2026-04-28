@@ -83,12 +83,3 @@ spec:
     name: redis
   selector:
     app: redis
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: redis-credentials
-  namespace: bbb-production
-type: Opaque
-stringData:
-  password: "CHANGEME-generate-strong-password"
