@@ -99,12 +99,3 @@ spec:
     name: postgres
   selector:
     app: postgres
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: postgres-credentials
-  namespace: bbb-production
-type: Opaque
-stringData:
-  password: "CHANGEME-generate-strong-password"

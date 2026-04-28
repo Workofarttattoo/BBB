@@ -1,0 +1,294 @@
+# Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
+#
+# Build and deploy BBB to Kubernetes.
+
+name: Kubernetes Auto Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "GitHub environment to deploy"
+        required: true
+        default: production
+        type: choice
+        options:
+          - production
+          - staging
+      namespace:
+        description: "Kubernetes namespace"
+        required: true
+        default: bbb-production
+      deploy_ingress:
+        description: "Apply k8s/ingress.yaml"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: kubernetes-${{ github.event.inputs.environment || 'production' }}
+  cancel-in-progress: false
+
+env:
+  K8S_NAMESPACE: ${{ github.event.inputs.namespace || 'bbb-production' }}
+  DEPLOY_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
+
+jobs:
+  deploy:
+    name: Build and deploy to Kubernetes
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'production' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Prepare image name
+        id: image
+        run: |
+          set -euo pipefail
+          owner="$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+          image_name="ghcr.io/${owner}/bbb-api"
+          echo "IMAGE_NAME=${image_name}" >> "${GITHUB_ENV}"
+          echo "image_name=${image_name}" >> "${GITHUB_OUTPUT}"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push BBB API image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.image.outputs.image_name }}:${{ github.sha }}
+            ${{ steps.image.outputs.image_name }}:${{ env.DEPLOY_ENVIRONMENT }}-latest
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        env:
+          KUBE_CONFIG_PRODUCTION: ${{ secrets.KUBE_CONFIG_PRODUCTION }}
+          KUBE_CONFIG_STAGING: ${{ secrets.KUBE_CONFIG_STAGING }}
+          KUBE_CONFIG_FALLBACK: ${{ secrets.KUBE_CONFIG_B64 }}
+        run: |
+          set -euo pipefail
+          case "${DEPLOY_ENVIRONMENT}" in
+            production)
+              KUBE_CONFIG_B64="${KUBE_CONFIG_PRODUCTION:-${KUBE_CONFIG_FALLBACK:-}}"
+              ;;
+            staging)
+              KUBE_CONFIG_B64="${KUBE_CONFIG_STAGING:-${KUBE_CONFIG_FALLBACK:-}}"
+              ;;
+            *)
+              echo "Unsupported deployment environment: ${DEPLOY_ENVIRONMENT}" >&2
+              exit 1
+              ;;
+          esac
+
+          if [ -z "${KUBE_CONFIG_B64}" ]; then
+            echo "Missing kubeconfig secret for ${DEPLOY_ENVIRONMENT}" >&2
+            exit 1
+          fi
+          mkdir -p "${HOME}/.kube"
+          echo "${KUBE_CONFIG_B64}" | base64 -d > "${HOME}/.kube/config"
+          chmod 600 "${HOME}/.kube/config"
+
+      - name: Validate deployment secrets
+        env:
+          BBB_JWT_SECRET_KEY: ${{ secrets.BBB_JWT_SECRET_KEY }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in BBB_JWT_SECRET_KEY POSTGRES_PASSWORD REDIS_PASSWORD ENCRYPTION_KEY; do
+            if [ -z "${!name}" ]; then
+              echo "Missing required GitHub secret: ${name}" >&2
+              missing=1
+            fi
+          done
+          if [ "${missing}" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Validate Kubernetes access
+        run: |
+          set -euo pipefail
+          kubectl version --client=true
+          kubectl cluster-info
+
+      - name: Apply namespace, config, and secrets
+        env:
+          BBB_JWT_SECRET_KEY: ${{ secrets.BBB_JWT_SECRET_KEY }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          STRIPE_PROFESSIONAL_PRICE_ID: ${{ secrets.STRIPE_PROFESSIONAL_PRICE_ID }}
+          STRIPE_ENTERPRISE_PRICE_ID: ${{ secrets.STRIPE_ENTERPRISE_PRICE_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-4' }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          SENDGRID_FROM_EMAIL: ${{ vars.SENDGRID_FROM_EMAIL || 'noreply@betterbusinessbuilder.com' }}
+          BUFFER_ACCESS_TOKEN: ${{ secrets.BUFFER_ACCESS_TOKEN }}
+          AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+          AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
+          AUTH0_CLIENT_SECRET: ${{ secrets.AUTH0_CLIENT_SECRET }}
+          AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/configmap.yaml
+
+          kubectl create secret generic bbb-secrets \
+            --namespace="${K8S_NAMESPACE}" \
+            --from-literal=JWT_SECRET_KEY="${BBB_JWT_SECRET_KEY}" \
+            --from-literal=STRIPE_SECRET_KEY="${STRIPE_SECRET_KEY}" \
+            --from-literal=STRIPE_WEBHOOK_SECRET="${STRIPE_WEBHOOK_SECRET}" \
+            --from-literal=STRIPE_PROFESSIONAL_PRICE_ID="${STRIPE_PROFESSIONAL_PRICE_ID}" \
+            --from-literal=STRIPE_ENTERPRISE_PRICE_ID="${STRIPE_ENTERPRISE_PRICE_ID}" \
+            --from-literal=OPENAI_API_KEY="${OPENAI_API_KEY}" \
+            --from-literal=OPENAI_MODEL="${OPENAI_MODEL}" \
+            --from-literal=SENDGRID_API_KEY="${SENDGRID_API_KEY}" \
+            --from-literal=SENDGRID_FROM_EMAIL="${SENDGRID_FROM_EMAIL}" \
+            --from-literal=BUFFER_ACCESS_TOKEN="${BUFFER_ACCESS_TOKEN}" \
+            --from-literal=AUTH0_DOMAIN="${AUTH0_DOMAIN}" \
+            --from-literal=AUTH0_CLIENT_ID="${AUTH0_CLIENT_ID}" \
+            --from-literal=AUTH0_CLIENT_SECRET="${AUTH0_CLIENT_SECRET}" \
+            --from-literal=AUTH0_AUDIENCE="${AUTH0_AUDIENCE}" \
+            --from-literal=ENCRYPTION_KEY="${ENCRYPTION_KEY}" \
+            --dry-run=client \
+            -o yaml | kubectl apply -f -
+
+          kubectl create secret generic postgres-credentials \
+            --namespace="${K8S_NAMESPACE}" \
+            --from-literal=password="${POSTGRES_PASSWORD}" \
+            --dry-run=client \
+            -o yaml | kubectl apply -f -
+
+          kubectl create secret generic redis-credentials \
+            --namespace="${K8S_NAMESPACE}" \
+            --from-literal=password="${REDIS_PASSWORD}" \
+            --dry-run=client \
+            -o yaml | kubectl apply -f -
+
+      - name: Configure GHCR image pull secret
+        env:
+          GHCR_PULL_USERNAME: ${{ secrets.GHCR_PULL_USERNAME || github.actor }}
+          GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN || github.token }}
+        run: |
+          set -euo pipefail
+          kubectl create secret docker-registry ghcr-pull-secret \
+            --namespace="${K8S_NAMESPACE}" \
+            --docker-server=ghcr.io \
+            --docker-username="${GHCR_PULL_USERNAME}" \
+            --docker-password="${GHCR_PULL_TOKEN}" \
+            --dry-run=client \
+            -o yaml | kubectl apply -f -
+
+          kubectl patch serviceaccount default \
+            -n "${K8S_NAMESPACE}" \
+            --type=merge \
+            -p '{"imagePullSecrets":[{"name":"ghcr-pull-secret"}]}'
+
+      - name: Deploy data services
+        run: |
+          set -euo pipefail
+          kubectl apply -f k8s/postgres.yaml
+          kubectl apply -f k8s/redis.yaml
+          kubectl wait --for=condition=ready pod \
+            -l app=postgres \
+            -n "${K8S_NAMESPACE}" \
+            --timeout=5m
+          kubectl wait --for=condition=ready pod \
+            -l app=redis \
+            -n "${K8S_NAMESPACE}" \
+            --timeout=5m
+
+      - name: Run database migrations
+        run: |
+          set -euo pipefail
+          kubectl delete job bbb-migrations \
+            -n "${K8S_NAMESPACE}" \
+            --ignore-not-found
+
+          cat <<EOF | kubectl apply -f -
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: bbb-migrations
+            namespace: ${K8S_NAMESPACE}
+          spec:
+            backoffLimit: 1
+            template:
+              spec:
+                restartPolicy: Never
+                containers:
+                - name: migrations
+                  image: ${IMAGE_NAME}:${GITHUB_SHA}
+                  imagePullPolicy: Always
+                  command: ["alembic", "upgrade", "head"]
+                  env:
+                  - name: DATABASE_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: postgres-credentials
+                        key: password
+                  - name: DATABASE_URL
+                    value: "postgresql://bbbuser:\$(DATABASE_PASSWORD)@postgres:5432/bbb_production"
+          EOF
+
+          if ! kubectl wait --for=condition=complete job/bbb-migrations \
+            -n "${K8S_NAMESPACE}" \
+            --timeout=5m; then
+            kubectl logs job/bbb-migrations -n "${K8S_NAMESPACE}" || true
+            exit 1
+          fi
+          kubectl logs job/bbb-migrations -n "${K8S_NAMESPACE}" || true
+
+      - name: Deploy BBB application
+        run: |
+          set -euo pipefail
+          kubectl apply -f k8s/deployment.yaml
+          kubectl set image deployment/bbb-api \
+            api="${IMAGE_NAME}:${GITHUB_SHA}" \
+            -n "${K8S_NAMESPACE}"
+          kubectl rollout status deployment/bbb-api \
+            -n "${K8S_NAMESPACE}" \
+            --timeout=10m
+
+      - name: Apply ingress
+        if: ${{ github.event_name == 'push' || inputs.deploy_ingress }}
+        run: |
+          set -euo pipefail
+          kubectl apply -f k8s/ingress.yaml
+
+      - name: Show deployed resources
+        if: always()
+        run: |
+          kubectl get deployment,service,hpa,ingress \
+            -n "${K8S_NAMESPACE}" \
+            -l app=bbb-api || true
