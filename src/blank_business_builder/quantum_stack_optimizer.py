@@ -16,6 +16,15 @@ from dataclasses import dataclass
 import json
 from datetime import datetime
 
+CATEGORY_KEYWORD_MAPPING = {
+    'ai_ml': ['ai', 'ml', 'quantum', 'prediction'],
+    'infrastructure': ['k8s', 'deploy', 'scale', 'infrastructure'],
+    'user_experience': ['ui', 'ux', 'dashboard', 'interface'],
+    'integrations': ['api', 'integration', 'webhook'],
+    'analytics': ['analytics', 'metrics', 'tracking'],
+    'security': ['security', 'auth', 'compliance']
+}
+
 
 @dataclass
 class QuantumFeature:
@@ -382,18 +391,15 @@ class QuantumStackOptimizer:
             name_lower = feature.name.lower()
             weight = feature.quantum_priority / total_priority if total_priority > 0 else 0
 
-            if any(kw in name_lower for kw in ['ai', 'ml', 'quantum', 'prediction']):
-                categories['ai_ml'] += weight
-            elif any(kw in name_lower for kw in ['k8s', 'deploy', 'scale', 'infrastructure']):
-                categories['infrastructure'] += weight
-            elif any(kw in name_lower for kw in ['ui', 'ux', 'dashboard', 'interface']):
-                categories['user_experience'] += weight
-            elif any(kw in name_lower for kw in ['api', 'integration', 'webhook']):
-                categories['integrations'] += weight
-            elif any(kw in name_lower for kw in ['analytics', 'metrics', 'tracking']):
-                categories['analytics'] += weight
-            elif any(kw in name_lower for kw in ['security', 'auth', 'compliance']):
-                categories['security'] += weight
+            for category, keywords in CATEGORY_KEYWORD_MAPPING.items():
+                match_found = False
+                for kw in keywords:
+                    if kw in name_lower:
+                        categories[category] += weight
+                        match_found = True
+                        break
+                if match_found:
+                    break
 
         return categories
 
