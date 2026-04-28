@@ -280,6 +280,17 @@ jobs:
             -n "${K8S_NAMESPACE}" \
             --timeout=10m
 
+      - name: Deploy Echo Prime
+        run: |
+          set -euo pipefail
+          kubectl apply -f k8s/echo-prime.yaml
+          kubectl set image deployment/echo-prime \
+            echo-prime="${IMAGE_NAME}:${GITHUB_SHA}" \
+            -n "${K8S_NAMESPACE}"
+          kubectl rollout status deployment/echo-prime \
+            -n "${K8S_NAMESPACE}" \
+            --timeout=10m
+
       - name: Apply ingress
         if: ${{ github.event_name == 'push' || inputs.deploy_ingress }}
         run: |

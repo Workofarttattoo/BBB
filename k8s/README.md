@@ -84,6 +84,7 @@ Use the same image tag here that you deploy in `k8s/deployment.yaml`.
 ### 6. Deploy Application
 
 ```bash
+kubectl apply -f k8s/echo-prime.yaml
 kubectl apply -f k8s/deployment.yaml
 ```
 
@@ -123,6 +124,7 @@ kubectl get ingress -n bbb-production
 
 # View logs
 kubectl logs -f deployment/bbb-api -n bbb-production
+kubectl logs -f deployment/echo-prime -n bbb-production
 
 # Check HPA status
 kubectl get hpa -n bbb-production
