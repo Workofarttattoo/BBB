@@ -49,6 +49,41 @@ def test_onboarding_flow():
     assert response.status_code == 200
     assert response.json()["status"] == "success"
 
+def test_onboarding_to_active_dashboard_flow():
+    profile = {
+        "name": "Dashboard User",
+        "location_state": "CA",
+        "preferred_industry": "Technology",
+        "weekly_hours": 40,
+        "startup_budget": 10000.0,
+        "risk_posture": "balanced"
+    }
+
+    onboarding = client.post("/api/v1/onboarding", json=profile)
+    assert onboarding.status_code == 200
+
+    research = client.get("/api/v1/research")
+    assert research.status_code == 200
+    recommendations = research.json()["recommendations"]
+    assert recommendations
+
+    selected_name = recommendations[0]["name"]
+    selection = client.post("/api/v1/select-business", json={"business_name": selected_name})
+    assert selection.status_code == 200
+    assert selection.json()["selected"] == selected_name
+
+    license_response = client.post("/api/v1/license", json={"tier": "paid"})
+    assert license_response.status_code == 200
+    assert license_response.json()["active"] is True
+
+    dashboard = client.get("/api/v1/dashboard")
+    assert dashboard.status_code == 200
+    data = dashboard.json()
+    assert data["active"] is True
+    assert data["status"] == "Running"
+    assert data["business_name"] == selected_name
+    assert data["license"]["tier"] == "paid"
+
 def test_recommendations():
     # Set profile first to influence recommendations
     profile = {

@@ -660,8 +660,8 @@
     </div>
 
     <script>
-        // API Base URL
-        const API = 'http://localhost:8000/api';
+        // API Base URL - same origin keeps the GUI working behind Uvicorn proxies.
+        const API = '/api/v1';
 
         // State
         let currentStep = 1;
@@ -711,14 +711,15 @@
             }
 
             try {
-                await fetch(`${API}/onboarding`, {
+                const res = await fetch(`${API}/onboarding`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(profile)
                 });
+                if (!res.ok) throw await res.json();
                 nextStep(2);
             } catch (e) {
-                alert("Error connecting to server.");
+                alert("Error saving profile: " + (e.detail || "Could not connect to server."));
             }
         }
 
@@ -852,18 +853,19 @@
         async function selectTier(tier) {
             const businessName = document.getElementById('selectedBusiness').value;
 
-            // First save business selection
-            await fetch(`${API}/select-business`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ business_name: businessName })
-            });
-
             if (tier === 'partner') {
                 if (!confirm("Confirm Partner Tier?\n\n- 50% Revenue Share\n- NO switching later allowed\n- Instant Setup")) return;
             }
 
             try {
+                // First save business selection
+                const selectionRes = await fetch(`${API}/select-business`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ business_name: businessName })
+                });
+                if (!selectionRes.ok) throw await selectionRes.json();
+
                 const res = await fetch(`${API}/license`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -872,8 +874,8 @@
 
                 if (!res.ok) throw await res.json();
 
-                // Success - reload to show dashboard
-                window.location.reload();
+                // Success - move directly into the live dashboard without losing context.
+                await refreshDashboard();
             } catch (e) {
                 alert("Error: " + (e.detail || "Setup failed"));
             }
@@ -889,7 +891,7 @@
                 });
                 if (res.ok) {
                     alert("Admin Bypass Successful! Unlocked Owner Tier.");
-                    window.location.reload();
+                    await refreshDashboard();
                 } else {
                     alert("Invalid Code");
                 }
@@ -926,6 +928,16 @@
                     <p style="color: var(--success);">● Systems Operational</p>
                 </div>
             `;
+        }
+
+        async function refreshDashboard() {
+            const res = await fetch(`${API}/dashboard`);
+            if (!res.ok) throw await res.json();
+            const data = await res.json();
+            if (!data.active) {
+                throw new Error(data.status || "Dashboard is not active yet.");
+            }
+            showDashboard(data);
         }
 
         // Chat Logic
