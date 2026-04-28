@@ -67,6 +67,24 @@ class Config:
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "echo")
 
+    # Outreach stack (Bland + Apollo + Slack + Echo private reasoning)
+    BLAND_API_KEY = os.getenv("BLAND_API_KEY", "")
+    BLAND_WEBHOOK_SECRET = os.getenv("BLAND_WEBHOOK_SECRET", "")
+    BLAND_BASE_URL = os.getenv("BLAND_BASE_URL", "https://api.bland.ai")
+
+    APOLLO_API_KEY = os.getenv("APOLLO_API_KEY", "")
+    APOLLO_BASE_URL = os.getenv("APOLLO_BASE_URL", "https://api.apollo.io")
+
+    SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN", "")
+    SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET", "")
+    SLACK_CHANNEL_SALES = os.getenv("SLACK_CHANNEL_SALES", "")
+    SLACK_CHANNEL_MARKETING = os.getenv("SLACK_CHANNEL_MARKETING", "")
+    SLACK_CHANNEL_OPS = os.getenv("SLACK_CHANNEL_OPS", "")
+    SLACK_CHANNEL_EXEC = os.getenv("SLACK_CHANNEL_EXEC", "")
+    SLACK_CHANNEL_SUPPORT = os.getenv("SLACK_CHANNEL_SUPPORT", "")
+
+    ECHO_BASE_URL = os.getenv("ECHO_BASE_URL", "")
+
 settings = Config()
 
 

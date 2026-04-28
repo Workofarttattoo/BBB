@@ -46,8 +46,21 @@ try:
     import httpx
 except ImportError:
     httpx = None
-from fastapi import HTTPException, status
-from .task_queue import task_queue
+try:
+    from fastapi import HTTPException, status
+except ImportError:  # pragma: no cover
+    class HTTPException(Exception):
+        def __init__(self, status_code: int = 500, detail: str = "error"):
+            super().__init__(detail)
+            self.status_code = status_code
+            self.detail = detail
+
+    class _Status:
+        HTTP_500_INTERNAL_SERVER_ERROR = 500
+        HTTP_501_NOT_IMPLEMENTED = 501
+
+    status = _Status()
+from ..task_queue import task_queue
 
 if openai is None:  # pragma: no cover
 
@@ -130,8 +143,8 @@ if Mail is None:  # pragma: no cover
             self.html_content = html_content
 
 
-from .ech0_service import ECH0Service
-from .config import settings
+from ..ech0_service import ECH0Service
+from ..config import settings
 
 
 class OpenAIService:
