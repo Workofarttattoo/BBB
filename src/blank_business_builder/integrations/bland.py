@@ -29,23 +29,48 @@ class BlandService:
         self.timeout_seconds = timeout_seconds
         self.session = session or requests.Session()
 
+    def _authorization_values(self) -> list[str]:
+        """
+        Return auth header candidates in preferred order.
+        - org_* keys are attempted raw first.
+        - other keys default to Bearer first.
+        - explicit "Bearer ..." values are used as-is.
+        """
+        key = self.api_key.strip()
+        if key.lower().startswith("bearer "):
+            return [key]
+        if key.startswith("org_"):
+            return [key, f"Bearer {key}"]
+        return [f"Bearer {key}", key]
+
     def _request(self, method: str, path: str, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         if not self.api_key:
             raise ValueError("BLAND_API_KEY is required")
-
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
-        response = self.session.request(
-            method=method,
-            url=f"{self.base_url}{path}",
-            json=payload,
-            headers=headers,
-            timeout=self.timeout_seconds,
-        )
-        response.raise_for_status()
-        return response.json() if response.content else {}
+        auth_candidates = self._authorization_values()
+        last_response = None
+        for idx, auth_value in enumerate(auth_candidates):
+            headers = {
+                "Authorization": auth_value,
+                "Content-Type": "application/json",
+            }
+            response = self.session.request(
+                method=method,
+                url=f"{self.base_url}{path}",
+                json=payload,
+                headers=headers,
+                timeout=self.timeout_seconds,
+            )
+            last_response = response
+            status_code = int(getattr(response, "status_code", 200))
+            # Retry with fallback auth style if provider rejects first attempt.
+            if status_code in {401, 403} and idx < len(auth_candidates) - 1:
+                continue
+            response.raise_for_status()
+            return response.json() if response.content else {}
+        # Defensive fallback - should not normally execute.
+        if last_response is not None:
+            last_response.raise_for_status()
+        return {}
 
     def create_call(
         self,
