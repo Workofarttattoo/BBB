@@ -25,9 +25,11 @@ def test_cors_restricted_by_default():
     # Check allow_origins in the middleware options
     # Note: If tests run after other tests that set CORS_ORIGINS, this might fail
     # unless we ensure a fresh state.
-    assert isinstance(cors_middleware.options["allow_origins"], list)
+    middleware_options = getattr(cors_middleware, "options", cors_middleware.kwargs)
+
+    assert isinstance(middleware_options["allow_origins"], list)
     if not os.getenv("CORS_ORIGINS"):
-        assert cors_middleware.options["allow_origins"] == []
+        assert middleware_options["allow_origins"] == []
 
 def test_cors_parsing_logic():
     """Test the logic for parsing CORS_ORIGINS string."""
