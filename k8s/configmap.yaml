@@ -16,7 +16,7 @@ data:
   # API settings
   API_HOST: "0.0.0.0"
   API_PORT: "8000"
-  ECHO_BASE_URL: "http://echo-prime-service:8000"
+  ECHO_BASE_URL: "http://echo-prime-service:8001"
 
   # CORS settings
   CORS_ORIGINS: "*"
