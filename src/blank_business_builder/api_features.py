@@ -71,10 +71,17 @@ class MarketingAutomateRequest(BaseModel):
     channels: List[str]
 
 # 6. Payment Processor
-class PaymentProcessRequest(BaseModel):
+
+class PaymentRequest(BaseModel):
     amount: float
     currency: str = "usd"
-    payment_method: str
+    payment_method_id: str
+
+class PaymentResponse(BaseModel):
+    transaction_id: str
+    status: str
+
+
 
 # 7. Social Media
 class SocialPostRequest(BaseModel):
@@ -218,21 +225,23 @@ async def list_marketing_campaigns(current_user: User = Depends(get_current_user
     return {"campaigns": []}
 
 # 6. Payment Processor
-@router.post("/payments/process")
+@router.post("/payment/process", response_model=PaymentResponse)
 async def process_payment(
-    request: PaymentProcessRequest,
+    request: PaymentRequest,
     current_user: User = Depends(get_current_user)
 ):
-    """Process a payment transaction using PaymentProcessor."""
+    """Process a payment using PaymentProcessor."""
     processor = PaymentProcessor(api_key=os.getenv("STRIPE_API_KEY", ""))
-
-    # We call checkout session as standard representation
-    session_url = await processor.create_checkout_session(
-        price_id="price_123",
-        success_url="https://example.com/success",
-        cancel_url="https://example.com/cancel"
+    success = await processor.process_charge(
+        amount=request.amount,
+        currency=request.currency,
+        source=request.payment_method_id
     )
-    return {"status": "checkout_created", "url": session_url}
+
+    return PaymentResponse(
+        transaction_id="txn_" + os.urandom(8).hex(),
+        status="succeeded" if success else "failed"
+    )
 
 # 7. Social Media
 @router.post("/social/post")
