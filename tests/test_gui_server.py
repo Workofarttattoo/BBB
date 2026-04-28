@@ -83,6 +83,7 @@ def test_onboarding_to_active_dashboard_flow():
     assert data["status"] == "Running"
     assert data["business_name"] == selected_name
     assert data["license"]["tier"] == "paid"
+    assert data["user_share"] == data["revenue_today"]
 
 def test_recommendations():
     # Set profile first to influence recommendations

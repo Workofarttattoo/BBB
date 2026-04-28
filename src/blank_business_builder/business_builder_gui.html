@@ -144,6 +144,11 @@
             font-size: 1rem;
         }
 
+        select option {
+            background: var(--bg-card);
+            color: var(--text);
+        }
+
         input:focus, select:focus {
             outline: none;
             border-color: var(--primary);
@@ -186,6 +191,19 @@
             width: 20px;
             height: 20px;
             margin-right: 1rem;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            flex: 0 0 auto;
         }
 
         .console-log {
@@ -469,9 +487,9 @@
                     </a>
 
                     <div class="form-group">
-                        <label>
+                        <label class="checkbox-label">
                             <input type="checkbox" id="einConfirmed" onchange="toggleStep2Btn()">
-                            I have received my EIN and saved the documentation.
+                            <span>I have received my EIN and saved the documentation.</span>
                         </label>
                     </div>
 

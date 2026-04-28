@@ -281,15 +281,18 @@ async def get_dashboard():
             "status": "Pending License"
         }
 
+    revenue_today = random.randint(100, 500)
+    user_share_today = revenue_today * (1 - license_info.get("revenue_share_percentage", 0.0))
+
     # Simulate running agents
     return {
         "active": True,
         "business_name": selected,
         "status": "Running",
         "agents_active": 3,
-        "revenue_today": random.randint(100, 500),
+        "revenue_today": revenue_today,
         "total_revenue": state.get("revenue_total", 0.0),
-        "user_share": state.get("wallet", 0.0),
+        "user_share": user_share_today,
         "license": license_info
     }
 
