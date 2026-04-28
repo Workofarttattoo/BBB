@@ -10,7 +10,8 @@ import json
 import logging
 import urllib.request
 import urllib.error
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
+from .ech0_llm_engine import ECH0LLMEngine
 from .task_queue import task_queue
 from .semantic_framework import semantic
 from .config import settings
@@ -24,19 +25,47 @@ class ECH0Service:
     Service for interacting with the ECH0 local brain via Ollama.
     """
 
-    def __init__(self, model: str = settings.OLLAMA_MODEL, base_url: str = settings.OLLAMA_BASE_URL):
+    def __init__(
+        self,
+        model: str = settings.OLLAMA_MODEL,
+        base_url: str = settings.OLLAMA_BASE_URL,
+        llm_engine: Optional[ECH0LLMEngine] = None,
+    ):
         self.model = model
         self.base_url = base_url
+        self.llm_engine = llm_engine
         self.system_prompt = (
             "You are Echo, an advanced autonomous business orchestrator. "
             "Your goal is to help the user build and manage a successful business empire. "
             "Be helpful, concise, and professional."
         )
 
+    def _get_llm_engine(self) -> ECH0LLMEngine:
+        if self.llm_engine is None:
+            self.llm_engine = ECH0LLMEngine(
+                provider=settings.ECH0_LLM_PROVIDER,
+                endpoint=settings.ECH0_LLM_ENDPOINT,
+                api_key=settings.ECH0_LLM_API_KEY,
+                timeout_seconds=settings.ECH0_LLM_TIMEOUT_SECONDS,
+                ollama_model=self.model,
+                ollama_base_url=self.base_url,
+            )
+        return self.llm_engine
+
     async def _call_ollama(self, prompt: str, system_prompt: Optional[str] = None) -> str:
         """
-        Call the local Ollama instance.
+        Call Echo's configured inference engine.
         """
+        if settings.ECH0_LLM_PROVIDER != "ollama" or settings.ECH0_LLM_ENDPOINT:
+            loop = asyncio.get_running_loop()
+            return await loop.run_in_executor(
+                None,
+                lambda: self._get_llm_engine().generate_response(
+                    prompt,
+                    context=system_prompt or self.system_prompt,
+                ),
+            )
+
         url = f"{self.base_url}/api/generate"
         payload = {
             "model": self.model,
