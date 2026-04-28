@@ -445,12 +445,21 @@ class Level6Agent:
         decisions = []
 
         # Auto-generate marketing campaigns for businesses without recent campaigns
-        businesses = db.query(Business).filter(Business.status == "active").all()
+        # Optimization: Use a single LEFT OUTER JOIN query to prevent N+1 queries
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
 
-        for business in businesses:
-            if self._needs_marketing_campaign(business, db):
-                decision = await self._create_auto_campaign(business, db)
-                decisions.append(decision)
+        businesses_without_recent_campaigns = db.query(Business).outerjoin(
+            MarketingCampaign,
+            (Business.id == MarketingCampaign.business_id) &
+            (MarketingCampaign.created_at > thirty_days_ago)
+        ).filter(
+            Business.status == "active",
+            MarketingCampaign.id == None
+        ).all()
+
+        for business in businesses_without_recent_campaigns:
+            decision = await self._create_auto_campaign(business, db)
+            decisions.append(decision)
 
         return decisions
 
