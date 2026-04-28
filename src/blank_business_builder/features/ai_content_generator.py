@@ -323,7 +323,7 @@ class AIContentGenerator:
             # Use the local Ollama/ECH0 core for reasoning
             return await self.ech0_service.generate(prompt)
         except Exception as e:
-            logger.warning(f"ECH0 generation failed: {e}. Falling back to default model.")
+            logging.warning(f"ECH0 generation failed: {e}. Falling back to default model.")
             # Fallback to OpenAI if ECH0 fails
             if request.ai_model in [AIModel.GPT4, AIModel.GPT4_TURBO]:
                 return await self._generate_with_openai(prompt, request)
@@ -349,7 +349,7 @@ class AIContentGenerator:
             )
             return response.choices[0].message.content
         except Exception as e:
-            logger.warning(f"OpenAI generation failed: {e}. Falling back to placeholder.")
+            logging.warning(f"OpenAI generation failed: {e}. Falling back to placeholder.")
             return self._generate_placeholder_content("OpenAI", request)
 
     def _generate_placeholder_content(self, model_name: str, request: ContentRequest) -> str:
@@ -363,7 +363,7 @@ class AIContentGenerator:
         Returns:
             A formatted placeholder string.
         """
-        logger.warning(f"Using placeholder for {model_name} content generation. API integration pending.")
+        logging.warning(f"Using placeholder for {model_name} content generation. API integration pending.")
         return f"[{model_name}-Generated Content]\n\nHigh-quality content about {request.topic}"
 
     async def _generate_with_claude(self, prompt: str, request: ContentRequest) -> str:
