@@ -1,0 +1,135 @@
+# Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
+#
+# Echo Prime private reasoning service for BBB.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-prime
+  namespace: bbb-production
+  labels:
+    app: echo-prime
+    component: reasoning
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: echo-prime
+  template:
+    metadata:
+      labels:
+        app: echo-prime
+        component: reasoning
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8001"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: echo-prime
+        image: bbb/api:latest
+        imagePullPolicy: Always
+        command:
+        - uvicorn
+        - blank_business_builder.echo_prime_api:app
+        - --host
+        - "0.0.0.0"
+        - --port
+        - "8001"
+        - --workers
+        - "2"
+        ports:
+        - containerPort: 8001
+          name: http
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: bbb-config
+        env:
+        - name: ECHO_PRIME_NAME
+          value: "echo_prime"
+        - name: ECHO_PRIME_MODE
+          value: "cluster"
+        - name: ECH0_LLM_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: bbb-secrets
+              key: ECH0_LLM_API_KEY
+              optional: true
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 5"]
+      terminationGracePeriodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-prime-service
+  namespace: bbb-production
+  labels:
+    app: echo-prime
+    component: reasoning
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8001
+    targetPort: 8001
+    protocol: TCP
+    name: http
+  selector:
+    app: echo-prime
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: echo-prime-hpa
+  namespace: bbb-production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: echo-prime
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

@@ -63,6 +63,8 @@ spec:
             secretKeyRef:
               name: bbb-secrets
               key: JWT_SECRET_KEY
+        - name: ECHO_BASE_URL
+          value: "http://echo-prime-service:8001"
 
         # From Secrets
         - name: JWT_SECRET_KEY
