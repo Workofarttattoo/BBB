@@ -42,7 +42,7 @@ class TestECH0ServiceOllama(unittest.TestCase):
         self.assertEqual(request.get_method(), "POST")
 
         payload = json.loads(request.data.decode('utf-8'))
-        self.assertEqual(payload['model'], 'echo')
+        self.assertEqual(payload['model'], 'ech0-fine-tuned-v2:latest')
         self.assertEqual(payload['prompt'], 'Hello')
 
     @patch('urllib.request.urlopen')

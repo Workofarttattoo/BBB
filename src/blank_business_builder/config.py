@@ -65,7 +65,11 @@ class Config:
     # Ollama / Echo
     LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama")
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "echo")
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "ech0-fine-tuned-v2:latest")
+    ECH0_LLM_PROVIDER = os.getenv("ECH0_LLM_PROVIDER", LLM_PROVIDER)
+    ECH0_LLM_ENDPOINT = os.getenv("ECH0_LLM_ENDPOINT", "")
+    ECH0_LLM_API_KEY = os.getenv("ECH0_LLM_API_KEY", "")
+    ECH0_LLM_TIMEOUT_SECONDS = int(os.getenv("ECH0_LLM_TIMEOUT_SECONDS", "180"))
 
     # Outreach stack (Bland + Apollo + Slack + Echo private reasoning)
     BLAND_API_KEY = os.getenv("BLAND_API_KEY", "")
@@ -84,6 +88,7 @@ class Config:
     SLACK_CHANNEL_SUPPORT = os.getenv("SLACK_CHANNEL_SUPPORT", "")
 
     ECHO_BASE_URL = os.getenv("ECHO_BASE_URL", "")
+    ECHO_PRIME_BASE_URL = os.getenv("ECHO_PRIME_BASE_URL", ECHO_BASE_URL)
 
 settings = Config()
 
