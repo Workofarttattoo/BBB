@@ -44,6 +44,8 @@ spec:
         - configMapRef:
             name: bbb-config
         env:
+        - name: ECHO_BASE_URL
+          value: "http://echo-prime:8001"
         - name: DATABASE_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -134,6 +136,78 @@ spec:
 
       terminationGracePeriodSeconds: 30
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-prime
+  namespace: bbb-production
+  labels:
+    app: echo-prime
+    component: steering
+    version: v1
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: echo-prime
+  template:
+    metadata:
+      labels:
+        app: echo-prime
+        component: steering
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8001"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: echo-prime
+        image: bbb/api:latest
+        imagePullPolicy: Always
+        command: ["uvicorn"]
+        args:
+        - "blank_business_builder.echo_prime_service:app"
+        - "--host"
+        - "0.0.0.0"
+        - "--port"
+        - "8001"
+        ports:
+        - containerPort: 8001
+          name: http
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: bbb-config
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -155,6 +229,24 @@ spec:
   sessionAffinityConfig:
     clientIP:
       timeoutSeconds: 10800
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-prime
+  namespace: bbb-production
+  labels:
+    app: echo-prime
+    component: steering
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8001
+    targetPort: 8001
+    protocol: TCP
+    name: http
+  selector:
+    app: echo-prime
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler

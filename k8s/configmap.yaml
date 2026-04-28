@@ -29,3 +29,6 @@ data:
   ENABLE_AUTH0: "false"
   ENABLE_MONITORING: "true"
   ENABLE_WEBSOCKETS: "true"
+
+  # Internal ECH0 Prime steering service
+  ECHO_BASE_URL: "http://echo-prime:8001"
