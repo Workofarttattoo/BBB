@@ -43,6 +43,38 @@ class EchoMasterBrain:
         except Exception:
             return None
 
+    def health(self) -> Dict[str, Any]:
+        """Return steering service health without raising on network failures."""
+        if not self.base_url:
+            return {
+                "configured": False,
+                "connected": False,
+                "base_url": "",
+                "status": "fallback",
+            }
+        try:
+            response = self.session.get(
+                f"{self.base_url}/health",
+                timeout=self.timeout_seconds,
+                headers={"Accept": "application/json"},
+            )
+            response.raise_for_status()
+            payload = response.json() if response.content else {}
+            return {
+                "configured": True,
+                "connected": True,
+                "base_url": self.base_url,
+                "status": payload.get("status", "healthy"),
+            }
+        except Exception as exc:
+            return {
+                "configured": True,
+                "connected": False,
+                "base_url": self.base_url,
+                "status": "unreachable",
+                "error": str(exc),
+            }
+
     @staticmethod
     def _default_department(lead_event: Dict[str, Any]) -> str:
         text = " ".join(

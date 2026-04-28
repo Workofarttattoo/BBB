@@ -1,0 +1,47 @@
+# Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
+#
+# One-shot in-cluster check that proves BBB can reach echo_prime steering.
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: bbb-echo-prime-debug
+  namespace: bbb-production
+  labels:
+    app: bbb-api
+    component: debug
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: bbb-api
+        component: debug
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: echo-prime-debug
+        image: bbb/api:latest
+        imagePullPolicy: Always
+        command:
+        - python
+        - -c
+        - |
+          import json
+          import os
+          import urllib.request
+
+          base_url = os.environ["BBB_INTERNAL_URL"].rstrip("/")
+          request = urllib.request.Request(
+              f"{base_url}/health/echo-prime",
+              headers={"Accept": "application/json"},
+          )
+          with urllib.request.urlopen(request, timeout=15) as response:
+              payload = json.loads(response.read().decode("utf-8"))
+
+          print(json.dumps(payload, indent=2, sort_keys=True))
+          if not payload.get("connected"):
+              raise SystemExit("BBB is not connected to echo_prime steering")
+        env:
+        - name: BBB_INTERNAL_URL
+          value: "http://bbb-api-service"

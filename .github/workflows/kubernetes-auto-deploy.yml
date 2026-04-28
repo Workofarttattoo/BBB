@@ -291,6 +291,24 @@ jobs:
             -n "${K8S_NAMESPACE}" \
             --timeout=10m
 
+      - name: Debug echo_prime steering
+        run: |
+          set -euo pipefail
+          kubectl delete job bbb-echo-prime-debug \
+            -n "${K8S_NAMESPACE}" \
+            --ignore-not-found
+          kubectl apply -f k8s/echo-prime-debug-job.yaml
+          kubectl set image job/bbb-echo-prime-debug \
+            echo-prime-debug="${IMAGE_NAME}:${GITHUB_SHA}" \
+            -n "${K8S_NAMESPACE}"
+          if ! kubectl wait --for=condition=complete job/bbb-echo-prime-debug \
+            -n "${K8S_NAMESPACE}" \
+            --timeout=5m; then
+            kubectl logs job/bbb-echo-prime-debug -n "${K8S_NAMESPACE}" || true
+            exit 1
+          fi
+          kubectl logs job/bbb-echo-prime-debug -n "${K8S_NAMESPACE}"
+
       - name: Apply ingress
         if: ${{ github.event_name == 'push' || inputs.deploy_ingress }}
         run: |
@@ -300,6 +318,7 @@ jobs:
       - name: Show deployed resources
         if: always()
         run: |
-          kubectl get deployment,service,hpa,ingress \
+          kubectl get deployment,service,hpa,job \
             -n "${K8S_NAMESPACE}" \
-            -l app=bbb-api || true
+            -l 'app in (bbb-api,echo-prime)' || true
+          kubectl get ingress -n "${K8S_NAMESPACE}" || true

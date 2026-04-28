@@ -92,9 +92,31 @@ Wait for deployment:
 
 ```bash
 kubectl rollout status deployment/bbb-api -n bbb-production
+kubectl rollout status deployment/echo-prime -n bbb-production
 ```
 
-### 7. Setup Ingress (Optional)
+The `echo-prime` Service is cluster-internal and steers BBB via `ECHO_BASE_URL`.
+It is not exposed through ingress.
+
+### 7. Debug ECH0 Prime Steering
+
+Run the in-cluster debug job after the application rollout:
+
+```bash
+kubectl delete job bbb-echo-prime-debug -n bbb-production --ignore-not-found
+kubectl apply -f k8s/echo-prime-debug-job.yaml
+kubectl wait --for=condition=complete job/bbb-echo-prime-debug -n bbb-production --timeout=2m
+kubectl logs job/bbb-echo-prime-debug -n bbb-production
+```
+
+The job verifies:
+
+- `echo-prime` health
+- BBB `/health/echo-prime` connectivity to `echo-prime`
+- Outreach steering through `/v1/outreach/decision`
+- Post-call steering through `/v1/outreach/post-call`
+
+### 8. Setup Ingress (Optional)
 
 ```bash
 # Install NGINX Ingress Controller (if not already installed)

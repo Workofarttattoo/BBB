@@ -242,6 +242,14 @@ async def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
 
 
+@app.get("/health/echo-prime")
+async def echo_prime_health_check():
+    """Report whether BBB can reach the private echo_prime steering service."""
+    from .echo_master_brain import EchoMasterBrain
+
+    return EchoMasterBrain(timeout_seconds=3).health()
+
+
 # Authentication endpoints
 @app.post("/api/v1/auth/register", response_model=TokenResponse)
 async def register(user_data: UserCreate, db: Session = Depends(get_db)):
