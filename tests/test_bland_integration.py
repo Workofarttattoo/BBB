@@ -47,9 +47,20 @@ def test_bland_service_request_shapes():
     assert len(session.calls) == 3
     assert session.calls[0]["method"] == "POST"
     assert session.calls[0]["url"].endswith("/v1/calls")
+    assert session.calls[0]["headers"]["Authorization"] == "Bearer test-key"
     assert session.calls[1]["method"] == "GET"
     assert session.calls[1]["url"].endswith("/v1/calls/call_123")
     assert session.calls[2]["json"]["status"] == "completed"
+
+
+def test_bland_service_org_style_auth_header():
+    session = _FakeSession()
+    service = BlandService(api_key="org_abc123", session=session)
+
+    service.get_call("call_123")
+
+    assert len(session.calls) == 1
+    assert session.calls[0]["headers"]["Authorization"] == "org_abc123"
 
 
 def test_bland_webhook_signature_verification():
