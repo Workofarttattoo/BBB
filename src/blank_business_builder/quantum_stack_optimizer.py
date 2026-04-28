@@ -408,8 +408,14 @@ class QuantumStackOptimizer:
         if not features:
             return 0.5
 
-        top_10_priority = sum(f.quantum_priority for f in features[:10])
-        total_priority = sum(f.quantum_priority for f in features)
+        # ⚡ Bolt Optimization: Calculate priorities in a single loop
+        top_10_priority = 0.0
+        total_priority = 0.0
+        for i, f in enumerate(features):
+            p = f.quantum_priority
+            total_priority += p
+            if i < 10:
+                top_10_priority += p
 
         concentration = top_10_priority / total_priority if total_priority > 0 else 0.5
 
