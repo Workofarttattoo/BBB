@@ -56,6 +56,13 @@ class BlandService:
         metadata: Optional[Dict[str, Any]] = None,
         pathway_id: Optional[str] = None,
         from_number: Optional[str] = None,
+        persona_id: Optional[str] = None,
+        request_data: Optional[Dict[str, Any]] = None,
+        max_duration: Optional[int] = None,
+        record: Optional[bool] = None,
+        wait_for_greeting: Optional[bool] = None,
+        language: Optional[str] = None,
+        analysis_schema: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Create an outbound Bland call with per-call webhook callback."""
         body: Dict[str, Any] = {
@@ -69,6 +76,20 @@ class BlandService:
             body["pathway_id"] = pathway_id
         if from_number:
             body["from"] = from_number
+        if persona_id:
+            body["persona_id"] = persona_id
+        if request_data:
+            body["request_data"] = request_data
+        if max_duration is not None:
+            body["max_duration"] = max_duration
+        if record is not None:
+            body["record"] = record
+        if wait_for_greeting is not None:
+            body["wait_for_greeting"] = wait_for_greeting
+        if language:
+            body["language"] = language
+        if analysis_schema:
+            body["analysis_schema"] = analysis_schema
         return self._request("POST", "/v1/calls", body)
 
     def get_call(self, call_id: str) -> Dict[str, Any]:

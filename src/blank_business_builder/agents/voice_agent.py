@@ -6,9 +6,10 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
-
+from urllib.parse import urljoin
 from sqlalchemy.orm import Session
 
+from ..config import settings
 from ..database import CallSession, LeadRecord, OutreachAttempt, ProviderEvent
 from ..echo_master_brain import EchoMasterBrain
 from ..integrations import IntegrationFactory
@@ -22,6 +23,49 @@ class VoiceAgent:
         self.bland = IntegrationFactory.get_bland_service()
         self.slack = IntegrationFactory.get_slack_service()
         self.brain = EchoMasterBrain()
+        self.default_persona_id = settings.BBB_PERSONA_ID
+        self.default_from_number = settings.BLAND_FROM_NUMBER
+        self.default_language = settings.BLAND_DEFAULT_LANGUAGE
+        self.default_max_duration = settings.BLAND_MAX_DURATION_MINUTES
+        self.default_record_calls = settings.BLAND_RECORD_CALLS
+        self.default_wait_for_greeting = settings.BLAND_WAIT_FOR_GREETING
+
+    def _absolute_webhook(self, webhook_url: Optional[str]) -> str:
+        """Resolve relative webhook paths against ECHO_BASE_URL when possible."""
+        webhook = (webhook_url or "").strip()
+        if not webhook:
+            return ""
+        if webhook.startswith("http://") or webhook.startswith("https://"):
+            return webhook
+        base = settings.ECHO_BASE_URL.strip()
+        if not base:
+            return webhook
+        return urljoin(base.rstrip("/") + "/", webhook.lstrip("/"))
+
+    @staticmethod
+    def build_request_data_from_lead(lead: LeadRecord) -> Dict[str, Any]:
+        """Map a lead record into Bland request_data fields used by BBB persona."""
+        first_name = (lead.first_name or "").strip()
+        last_name = (lead.last_name or "").strip()
+        return {
+            "first_name": first_name,
+            "last_name": last_name,
+            "homeowner_name": (lead.full_name or f"{first_name} {last_name}".strip()).strip(),
+            "property_address": "",
+            "business_name": lead.company or "",
+            "company": lead.company or "",
+            "city": "",
+            "state": "",
+            "zip_code": "",
+            "storm_date": "",
+            "hail_size": "",
+            "storm_type": "",
+            "damage_probability": "",
+            "structures_hit": "",
+            "image_findings": "",
+            "lead_priority": str(lead.outreach_priority or ""),
+            "callback_number": lead.phone or "",
+        }
 
     def create_outreach_call(
         self,
@@ -32,6 +76,14 @@ class VoiceAgent:
         department: str,
         script: str,
         task: str,
+        persona_id: Optional[str] = None,
+        from_number: Optional[str] = None,
+        request_data: Optional[Dict[str, Any]] = None,
+        max_duration: Optional[int] = None,
+        record: Optional[bool] = None,
+        wait_for_greeting: Optional[bool] = None,
+        language: Optional[str] = None,
+        analysis_schema: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Create Bland call + persist outreach/call session records."""
         outreach = OutreachAttempt(
@@ -45,15 +97,26 @@ class VoiceAgent:
         db.add(outreach)
         db.flush()
 
+        resolved_webhook = self._absolute_webhook(webhook_url)
         call_response = self.bland.create_call(
             phone_number=lead.phone or "",
             task=task,
-            webhook=webhook_url,
+            webhook=resolved_webhook,
             metadata={
                 "lead_id": str(lead.id),
                 "outreach_attempt_id": str(outreach.id),
                 "department": department,
             },
+            persona_id=persona_id or self.default_persona_id or None,
+            from_number=from_number or self.default_from_number or None,
+            request_data=request_data or self.build_request_data_from_lead(lead),
+            max_duration=max_duration if max_duration is not None else self.default_max_duration,
+            record=self.default_record_calls if record is None else record,
+            wait_for_greeting=self.default_wait_for_greeting
+            if wait_for_greeting is None
+            else wait_for_greeting,
+            language=language or self.default_language,
+            analysis_schema=analysis_schema,
         )
         provider_call_id = str(call_response.get("call_id") or call_response.get("id") or outreach.id)
         call = CallSession(
