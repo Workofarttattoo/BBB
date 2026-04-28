@@ -11,7 +11,7 @@ import os
 import random
 from dataclasses import asdict
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -73,6 +73,18 @@ class BusinessSelection(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
+
+class AcquisitionSetupRequest(BaseModel):
+    target_customer: str
+    lead_keywords: str
+    service_offer: str
+    github_repo_url: Optional[str] = None
+    github_pages_url: Optional[str] = None
+    google_workspace_email: Optional[str] = None
+    google_drive_folder_url: Optional[str] = None
+    apollo_api_key: Optional[str] = None
+    bland_api_key: Optional[str] = None
+    bland_webhook_url: Optional[str] = None
 
 # --- State Management (Simple In-Memory + JSON Sync) ---
 STATE_FILE = "business_state.json"
@@ -185,6 +197,69 @@ class RealAnalysisEngine:
             "recommendations": top_3
         }
 
+def _link_runtime_env(request: AcquisitionSetupRequest) -> Dict[str, bool]:
+    """Load provided tool keys into this Uvicorn process without writing secrets to disk."""
+    if request.apollo_api_key:
+        os.environ["APOLLO_API_KEY"] = request.apollo_api_key
+    if request.bland_api_key:
+        os.environ["BLAND_API_KEY"] = request.bland_api_key
+
+    return {
+        "apollo_configured": bool(os.getenv("APOLLO_API_KEY")),
+        "bland_configured": bool(os.getenv("BLAND_API_KEY")),
+        "github_pages_configured": bool(request.github_pages_url or request.github_repo_url),
+        "google_workspace_configured": bool(request.google_workspace_email),
+        "google_drive_configured": bool(request.google_drive_folder_url),
+    }
+
+def _build_acquisition_run(state: Dict[str, Any], setup: Dict[str, Any]) -> Dict[str, Any]:
+    selected_business = state.get("selected_business", "Unknown Business")
+    profile = state.get("profile", {})
+    env_status = setup["env_status"]
+    target_customer = setup["target_customer"]
+    lead_keywords = setup["lead_keywords"]
+    service_offer = setup["service_offer"]
+
+    return {
+        "business_name": selected_business,
+        "status": "running",
+        "toolchain": {
+            "headhunter": {
+                "provider": "Apollo.io",
+                "status": "ready" if env_status["apollo_configured"] else "needs_api_key",
+                "query": f"{lead_keywords} in {profile.get('location_state', 'target market')}",
+                "target_customer": target_customer,
+                "planned_leads": 25,
+            },
+            "bland": {
+                "provider": "Bland",
+                "status": "ready" if env_status["bland_configured"] else "needs_api_key",
+                "outreach_goal": f"Book discovery calls for {service_offer}",
+                "webhook_url": setup.get("bland_webhook_url") or "/api/webhooks/bland/post-call",
+            },
+            "website": {
+                "provider": "GitHub Pages",
+                "status": "ready" if env_status["github_pages_configured"] else "needs_github_pages_url",
+                "repo_url": setup.get("github_repo_url"),
+                "pages_url": setup.get("github_pages_url"),
+            },
+            "delivery": {
+                "providers": ["Google Workspace", "Google Drive", "BBB", "Echo AI"],
+                "status": "ready" if (
+                    env_status["google_workspace_configured"] and env_status["google_drive_configured"]
+                ) else "needs_google_workspace_or_drive",
+                "delivery_path": "Email service/product deliverables with Google Drive links",
+            },
+        },
+        "pipeline": [
+            "Search and enrich prospects with Headhunter/Apollo",
+            "Qualify leads and queue Bland cold-call outreach",
+            "Send qualified prospects to BBB/Echo for proposal and product generation",
+            "Deliver ordered products by email and Google Drive link",
+            "Repeat this acquisition run for each newly selected business",
+        ],
+    }
+
 # --- Routes ---
 
 @app.get("/")
@@ -266,6 +341,35 @@ async def admin_bypass(request: BypassRequest):
         return {"status": "success", "message": "Admin bypass applied"}
     raise HTTPException(status_code=403, detail="Invalid admin code")
 
+@app.post("/api/v1/acquisition/setup")
+async def setup_acquisition(request: AcquisitionSetupRequest):
+    """Configure the post-license acquisition toolchain for the selected business."""
+    state = get_app_state()
+    selected = state.get("selected_business")
+    license_info = fiduciary.get_license_info()
+    if not license_info.get("active"):
+        raise HTTPException(status_code=400, detail="Activate Owner Tier before acquisition setup.")
+    if not selected:
+        raise HTTPException(status_code=400, detail="Select a business before acquisition setup.")
+
+    env_status = _link_runtime_env(request)
+    setup = {
+        "business_name": selected,
+        "target_customer": request.target_customer,
+        "lead_keywords": request.lead_keywords,
+        "service_offer": request.service_offer,
+        "github_repo_url": request.github_repo_url,
+        "github_pages_url": request.github_pages_url,
+        "google_workspace_email": request.google_workspace_email,
+        "google_drive_folder_url": request.google_drive_folder_url,
+        "bland_webhook_url": request.bland_webhook_url,
+        "env_status": env_status,
+    }
+    run = _build_acquisition_run(state, setup)
+    update_app_state("acquisition_setup", setup)
+    update_app_state("acquisition_run", run)
+    return {"status": "started", "setup": setup, "run": run}
+
 @app.get("/api/v1/dashboard")
 async def get_dashboard():
     """Get simulated dashboard metrics."""
@@ -293,7 +397,8 @@ async def get_dashboard():
         "revenue_today": revenue_today,
         "total_revenue": state.get("revenue_total", 0.0),
         "user_share": user_share_today,
-        "license": license_info
+        "license": license_info,
+        "acquisition": state.get("acquisition_run")
     }
 
 @app.post("/api/v1/chat")

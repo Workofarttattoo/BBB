@@ -239,6 +239,35 @@
             box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
         }
 
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+        }
+
+        .workflow-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .workflow-card.ready {
+            border-color: var(--primary);
+            background: rgba(0, 255, 136, 0.06);
+        }
+
+        .workflow-card.pending {
+            border-color: var(--warning);
+            background: rgba(255, 152, 0, 0.08);
+        }
+
+        .workflow-card h4 {
+            margin-bottom: 0.4rem;
+            color: var(--primary);
+        }
+
         .pricing-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -279,6 +308,37 @@
 
         .metric-val { font-size: 2rem; font-weight: bold; color: var(--primary); }
         .metric-label { color: var(--text-dim); font-size: 0.9rem; margin-top: 0.5rem; }
+
+        .setup-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .setup-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .status-chip {
+            display: inline-block;
+            margin-top: 0.75rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
+            background: rgba(0, 191, 255, 0.12);
+            color: var(--secondary);
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .pipeline-list {
+            margin-left: 1.25rem;
+            color: var(--text-dim);
+            line-height: 1.8;
+        }
 
         /* Admin Bypass */
         .admin-bypass {
@@ -417,6 +477,7 @@
                 <div class="step-indicator" id="ind-4">4</div>
                 <div class="step-indicator" id="ind-5">5</div>
                 <div class="step-indicator" id="ind-6">6</div>
+                <div class="step-indicator" id="ind-7">7</div>
             </div>
 
             <!-- Step 1: Profile -->
@@ -619,6 +680,58 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Step 7: Headhunter Launch -->
+            <div class="step-content" id="step-7">
+                <div class="card">
+                    <h2>🎧 Headhunter Client Acquisition</h2>
+                    <p>Link Apollo.io, Bland, GitHub Pages, and Google delivery so BBB can start finding clients for the selected business.</p>
+                    <br>
+                    <form id="acquisitionForm">
+                        <div class="setup-grid">
+                            <div class="setup-card">
+                                <h3>Headhunter / Apollo.io</h3>
+                                <p style="color: var(--text-dim);">Lead search and enrichment for the first customer list.</p>
+                                <br>
+                                <label>Target Customer</label>
+                                <input type="text" id="targetCustomer" value="Small business owners" required>
+                                <label style="margin-top: 1rem;">Lead Keywords</label>
+                                <input type="text" id="leadKeywords" value="founder, owner, operator" required>
+                                <label style="margin-top: 1rem;">Apollo API Key</label>
+                                <input type="password" id="apolloApiKey" placeholder="Stored only in this server process">
+                            </div>
+
+                            <div class="setup-card">
+                                <h3>Bland Cold Outreach</h3>
+                                <p style="color: var(--text-dim);">Telephony setup for qualified lead call campaigns.</p>
+                                <br>
+                                <label>Service/Product Offer</label>
+                                <input type="text" id="serviceOffer" value="AI automation setup package" required>
+                                <label style="margin-top: 1rem;">Bland API Key</label>
+                                <input type="password" id="blandApiKey" placeholder="Stored only in this server process">
+                                <label style="margin-top: 1rem;">Bland Webhook URL</label>
+                                <input type="text" id="blandWebhookUrl" value="/api/webhooks/bland/post-call">
+                            </div>
+
+                            <div class="setup-card">
+                                <h3>Website + Delivery</h3>
+                                <p style="color: var(--text-dim);">Publish the business website and deliver orders by Google email/Drive.</p>
+                                <br>
+                                <label>GitHub Repo URL</label>
+                                <input type="url" id="githubRepoUrl" placeholder="https://github.com/org/business-site">
+                                <label style="margin-top: 1rem;">GitHub Pages URL</label>
+                                <input type="url" id="githubPagesUrl" placeholder="https://org.github.io/business-site">
+                                <label style="margin-top: 1rem;">Google Workspace Email</label>
+                                <input type="email" id="googleWorkspaceEmail" placeholder="sales@example.com">
+                                <label style="margin-top: 1rem;">Google Drive Folder URL</label>
+                                <input type="url" id="googleDriveFolderUrl" placeholder="https://drive.google.com/drive/folders/...">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn" id="btn-acquisition" style="font-size: 1.05rem;">🚀 Start Headhunter Pipeline</button>
+                    </form>
+                    <div id="acquisition-result" class="console-log" style="display:none; margin-top: 1rem; height: 150px;"></div>
+                </div>
+            </div>
         </div>
 
         <!-- DASHBOARD CONTAINER (Hidden initially) -->
@@ -654,6 +767,12 @@
                 <h3>Active Businesses</h3>
                 <div id="active-business-list" style="margin-top: 1rem;">
                     Loading...
+                </div>
+
+                <br><br>
+                <h3>Client Acquisition Pipeline</h3>
+                <div id="acquisition-status" style="margin-top: 1rem;">
+                    Not launched yet.
                 </div>
             </div>
         </div>
@@ -867,6 +986,47 @@
             nextStep(6);
         }
 
+        // Step 7: Client acquisition setup
+        document.getElementById('acquisitionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-acquisition');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = 'Launching Headhunter...';
+
+            const payload = {
+                target_customer: document.getElementById('targetCustomer').value,
+                lead_keywords: document.getElementById('leadKeywords').value,
+                service_offer: document.getElementById('serviceOffer').value,
+                github_repo_url: document.getElementById('githubRepoUrl').value || null,
+                github_pages_url: document.getElementById('githubPagesUrl').value || null,
+                google_workspace_email: document.getElementById('googleWorkspaceEmail').value || null,
+                google_drive_folder_url: document.getElementById('googleDriveFolderUrl').value || null,
+                apollo_api_key: document.getElementById('apolloApiKey').value || null,
+                bland_api_key: document.getElementById('blandApiKey').value || null,
+                bland_webhook_url: document.getElementById('blandWebhookUrl').value || null
+            };
+
+            try {
+                const res = await fetch(`${API}/acquisition/setup`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw await res.json();
+                const data = await res.json();
+                const result = document.getElementById('acquisition-result');
+                result.style.display = 'block';
+                result.innerHTML = data.run.pipeline.map(step => `> ${step}`).join('<br>');
+                await refreshDashboard();
+            } catch (err) {
+                alert("Error launching Headhunter: " + (err.detail || "Setup failed"));
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        });
+
         // Step 6: Licensing
         async function selectTier(tier) {
             const businessName = document.getElementById('selectedBusiness').value;
@@ -892,8 +1052,8 @@
 
                 if (!res.ok) throw await res.json();
 
-                // Success - move directly into the live dashboard without losing context.
-                await refreshDashboard();
+                // Owner/Partner activation is complete; now launch the first acquisition run.
+                nextStep(7);
             } catch (e) {
                 alert("Error: " + (e.detail || "Setup failed"));
             }
@@ -909,7 +1069,7 @@
                 });
                 if (res.ok) {
                     alert("Admin Bypass Successful! Unlocked Owner Tier.");
-                    await refreshDashboard();
+                    nextStep(7);
                 } else {
                     alert("Invalid Code");
                 }
@@ -945,6 +1105,40 @@
                     <h3>${data.business_name}</h3>
                     <p style="color: var(--success);">● Systems Operational</p>
                 </div>
+            `;
+            renderAcquisitionStatus(data.acquisition);
+        }
+
+        function renderAcquisitionStatus(acquisition) {
+            const container = document.getElementById('acquisition-status');
+            if (!acquisition) {
+                container.innerHTML = '<p style="color: var(--text-dim);">Not launched yet.</p>';
+                return;
+            }
+
+            const tools = acquisition.toolchain;
+            container.innerHTML = `
+                <div class="setup-grid">
+                    <div class="setup-card">
+                        <h3>Headhunter / Apollo.io</h3>
+                        <div class="status-chip">${tools.headhunter.status}</div>
+                        <p style="margin-top:0.75rem;color:var(--text-dim);">${tools.headhunter.query}</p>
+                    </div>
+                    <div class="setup-card">
+                        <h3>Bland Outreach</h3>
+                        <div class="status-chip">${tools.bland.status}</div>
+                        <p style="margin-top:0.75rem;color:var(--text-dim);">${tools.bland.outreach_goal}</p>
+                    </div>
+                    <div class="setup-card">
+                        <h3>Website + Delivery</h3>
+                        <div class="status-chip">${tools.website.status}</div>
+                        <div class="status-chip">${tools.delivery.status}</div>
+                        <p style="margin-top:0.75rem;color:var(--text-dim);">${tools.delivery.delivery_path}</p>
+                    </div>
+                </div>
+                <ol class="pipeline-list">
+                    ${acquisition.pipeline.map(step => `<li>${step}</li>`).join('')}
+                </ol>
             `;
         }
 

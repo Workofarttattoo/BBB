@@ -8,15 +8,13 @@ import json
 import os
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
-from src.blank_business_builder.gui_server import app, update_app_state, STATE_FILE, fiduciary
+from src.blank_business_builder.gui_server import app, update_app_state, STATE_FILE, fiduciary, get_app_state
 
 client = TestClient(app)
 
-def setup_module(module):
-    # Ensure clean state
+def reset_state():
     if os.path.exists(STATE_FILE):
         os.remove(STATE_FILE)
-    # Reset fiduciary state
     fiduciary.state = {
         "license": {
             "tier": "free",
@@ -24,8 +22,17 @@ def setup_module(module):
             "revenue_share_percentage": 0.0,
             "start_date": "2025-01-01T00:00:00",
             "bypass_used": False
-        }
+        },
+        "wallet": 0.0,
+        "revenue_total": 0.0
     }
+
+def setup_function(function):
+    reset_state()
+
+def setup_module(module):
+    # Ensure clean state
+    reset_state()
 
 def teardown_module(module):
     if os.path.exists(STATE_FILE):
@@ -84,6 +91,50 @@ def test_onboarding_to_active_dashboard_flow():
     assert data["business_name"] == selected_name
     assert data["license"]["tier"] == "paid"
     assert data["user_share"] == data["revenue_today"]
+
+def test_acquisition_setup_after_owner_tier_does_not_persist_keys():
+    profile = {
+        "name": "Acquisition User",
+        "location_state": "CA",
+        "preferred_industry": "Technology",
+        "weekly_hours": 40,
+        "startup_budget": 10000.0,
+        "risk_posture": "balanced"
+    }
+    client.post("/api/v1/onboarding", json=profile)
+    client.post("/api/v1/select-business", json={"business_name": "No-Code App Development Agency"})
+    client.post("/api/v1/license", json={"tier": "paid"})
+
+    payload = {
+        "target_customer": "small business owners",
+        "lead_keywords": "founder owner operator",
+        "service_offer": "AI automation setup package",
+        "github_repo_url": "https://github.com/example/no-code-agency",
+        "github_pages_url": "https://example.github.io/no-code-agency",
+        "google_workspace_email": "sales@example.com",
+        "google_drive_folder_url": "https://drive.google.com/drive/folders/demo",
+        "apollo_api_key": "apollo-secret",
+        "bland_api_key": "bland-secret",
+        "bland_webhook_url": "https://example.com/api/webhooks/bland/post-call"
+    }
+
+    response = client.post("/api/v1/acquisition/setup", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "started"
+    assert data["run"]["business_name"] == "No-Code App Development Agency"
+    assert data["run"]["toolchain"]["headhunter"]["status"] == "ready"
+    assert data["run"]["toolchain"]["bland"]["status"] == "ready"
+    assert data["run"]["toolchain"]["delivery"]["status"] == "ready"
+
+    state = get_app_state()
+    serialized_state = json.dumps(state)
+    assert "apollo-secret" not in serialized_state
+    assert "bland-secret" not in serialized_state
+
+    dashboard = client.get("/api/v1/dashboard").json()
+    assert dashboard["acquisition"]["status"] == "running"
+    assert "Search and enrich prospects" in dashboard["acquisition"]["pipeline"][0]
 
 def test_recommendations():
     # Set profile first to influence recommendations
