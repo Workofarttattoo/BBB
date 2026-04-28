@@ -150,7 +150,7 @@ class Level6BusinessAgent:
         payment_processor: PaymentProcessor = None,
         social_media: SocialMedia = None,
         prompt_registry: PromptRegistry = None,
-        hive_mind: ECH0Service = None, # Changed type hint to ECH0Service
+        hive_mind: ECH0Service = None,  # Changed type hint to ECH0Service
     ):
         self.agent_id = agent_id
         self.role = role
@@ -171,7 +171,7 @@ class Level6BusinessAgent:
         self.on = on
         self.send = send
         self.every = every
-        
+
         # Register with HiveMind
         if self.hive_mind:
             # Map role to hive AgentType where possible, else default to ANALYTICS/SUPPORT
@@ -564,10 +564,10 @@ class Level6BusinessAgent:
                 "Switch mining pool to Hiveon",
                 "Adjust overclock settings for max efficiency",
                 "Monitor GPU temps",
-                "Auto-exchange payouts to USDT"
+                "Auto-exchange payouts to USDT",
             ],
             "estimated_time": 10,
-            "confidence": 0.99
+            "confidence": 0.99,
         }
 
     async def _plan_nft_trading(self, task: AutonomousTask) -> Dict:
@@ -579,10 +579,10 @@ class Level6BusinessAgent:
                 "Analyze rarity vs price floor",
                 "Execute flash loan purchase",
                 "List for 20% markup",
-                "Promote listing on Twitter"
+                "Promote listing on Twitter",
             ],
             "estimated_time": 15,
-            "confidence": 0.85
+            "confidence": 0.85,
         }
 
     async def _plan_saas_building(self, task: AutonomousTask) -> Dict:
@@ -594,10 +594,10 @@ class Level6BusinessAgent:
                 "Generate boilerplate code via GPT-4",
                 "Deploy to Vercel",
                 "Configure Stripe Connect",
-                "Submit to directories"
+                "Submit to directories",
             ],
             "estimated_time": 120,
-            "confidence": 0.90
+            "confidence": 0.90,
         }
 
     async def _plan_arbitrage(self, task: AutonomousTask) -> Dict:
@@ -609,10 +609,10 @@ class Level6BusinessAgent:
                 "Compare with Amazon Buy Box prices",
                 "Calculate FBA fees and profit margin",
                 "Auto-purchase profitable SKU",
-                "Schedule UPS pickup"
+                "Schedule UPS pickup",
             ],
             "estimated_time": 30,
-            "confidence": 0.92
+            "confidence": 0.92,
         }
 
     async def _plan_content_creation(self, task: AutonomousTask) -> Dict:
@@ -624,10 +624,10 @@ class Level6BusinessAgent:
                 "Generate script using 'Hook, Story, Offer' framework",
                 "Create AI voiceover",
                 "Assemble stock footage",
-                "Auto-caption and publish"
+                "Auto-caption and publish",
             ],
             "estimated_time": 60,
-            "confidence": 0.95
+            "confidence": 0.95,
         }
 
     async def _plan_dropshipping(self, task: AutonomousTask) -> Dict:
@@ -639,10 +639,10 @@ class Level6BusinessAgent:
                 "Update Shopify store inventory",
                 "Process pending orders via DSers",
                 "Send shipping updates to customers",
-                "Launch retargeting ads"
+                "Launch retargeting ads",
             ],
             "estimated_time": 45,
-            "confidence": 0.88
+            "confidence": 0.88,
         }
 
     async def _plan_quantum_trading(self, task: AutonomousTask) -> Dict:
@@ -654,10 +654,10 @@ class Level6BusinessAgent:
                 "Identify non-linear correlations",
                 "Execute high-frequency trade",
                 "Rebalance portfolio risk",
-                "Log trade outcome"
+                "Log trade outcome",
             ],
             "estimated_time": 5,
-            "confidence": 0.97
+            "confidence": 0.97,
         }
 
     async def _plan_survey_task(self, task: AutonomousTask) -> Dict:
@@ -669,12 +669,11 @@ class Level6BusinessAgent:
                 "Filter for high-payout surveys",
                 "Fill demographic data consistently",
                 "Complete survey",
-                "Cash out points"
+                "Cash out points",
             ],
             "estimated_time": 10,
-            "confidence": 0.99
+            "confidence": 0.99,
         }
-
 
     async def _act(self, action_plan: Dict) -> Dict:
         """Execute decision with confidence tracking."""
@@ -939,10 +938,10 @@ class AutonomousBusinessOrchestrator:
                 AgentRole.EXECUTIVE,
                 AgentRole.DEEP_RESEARCHER,
                 AgentRole.OSINT_SPECIALIST,
-                AgentRole.CREATIVE_DIRECTOR
+                AgentRole.CREATIVE_DIRECTOR,
             ]
         else:
-             # Ensure Management/Executive/HR roles are always present for governance
+            # Ensure Management/Executive/HR roles are always present for governance
             if AgentRole.EXECUTIVE not in required:
                 required.append(AgentRole.EXECUTIVE)
             if AgentRole.HR not in required:
@@ -1026,7 +1025,7 @@ class AutonomousBusinessOrchestrator:
 
         # Specialized Tasks
         if AgentRole.CRYPTO_MINER in self.required_roles:
-             self.add_task(
+            self.add_task(
                 AutonomousTask(
                     task_id="mining_001",
                     role=AgentRole.CRYPTO_MINER,
@@ -1036,7 +1035,7 @@ class AutonomousBusinessOrchestrator:
             )
 
         if AgentRole.NFT_TRADER in self.required_roles:
-             self.add_task(
+            self.add_task(
                 AutonomousTask(
                     task_id="nft_001",
                     role=AgentRole.NFT_TRADER,
@@ -1046,7 +1045,7 @@ class AutonomousBusinessOrchestrator:
             )
 
         if AgentRole.SAAS_BUILDER in self.required_roles:
-             self.add_task(
+            self.add_task(
                 AutonomousTask(
                     task_id="saas_001",
                     role=AgentRole.SAAS_BUILDER,
@@ -1056,7 +1055,7 @@ class AutonomousBusinessOrchestrator:
             )
 
         if AgentRole.ARBITRAGE_BOT in self.required_roles:
-             self.add_task(
+            self.add_task(
                 AutonomousTask(
                     task_id="arb_001",
                     role=AgentRole.ARBITRAGE_BOT,
@@ -1083,7 +1082,9 @@ class AutonomousBusinessOrchestrator:
                     role=AgentRole.MARKETER,
                     description="Create content marketing strategy and launch campaigns",
                     priority=9,
-                    dependencies=["research_001"] if AgentRole.RESEARCHER in self.required_roles else [],
+                    dependencies=(
+                        ["research_001"] if AgentRole.RESEARCHER in self.required_roles else []
+                    ),
                 )
             )
 
@@ -1094,7 +1095,9 @@ class AutonomousBusinessOrchestrator:
                     role=AgentRole.SALES,
                     description="Generate leads and initiate outreach campaigns",
                     priority=8,
-                    dependencies=["marketing_001"] if AgentRole.MARKETER in self.required_roles else [],
+                    dependencies=(
+                        ["marketing_001"] if AgentRole.MARKETER in self.required_roles else []
+                    ),
                 )
             )
 
@@ -1139,7 +1142,7 @@ class AutonomousBusinessOrchestrator:
             )
 
         if AgentRole.DEEP_RESEARCHER in self.required_roles:
-             self.add_task(
+            self.add_task(
                 AutonomousTask(
                     task_id="deep_res_001",
                     role=AgentRole.DEEP_RESEARCHER,
@@ -1149,7 +1152,7 @@ class AutonomousBusinessOrchestrator:
             )
 
         if AgentRole.OSINT_SPECIALIST in self.required_roles:
-             self.add_task(
+            self.add_task(
                 AutonomousTask(
                     task_id="osint_001",
                     role=AgentRole.OSINT_SPECIALIST,
@@ -1159,7 +1162,7 @@ class AutonomousBusinessOrchestrator:
             )
 
         if AgentRole.CREATIVE_DIRECTOR in self.required_roles:
-             self.add_task(
+            self.add_task(
                 AutonomousTask(
                     task_id="creative_001",
                     role=AgentRole.CREATIVE_DIRECTOR,
@@ -1167,7 +1170,6 @@ class AutonomousBusinessOrchestrator:
                     priority=9,
                 )
             )
-
 
     async def run_autonomous_loop(self, duration_hours: float = 24.0) -> None:
         """
@@ -1221,10 +1223,12 @@ class AutonomousBusinessOrchestrator:
             # Check dependencies
             is_blocked = False
             if task.dependencies:
-                deps_complete = all(dep_id in self.completed_task_ids for dep_id in task.dependencies)
+                deps_complete = all(
+                    dep_id in self.completed_task_ids for dep_id in task.dependencies
+                )
                 if not deps_complete:
                     if task.status != TaskStatus.BLOCKED:
-                         self._set_task_status(task, TaskStatus.BLOCKED)
+                        self._set_task_status(task, TaskStatus.BLOCKED)
                     is_blocked = True
 
             if is_blocked:
@@ -1234,7 +1238,7 @@ class AutonomousBusinessOrchestrator:
 
             # Dependencies met. If it was blocked, it's now unblocked.
             if task.status == TaskStatus.BLOCKED:
-                 self._set_task_status(task, TaskStatus.PENDING)
+                self._set_task_status(task, TaskStatus.PENDING)
 
             # Find agent with matching role
             agent = next(
@@ -1414,11 +1418,11 @@ class AutonomousBusinessOrchestrator:
                 if agent.role == AgentRole.SALES:
                     revenue = 500.0  # Average deal size
                 elif agent.role == AgentRole.CRYPTO_MINER:
-                    revenue = 25.0   # Daily mining yield simulated
+                    revenue = 25.0  # Daily mining yield simulated
                 elif agent.role == AgentRole.NFT_TRADER:
                     revenue = 200.0  # Trade flip
                 elif agent.role == AgentRole.SAAS_BUILDER:
-                    revenue = 50.0   # Subscription signup
+                    revenue = 50.0  # Subscription signup
 
                 if revenue > 0:
                     self.metrics.total_revenue += revenue
@@ -1465,9 +1469,9 @@ class AutonomousBusinessOrchestrator:
 
         # Crypto logic: If mining successful, optimize
         for result in results:
-             agent = self.agents.get(result.get("agent_id"))
-             if agent and agent.role == AgentRole.CRYPTO_MINER and result.get("success"):
-                  self.add_task(
+            agent = self.agents.get(result.get("agent_id"))
+            if agent and agent.role == AgentRole.CRYPTO_MINER and result.get("success"):
+                self.add_task(
                     AutonomousTask(
                         task_id=f"mining_{len(self.task_queue)}",
                         role=AgentRole.CRYPTO_MINER,
@@ -1499,8 +1503,11 @@ class AutonomousBusinessOrchestrator:
 
     def get_metrics_dashboard(self) -> Dict:
         """Get comprehensive metrics for user dashboard."""
-        total_finished = self.task_status_counts[TaskStatus.COMPLETED] + self.task_status_counts[TaskStatus.FAILED]
-        success_rate = (self.task_status_counts[TaskStatus.COMPLETED] / max(1, total_finished))
+        total_finished = (
+            self.task_status_counts[TaskStatus.COMPLETED]
+            + self.task_status_counts[TaskStatus.FAILED]
+        )
+        success_rate = self.task_status_counts[TaskStatus.COMPLETED] / max(1, total_finished)
 
         return {
             "business_concept": self.business_concept,
