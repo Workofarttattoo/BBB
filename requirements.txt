@@ -19,6 +19,7 @@ PyJWT==2.8.0
 passlib[bcrypt]==1.7.4
 bcrypt==3.2.2  # Required for passlib compatibility
 python-dotenv==1.0.0
+email-validator==2.3.0
 
 # Payment Processing
 stripe==9.6.0

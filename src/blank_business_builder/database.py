@@ -281,27 +281,6 @@ class Subscription(Base):
         return f"<Subscription(id={self.id}, user_id={self.user_id}, plan={self.plan_name}, status={self.status})>"
 
 
-class PaymentTransaction(Base):
-    """Payment transaction records"""
-    __tablename__ = 'payment_transactions'
-
-    id = Column(UUIDType(), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUIDType(), ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
-    stripe_payment_intent_id = Column(String(255), index=True)
-    amount = Column(Numeric(12, 2))
-    currency = Column(String(10))
-    status = Column(String(50))
-    description = Column(String(255), nullable=True)
-    transaction_metadata = Column(JSONType(), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    # Relationships
-    user = relationship("User", back_populates="payment_transactions")
-
-    def __repr__(self):
-        return f"<PaymentTransaction(id={self.id}, user_id={self.user_id}, status={self.status})>"
-
-
 class MarketingCampaign(Base):
     """Marketing campaign records"""
     __tablename__ = 'marketing_campaigns'
