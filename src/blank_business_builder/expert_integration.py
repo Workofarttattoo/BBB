@@ -40,6 +40,18 @@ from .autonomous_business import (
 
 logger = logging.getLogger(__name__)
 
+# Performance: Module-level constants for keyword matching to avoid redundant allocation
+CONSULT_KEYWORDS = ('research', 'analysis', 'technical', 'science', 'optimize', 'design', 'develop')
+CHEMISTRY_KEYWORDS = ('chemistry', 'chemical', 'molecule', 'compound')
+BIOLOGY_KEYWORDS = ('biology', 'biological', 'organism', 'cell', 'dna')
+PHYSICS_KEYWORDS = ('physics', 'physical', 'quantum', 'mechanics')
+MATERIALS_KEYWORDS = ('material', 'crystalline', 'properties')
+MARKETING_KEYWORDS = ('marketing', 'advertising', 'campaign')
+FINANCE_KEYWORDS = ('finance', 'financial', 'accounting', 'revenue')
+SALES_KEYWORDS = ('sales', 'selling', 'customer')
+DATA_SCIENCE_KEYWORDS = ('data', 'analytics', 'statistics')
+MACHINE_LEARNING_KEYWORDS = ('machine learning', 'ai', 'neural', 'model')
+
 
 class ExpertEnhancedBusinessAgent(Level6BusinessAgent):
     """
@@ -84,8 +96,7 @@ class ExpertEnhancedBusinessAgent(Level6BusinessAgent):
     def _should_consult_expert(self, task: AutonomousTask) -> bool:
         """Determine if task would benefit from expert consultation."""
         # Consult experts for complex or specialized tasks
-        keywords = ['research', 'analysis', 'technical', 'science', 'optimize', 'design', 'develop']
-        return any(keyword in task.description.lower() for keyword in keywords)
+        return any(keyword in task.description.lower() for keyword in CONSULT_KEYWORDS)
 
     async def _consult_experts(self, task: AutonomousTask, world_model: Dict) -> Optional[Dict]:
         """Consult domain experts for task."""
@@ -130,27 +141,27 @@ class ExpertEnhancedBusinessAgent(Level6BusinessAgent):
         description = task.description.lower()
 
         # Science & engineering domains
-        if any(word in description for word in ['chemistry', 'chemical', 'molecule', 'compound']):
+        if any(word in description for word in CHEMISTRY_KEYWORDS):
             return ExpertDomain.CHEMISTRY
-        elif any(word in description for word in ['biology', 'biological', 'organism', 'cell', 'dna']):
+        elif any(word in description for word in BIOLOGY_KEYWORDS):
             return ExpertDomain.BIOLOGY
-        elif any(word in description for word in ['physics', 'physical', 'quantum', 'mechanics']):
+        elif any(word in description for word in PHYSICS_KEYWORDS):
             return ExpertDomain.PHYSICS
-        elif any(word in description for word in ['material', 'crystalline', 'properties']):
+        elif any(word in description for word in MATERIALS_KEYWORDS):
             return ExpertDomain.MATERIALS_SCIENCE
 
         # Business domains
-        elif any(word in description for word in ['marketing', 'advertising', 'campaign']):
+        elif any(word in description for word in MARKETING_KEYWORDS):
             return ExpertDomain.MARKETING
-        elif any(word in description for word in ['finance', 'financial', 'accounting', 'revenue']):
+        elif any(word in description for word in FINANCE_KEYWORDS):
             return ExpertDomain.FINANCE
-        elif any(word in description for word in ['sales', 'selling', 'customer']):
+        elif any(word in description for word in SALES_KEYWORDS):
             return ExpertDomain.SALES
 
         # Data & AI domains
-        elif any(word in description for word in ['data', 'analytics', 'statistics']):
+        elif any(word in description for word in DATA_SCIENCE_KEYWORDS):
             return ExpertDomain.DATA_SCIENCE
-        elif any(word in description for word in ['machine learning', 'ai', 'neural', 'model']):
+        elif any(word in description for word in MACHINE_LEARNING_KEYWORDS):
             return ExpertDomain.MACHINE_LEARNING
 
         return None
