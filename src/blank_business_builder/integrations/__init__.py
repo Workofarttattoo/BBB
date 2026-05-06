@@ -4,6 +4,7 @@ Public integrations package exports.
 
 from .apollo import ApolloService
 from .bland import BlandService
+from .elevenlabs import ElevenLabsService
 from .legacy import (
     AnthropicService,
     BufferService,
@@ -22,6 +23,7 @@ __all__ = [
     "BlandService",
     "BufferService",
     "ECH0Service",
+    "ElevenLabsService",
     "IntegrationContainer",
     "IntegrationFactory",
     "OpenAIService",
