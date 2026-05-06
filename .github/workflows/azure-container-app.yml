@@ -11,6 +11,7 @@ permissions:
 env:
   AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
   AZURE_CONTAINER_APP_NAME: ${{ vars.AZURE_CONTAINER_APP_NAME }}
+  AZURE_ECHO_PRIME_APP_NAME: ${{ vars.AZURE_ECHO_PRIME_APP_NAME || 'echo-prime' }}
   AZURE_CONTAINER_APP_ENVIRONMENT: ${{ vars.AZURE_CONTAINER_APP_ENVIRONMENT }}
   AZURE_CONTAINER_REGISTRY: ${{ vars.AZURE_CONTAINER_REGISTRY }}
   AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus' }}
@@ -41,7 +42,65 @@ jobs:
             --image "$IMAGE_NAME:latest" \
             .
 
-      - name: Create or update Container App
+      - name: Create or update Echo Prime Container App
+        env:
+          IMAGE: ${{ vars.AZURE_CONTAINER_REGISTRY }}.azurecr.io/better-business-builder:${{ github.sha }}
+          ECH0_LLM_PROVIDER: ${{ vars.ECH0_LLM_PROVIDER || 'ollama' }}
+          ECH0_LLM_ENDPOINT: ${{ vars.ECH0_LLM_ENDPOINT }}
+          ECH0_LLM_API_KEY: ${{ secrets.ECH0_LLM_API_KEY }}
+        run: |
+          set -euo pipefail
+
+          echo_env=(
+            ENVIRONMENT=production
+            APP_MODULE=blank_business_builder.echo_prime_api:app
+            PORT=8001
+            WEB_CONCURRENCY=2
+            ECHO_BASE_URL=
+            ECHO_PRIME_BASE_URL=
+            ECH0_LLM_PROVIDER="$ECH0_LLM_PROVIDER"
+            ECH0_LLM_ENDPOINT="$ECH0_LLM_ENDPOINT"
+          )
+
+          if [ -n "${ECH0_LLM_API_KEY:-}" ]; then
+            echo_env+=(ECH0_LLM_API_KEY=secretref:ech0-llm-api-key)
+          fi
+
+          if az containerapp show \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$AZURE_ECHO_PRIME_APP_NAME" >/dev/null 2>&1; then
+            if [ -n "${ECH0_LLM_API_KEY:-}" ]; then
+              az containerapp secret set \
+                --resource-group "$AZURE_RESOURCE_GROUP" \
+                --name "$AZURE_ECHO_PRIME_APP_NAME" \
+                --secrets ech0-llm-api-key="$ECH0_LLM_API_KEY"
+            fi
+
+            az containerapp update \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --name "$AZURE_ECHO_PRIME_APP_NAME" \
+              --image "$IMAGE" \
+              --set-env-vars "${echo_env[@]}"
+          else
+            create_args=(
+              --resource-group "$AZURE_RESOURCE_GROUP"
+              --name "$AZURE_ECHO_PRIME_APP_NAME"
+              --environment "$AZURE_CONTAINER_APP_ENVIRONMENT"
+              --location "$AZURE_LOCATION"
+              --image "$IMAGE"
+              --target-port 8001
+              --ingress internal
+              --min-replicas 1
+              --max-replicas 3
+              --env-vars "${echo_env[@]}"
+            )
+            if [ -n "${ECH0_LLM_API_KEY:-}" ]; then
+              create_args+=(--secrets ech0-llm-api-key="$ECH0_LLM_API_KEY")
+            fi
+            az containerapp create "${create_args[@]}"
+          fi
+
+      - name: Create or update BBB Container App
         env:
           IMAGE: ${{ vars.AZURE_CONTAINER_REGISTRY }}.azurecr.io/better-business-builder:${{ github.sha }}
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
@@ -49,16 +108,24 @@ jobs:
           REDIS_URL: ${{ secrets.REDIS_URL }}
           APOLLO_API_KEY: ${{ secrets.APOLLO_API_KEY }}
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
-          ECHO_BASE_URL: ${{ vars.ECHO_BASE_URL }}
           CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
         run: |
           set -euo pipefail
 
+          echo_fqdn=$(az containerapp show \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$AZURE_ECHO_PRIME_APP_NAME" \
+            --query properties.configuration.ingress.fqdn \
+            --output tsv)
+          echo_prime_url="https://${echo_fqdn}"
+
           common_env=(
             ENVIRONMENT=production
+            APP_MODULE=blank_business_builder.main:app
             PORT=8000
-            ECHO_BASE_URL="$ECHO_BASE_URL"
-            ECHO_PRIME_BASE_URL="$ECHO_BASE_URL"
+            WEB_CONCURRENCY=4
+            ECHO_BASE_URL="$echo_prime_url"
+            ECHO_PRIME_BASE_URL="$echo_prime_url"
             CORS_ORIGINS="$CORS_ORIGINS"
             DATABASE_URL=secretref:database-url
             REDIS_URL=secretref:redis-url

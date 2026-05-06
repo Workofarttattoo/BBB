@@ -24,7 +24,9 @@ class EchoMasterBrain:
         timeout_seconds: int = 15,
         session: Optional[requests.Session] = None,
     ) -> None:
-        self.base_url = (base_url or os.getenv("ECHO_BASE_URL", "")).rstrip("/")
+        if base_url is None:
+            base_url = os.getenv("ECHO_PRIME_BASE_URL") or os.getenv("ECHO_BASE_URL", "")
+        self.base_url = base_url.rstrip("/")
         self.timeout_seconds = timeout_seconds
         self.session = session or requests.Session()
 
