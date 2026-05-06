@@ -1,0 +1,115 @@
+name: Deploy Azure Container App
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+  AZURE_CONTAINER_APP_NAME: ${{ vars.AZURE_CONTAINER_APP_NAME }}
+  AZURE_CONTAINER_APP_ENVIRONMENT: ${{ vars.AZURE_CONTAINER_APP_ENVIRONMENT }}
+  AZURE_CONTAINER_REGISTRY: ${{ vars.AZURE_CONTAINER_REGISTRY }}
+  AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus' }}
+  IMAGE_NAME: better-business-builder
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Install Container Apps extension
+        run: az extension add --name containerapp --upgrade
+
+      - name: Build image in Azure Container Registry
+        run: |
+          az acr build \
+            --registry "$AZURE_CONTAINER_REGISTRY" \
+            --image "$IMAGE_NAME:${{ github.sha }}" \
+            --image "$IMAGE_NAME:latest" \
+            .
+
+      - name: Create or update Container App
+        env:
+          IMAGE: ${{ vars.AZURE_CONTAINER_REGISTRY }}.azurecr.io/better-business-builder:${{ github.sha }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          APOLLO_API_KEY: ${{ secrets.APOLLO_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ECHO_BASE_URL: ${{ vars.ECHO_BASE_URL }}
+          CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
+        run: |
+          set -euo pipefail
+
+          common_env=(
+            ENVIRONMENT=production
+            PORT=8000
+            ECHO_BASE_URL="$ECHO_BASE_URL"
+            ECHO_PRIME_BASE_URL="$ECHO_BASE_URL"
+            CORS_ORIGINS="$CORS_ORIGINS"
+            DATABASE_URL=secretref:database-url
+            REDIS_URL=secretref:redis-url
+            SECRET_KEY=secretref:secret-key
+            APOLLO_API_KEY=secretref:apollo-api-key
+            ELEVENLABS_API_KEY=secretref:elevenlabs-api-key
+          )
+
+          if az containerapp show \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$AZURE_CONTAINER_APP_NAME" >/dev/null 2>&1; then
+            az containerapp secret set \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --name "$AZURE_CONTAINER_APP_NAME" \
+              --secrets \
+                database-url="$DATABASE_URL" \
+                redis-url="$REDIS_URL" \
+                secret-key="$SECRET_KEY" \
+                apollo-api-key="$APOLLO_API_KEY" \
+                elevenlabs-api-key="$ELEVENLABS_API_KEY"
+
+            az containerapp update \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --name "$AZURE_CONTAINER_APP_NAME" \
+              --image "$IMAGE" \
+              --set-env-vars "${common_env[@]}"
+          else
+            az containerapp create \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --name "$AZURE_CONTAINER_APP_NAME" \
+              --environment "$AZURE_CONTAINER_APP_ENVIRONMENT" \
+              --location "$AZURE_LOCATION" \
+              --image "$IMAGE" \
+              --target-port 8000 \
+              --ingress external \
+              --min-replicas 1 \
+              --max-replicas 3 \
+              --secrets \
+                database-url="$DATABASE_URL" \
+                redis-url="$REDIS_URL" \
+                secret-key="$SECRET_KEY" \
+                apollo-api-key="$APOLLO_API_KEY" \
+                elevenlabs-api-key="$ELEVENLABS_API_KEY" \
+              --env-vars "${common_env[@]}"
+          fi
+
+      - name: Smoke test health endpoint
+        run: |
+          fqdn=$(az containerapp show \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$AZURE_CONTAINER_APP_NAME" \
+            --query properties.configuration.ingress.fqdn \
+            --output tsv)
+          curl --fail --retry 12 --retry-delay 5 "https://${fqdn}/health"

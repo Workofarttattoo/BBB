@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
@@ -52,10 +52,34 @@ class VoiceOutreachRequest(BaseModel):
     force_script: Optional[str] = None
 
 
+class ElevenLabsOutreachRequest(BaseModel):
+    lead_id: str
+    consent_confirmed: bool = Field(
+        False,
+        description="Operator confirms a lawful basis/consent for B2B outreach to this lead.",
+    )
+    force_script: Optional[str] = None
+    voice_id: Optional[str] = None
+    model_id: Optional[str] = None
+
+
 class ApolloDiscoverRequest(BaseModel):
     keywords: str = Field(..., description="Search terms for Apollo people search")
     organization_name: Optional[str] = None
     per_page: int = 10
+
+
+class ApolloVoiceDraftRequest(ApolloDiscoverRequest):
+    consent_confirmed: bool = Field(
+        False,
+        description="Operator confirms a lawful basis/consent before generating outreach audio.",
+    )
+    voice_id: Optional[str] = None
+    model_id: Optional[str] = None
+    b2b_site_queries: List[str] = Field(
+        default_factory=list,
+        description="Optional extra B2B directory/site keywords to append to the Apollo search.",
+    )
 
 
 def _get_route_channel(db: Session, department: str) -> Optional[str]:
@@ -238,6 +262,108 @@ async def create_outreach_call(request: VoiceOutreachRequest, db: Session = Depe
         task=request.force_task or str(decision.get("task") or ""),
     )
     return {"ok": True, "decision": decision, "result": result}
+
+
+@router.post("/v1/outreach/create-elevenlabs-audio")
+async def create_elevenlabs_audio(request: ElevenLabsOutreachRequest, db: Session = Depends(get_db)):
+    """
+    Generate a personalized ElevenLabs voice asset for a lead.
+
+    This endpoint creates an audio asset for lawful B2B outreach workflows; it does not
+    place outbound calls. The caller must confirm consent/lawful basis before generation.
+    """
+    if not request.consent_confirmed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="consent_confirmed must be true before creating outreach audio",
+        )
+
+    lead = db.query(LeadRecord).filter(LeadRecord.id == request.lead_id).first()
+    if not lead:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lead not found")
+    if not (lead.email or lead.phone):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Lead must have an email or phone before outreach audio is generated",
+        )
+
+    brain = EchoMasterBrain()
+    decision = brain.decide_outreach(
+        {
+            "lead_id": str(lead.id),
+            "full_name": lead.full_name,
+            "title": lead.title,
+            "company": lead.company,
+            "email": lead.email,
+            "phone": lead.phone,
+        }
+    )
+    script = request.force_script or str(decision.get("script") or decision.get("task") or "")
+    if not script.strip():
+        script = (
+            f"Hi {lead.full_name or 'there'}, this is a quick note for "
+            f"{lead.company or 'your team'} about improving B2B growth workflows. "
+            "If this is relevant, please reply and we can schedule a short conversation."
+        )
+
+    voice = VoiceAgent()
+    try:
+        result = voice.create_elevenlabs_outreach_audio(
+            db,
+            lead=lead,
+            script=script,
+            voice_id=request.voice_id,
+            model_id=request.model_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return {"ok": True, "decision": decision, "result": result}
+
+
+@router.post("/v1/outreach/discover-and-create-elevenlabs-audio")
+async def discover_and_create_elevenlabs_audio(
+    payload: ApolloVoiceDraftRequest, db: Session = Depends(get_db)
+):
+    """
+    Discover leads via Apollo search terms (optionally expanded with B2B site keywords)
+    and generate ElevenLabs audio assets for stored leads with contact information.
+    """
+    if not payload.consent_confirmed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="consent_confirmed must be true before creating outreach audio",
+        )
+
+    expanded_keywords = " ".join(
+        [payload.keywords] + [query.strip() for query in payload.b2b_site_queries if query.strip()]
+    ).strip()
+    discover_payload = ApolloDiscoverRequest(
+        keywords=expanded_keywords or payload.keywords,
+        organization_name=payload.organization_name,
+        per_page=min(payload.per_page, 10),
+    )
+    discover_result = await discover_and_store_leads(discover_payload, db)
+
+    generated = []
+    for item in discover_result["stored"]:
+        lead = db.query(LeadRecord).filter(LeadRecord.id == item["lead_id"]).first()
+        if not lead or not (lead.email or lead.phone):
+            continue
+        audio_request = ElevenLabsOutreachRequest(
+            lead_id=str(lead.id),
+            consent_confirmed=True,
+            voice_id=payload.voice_id,
+            model_id=payload.model_id,
+        )
+        audio_result = await create_elevenlabs_audio(audio_request, db)
+        generated.append(audio_result["result"])
+
+    return {
+        "ok": True,
+        "discovered": discover_result,
+        "generated": generated,
+        "count": len(generated),
+    }
 
 
 @router.get("/v1/outreach/calls/{provider_call_id}")

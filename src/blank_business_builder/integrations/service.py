@@ -9,6 +9,7 @@ from typing import Optional
 
 from .apollo import ApolloService
 from .bland import BlandService
+from .elevenlabs import ElevenLabsService
 from .legacy import (
     AnthropicService,
     BufferService,
@@ -28,6 +29,7 @@ class IntegrationContainer:
 
     bland: BlandService = field(default_factory=BlandService)
     apollo: ApolloService = field(default_factory=ApolloService)
+    elevenlabs: ElevenLabsService = field(default_factory=ElevenLabsService)
     slack: SlackService = field(default_factory=SlackService)
 
 
@@ -51,6 +53,10 @@ class IntegrationFactory(LegacyIntegrationFactory):
         return cls.get_container().apollo
 
     @classmethod
+    def get_elevenlabs_service(cls) -> ElevenLabsService:
+        return cls.get_container().elevenlabs
+
+    @classmethod
     def get_slack_service(cls) -> SlackService:
         return cls.get_container().slack
 
@@ -66,6 +72,7 @@ __all__ = [
     "BlandService",
     "BufferService",
     "ECH0Service",
+    "ElevenLabsService",
     "IntegrationContainer",
     "IntegrationFactory",
     "OpenAIService",

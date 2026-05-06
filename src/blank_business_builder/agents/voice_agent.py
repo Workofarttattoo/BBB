@@ -5,8 +5,10 @@ Webhook-driven voice outreach orchestration around Bland call lifecycle.
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any, Dict, Optional
 from urllib.parse import urljoin
+from uuid import uuid4
 from sqlalchemy.orm import Session
 
 from ..config import settings
@@ -21,6 +23,7 @@ class VoiceAgent:
 
     def __init__(self) -> None:
         self.bland = IntegrationFactory.get_bland_service()
+        self.elevenlabs = IntegrationFactory.get_elevenlabs_service()
         self.slack = IntegrationFactory.get_slack_service()
         self.brain = EchoMasterBrain()
         self.default_persona_id = settings.BBB_PERSONA_ID
@@ -29,6 +32,12 @@ class VoiceAgent:
         self.default_max_duration = settings.BLAND_MAX_DURATION_MINUTES
         self.default_record_calls = settings.BLAND_RECORD_CALLS
         self.default_wait_for_greeting = settings.BLAND_WAIT_FOR_GREETING
+
+    @staticmethod
+    def _safe_slug(value: str, *, fallback: str = "lead") -> str:
+        slug = "".join(ch.lower() if ch.isalnum() else "-" for ch in value).strip("-")
+        slug = "-".join(part for part in slug.split("-") if part)
+        return (slug or fallback)[:80]
 
     def _absolute_webhook(self, webhook_url: Optional[str]) -> str:
         """Resolve relative webhook paths against ECHO_BASE_URL when possible."""
@@ -134,6 +143,68 @@ class VoiceAgent:
             "outreach_attempt_id": str(outreach.id),
             "provider_call_id": provider_call_id,
             "call_response": call_response,
+        }
+
+    def create_elevenlabs_outreach_audio(
+        self,
+        db: Session,
+        *,
+        lead: LeadRecord,
+        script: str,
+        voice_id: Optional[str] = None,
+        model_id: Optional[str] = None,
+        output_dir: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Create a personalized ElevenLabs audio asset and persist an outreach attempt."""
+        if not script.strip():
+            raise ValueError("script is required")
+
+        outreach = OutreachAttempt(
+            lead_id=lead.id,
+            channel="voice_asset",
+            provider="elevenlabs",
+            status="queued",
+            task="Generate personalized voice outreach audio",
+            script=script,
+        )
+        db.add(outreach)
+        db.flush()
+
+        directory = Path(output_dir or settings.ELEVENLABS_OUTREACH_AUDIO_DIR)
+        lead_slug = self._safe_slug(lead.full_name or lead.company or str(lead.id))
+        output_path = directory / f"{lead_slug}-{uuid4().hex[:10]}.mp3"
+        written_path = self.elevenlabs.write_speech_file(
+            script,
+            output_path,
+            voice_id=voice_id,
+            model_id=model_id,
+        )
+
+        outreach.status = "completed"
+        outreach.completed_at = datetime.utcnow()
+        lead.status = "voice_asset_ready"
+        db.add(
+            ProviderEvent(
+                provider="elevenlabs",
+                event_type="text_to_speech.generated",
+                external_id=str(outreach.id),
+                payload={
+                    "lead_id": str(lead.id),
+                    "outreach_attempt_id": str(outreach.id),
+                    "audio_path": str(written_path),
+                    "voice_id": voice_id or settings.ELEVENLABS_VOICE_ID,
+                },
+                processed=True,
+                processed_at=datetime.utcnow(),
+            )
+        )
+        db.commit()
+        return {
+            "outreach_attempt_id": str(outreach.id),
+            "lead_id": str(lead.id),
+            "provider": "elevenlabs",
+            "audio_path": str(written_path),
+            "status": outreach.status,
         }
 
     def handle_post_call_webhook(
