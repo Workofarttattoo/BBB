@@ -163,6 +163,9 @@ class MultiChannelCampaignOrchestrator:
         Returns:
             Dictionary mapping channel to allocated budget
         """
+        if not campaign.channels:
+            return {}
+
         if not performance_data:
             # Initial allocation - equal split
             per_channel = campaign.budget / len(campaign.channels)
@@ -189,12 +192,13 @@ class MultiChannelCampaignOrchestrator:
             roi_scores[channel] = max(0.1, score)  # Ensure minimum
             total_roi_score += roi_scores[channel]
 
-        # Allocate budget proportionally to ROI scores
-        allocation = {}
-        for channel in campaign.channels:
-            allocation[channel] = campaign.budget * (roi_scores[channel] / total_roi_score)
+        if total_roi_score == 0:
+            per_channel = campaign.budget / len(campaign.channels)
+            return {channel: per_channel for channel in campaign.channels}
 
-        return allocation
+        # BOLT OPTIMIZATION: Hoist division and use dictionary comprehension
+        allocation_factor = campaign.budget / total_roi_score
+        return {channel: roi_scores[channel] * allocation_factor for channel in campaign.channels}
 
     def generate_content(
         self,
