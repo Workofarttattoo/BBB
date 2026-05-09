@@ -779,18 +779,18 @@ class ChiefEnhancementOfficer:
 
     async def _check_bottlenecks(self):
         """Analyze task queues for blocked tasks."""
-        blocked_tasks = [t for t in self.orchestrator.task_queue if t.status == TaskStatus.BLOCKED]
-        pending_tasks = [t for t in self.orchestrator.task_queue if t.status == TaskStatus.PENDING]
+        num_blocked = self.orchestrator.task_status_counts[TaskStatus.BLOCKED]
+        num_pending = self.orchestrator.task_status_counts[TaskStatus.PENDING]
 
-        if len(blocked_tasks) > 2:
+        if num_blocked > 2:
             logger.warning(
-                f"[CEO Daemon] Detected {len(blocked_tasks)} blocked tasks. Analyzing root cause..."
+                f"[CEO Daemon] Detected {num_blocked} blocked tasks. Analyzing root cause..."
             )
             # In a real system, this would trigger a re-planning or resource reallocation
 
-        if len(pending_tasks) > 10:
+        if num_pending > 10:
             logger.warning(
-                f"[CEO Daemon] High backlog detected ({len(pending_tasks)} tasks). Suggesting scale-up."
+                f"[CEO Daemon] High backlog detected ({num_pending} tasks). Suggesting scale-up."
             )
 
     async def _make_improvement(self):
