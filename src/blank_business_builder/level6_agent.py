@@ -113,13 +113,14 @@ class Level6Agent:
             business_counts = {user_id: count for user_id, count in counts}
 
         for user in users:
+            business_count = business_counts.get(user.id, 0)
+
             # Check if user needs onboarding
-            if self._needs_onboarding(user):
+            if self._needs_onboarding(user, business_count):
                 decision = await self._create_onboarding_sequence(user, db)
                 decisions.append(decision)
 
             # Check for upgrade opportunities
-            business_count = business_counts.get(user.id, 0)
             if self._should_suggest_upgrade(user, business_count):
                 decision = await self._create_upgrade_campaign(user, db)
                 decisions.append(decision)
@@ -131,11 +132,11 @@ class Level6Agent:
 
         return decisions
 
-    def _needs_onboarding(self, user: User) -> bool:
+    def _needs_onboarding(self, user: User, business_count: int) -> bool:
         """Check if user needs onboarding."""
         # User created in last 7 days and hasn't created a business
         days_since_creation = (datetime.utcnow() - user.created_at).days
-        return days_since_creation <= 7 and not user.businesses
+        return days_since_creation <= 7 and business_count == 0
 
     async def _create_onboarding_sequence(self, user: User, db: Session) -> AgentDecision:
         """Create personalized onboarding email sequence."""
@@ -447,21 +448,30 @@ class Level6Agent:
         # Auto-generate marketing campaigns for businesses without recent campaigns
         businesses = db.query(Business).filter(Business.status == "active").all()
 
+        # Pre-fetch recent campaign counts for all active businesses to avoid N+1 queries
+        from sqlalchemy import func
+        business_ids = [b.id for b in businesses]
+        campaign_counts = {}
+        if business_ids:
+            counts = db.query(
+                MarketingCampaign.business_id, func.count(MarketingCampaign.id)
+            ).filter(
+                MarketingCampaign.business_id.in_(business_ids),
+                MarketingCampaign.created_at > datetime.utcnow() - timedelta(days=30)
+            ).group_by(MarketingCampaign.business_id).all()
+            campaign_counts = {b_id: count for b_id, count in counts}
+
         for business in businesses:
-            if self._needs_marketing_campaign(business, db):
+            recent_count = campaign_counts.get(business.id, 0)
+            if self._needs_marketing_campaign(business, recent_count):
                 decision = await self._create_auto_campaign(business, db)
                 decisions.append(decision)
 
         return decisions
 
-    def _needs_marketing_campaign(self, business: Business, db: Session) -> bool:
+    def _needs_marketing_campaign(self, business: Business, recent_campaign_count: int) -> bool:
         """Check if business needs a new marketing campaign."""
-        recent_campaigns = db.query(MarketingCampaign).filter(
-            MarketingCampaign.business_id == business.id,
-            MarketingCampaign.created_at > datetime.utcnow() - timedelta(days=30)
-        ).count()
-
-        return recent_campaigns == 0
+        return recent_campaign_count == 0
 
     async def _create_auto_campaign(self, business: Business, db: Session) -> AgentDecision:
         """Automatically create marketing campaign for business."""
