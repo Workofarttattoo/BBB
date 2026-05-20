@@ -630,12 +630,14 @@ from .api_features import router as features_router
 from .api_premium import router as premium_router
 from .api.echo_prime import router as echo_prime_router
 from .api.webhooks import router as webhooks_router
+from .api_catalog import router as catalog_router
 
 app.include_router(quantum_router)
 app.include_router(licensing_router)
 app.include_router(features_router)
 app.include_router(premium_router)
 app.include_router(echo_prime_router)
+app.include_router(catalog_router)
 app.include_router(webhooks_router)
 
 

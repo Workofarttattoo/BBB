@@ -114,6 +114,11 @@
                         <i class="fa-solid fa-bullhorn w-6"></i> Campaigns
                     </a>
                 </li>
+                <li>
+                    <a href="#" data-view="catalog" class="nav-link flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors">
+                        <i class="fa-solid fa-store w-6"></i> Catalog
+                    </a>
+                </li>
             </ul>
 
             <div class="p-4 border-t border-gray-700 space-y-1">
@@ -399,7 +404,78 @@
                     </div>
                 </div>
 
-                <!-- 5. Settings View -->
+                <!-- 5. Catalog View -->
+                <div id="view-catalog" class="view-section hidden">
+                    <!-- Catalog Sub-Tabs -->
+                    <div class="flex space-x-1 mb-6 bg-white rounded-xl shadow p-1 w-fit">
+                        <button onclick="showCatalogTab('businesses')" id="cat-tab-businesses" class="catalog-tab active px-5 py-2 rounded-lg text-sm font-medium transition-colors bg-primary text-white">
+                            <i class="fa-solid fa-building mr-2"></i>Business Templates
+                        </button>
+                        <button onclick="showCatalogTab('agents')" id="cat-tab-agents" class="catalog-tab px-5 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                            <i class="fa-solid fa-robot mr-2"></i>Agents
+                        </button>
+                        <button onclick="showCatalogTab('composer')" id="cat-tab-composer" class="catalog-tab px-5 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Company Composer
+                        </button>
+                    </div>
+
+                    <!-- Business Templates Tab -->
+                    <div id="cat-businesses" class="catalog-panel">
+                        <div id="business-catalog-grid" class="space-y-8">
+                            <div class="text-center py-12 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i><p class="mt-3">Loading catalog...</p></div>
+                        </div>
+                    </div>
+
+                    <!-- Agents Tab -->
+                    <div id="cat-agents" class="catalog-panel hidden">
+                        <div class="mb-4 flex flex-wrap gap-2" id="agent-tier-filters">
+                            <button onclick="filterAgents('all')" class="agent-filter-btn active px-3 py-1 rounded-full text-xs font-semibold bg-primary text-white">All</button>
+                            <button onclick="filterAgents('core')" class="agent-filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300">Core</button>
+                            <button onclick="filterAgents('management')" class="agent-filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300">Management</button>
+                            <button onclick="filterAgents('specialist')" class="agent-filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300">Specialist</button>
+                            <button onclick="filterAgents('specialized')" class="agent-filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300">Specialized 2025</button>
+                        </div>
+                        <div id="agent-catalog-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="text-center py-12 text-gray-400 col-span-3"><i class="fa-solid fa-spinner fa-spin text-3xl"></i></div>
+                        </div>
+                    </div>
+
+                    <!-- Company Composer Tab -->
+                    <div id="cat-composer" class="catalog-panel hidden">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <!-- Left: Selectors -->
+                            <div class="lg:col-span-1 space-y-4">
+                                <div class="bg-white rounded-xl shadow p-4">
+                                    <h4 class="font-semibold text-gray-800 mb-3"><i class="fa-solid fa-building text-primary mr-2"></i>Select Business Templates</h4>
+                                    <div id="composer-biz-list" class="space-y-2 max-h-64 overflow-y-auto text-sm"></div>
+                                </div>
+                                <div class="bg-white rounded-xl shadow p-4">
+                                    <h4 class="font-semibold text-gray-800 mb-3"><i class="fa-solid fa-robot text-accent mr-2"></i>Select Agents</h4>
+                                    <div id="composer-agent-list" class="space-y-2 max-h-64 overflow-y-auto text-sm"></div>
+                                </div>
+                                <div class="bg-white rounded-xl shadow p-4">
+                                    <h4 class="font-semibold text-gray-800 mb-3"><i class="fa-solid fa-comment text-green-500 mr-2"></i>Custom Note (optional)</h4>
+                                    <textarea id="composer-note" rows="3" placeholder="e.g. Focus on passive income, target crypto audience..." class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm resize-none focus:ring-primary focus:border-primary"></textarea>
+                                </div>
+                                <button onclick="runComposer()" class="w-full py-3 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl shadow hover:opacity-90 transition flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> Generate with Paperclip AI
+                                </button>
+                            </div>
+                            <!-- Right: Result -->
+                            <div class="lg:col-span-2">
+                                <div id="composer-result" class="bg-white rounded-xl shadow p-6 min-h-96">
+                                    <div class="text-center text-gray-400 py-16">
+                                        <i class="fa-solid fa-wand-magic-sparkles text-5xl mb-4 text-gray-300"></i>
+                                        <p class="text-lg font-medium text-gray-500">Select business templates and agents,<br>then generate your unique company.</p>
+                                        <p class="text-sm mt-2 text-gray-400">Powered by Paperclip (Claude AI)</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. Settings View -->
                 <div id="view-settings" class="view-section hidden">
                     <div class="bg-white shadow rounded-lg p-6 max-w-2xl">
                         <h3 class="text-xl font-medium text-gray-800 mb-6 border-b pb-2">Account Information</h3>
@@ -434,5 +510,208 @@
     <!-- Scripts -->
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/app.js"></script>
+
+    <!-- Catalog Script -->
+    <script>
+    (function() {
+        let _bizData = [], _agentData = [], _agentFilter = 'all';
+        const TIER_COLORS = { 0: 'yellow', 1: 'blue', 2: 'green', 3: 'gray' };
+        const TIER_BORDER = { 0: 'border-yellow-400', 1: 'border-blue-500', 2: 'border-green-500', 3: 'border-gray-400' };
+
+        async function loadCatalog() {
+            if (_bizData.length && _agentData.length) return;
+            const [bizRes, agentRes] = await Promise.all([
+                fetch('/api/catalog/businesses').then(r => r.json()),
+                fetch('/api/catalog/agents').then(r => r.json())
+            ]);
+            _bizData = bizRes.businesses || [];
+            _agentData = agentRes.agents || [];
+            renderBusinessCatalog();
+            renderAgentCatalog();
+            renderComposerLists();
+        }
+
+        function tierBadge(b) {
+            const colors = { 0: 'bg-yellow-100 text-yellow-800', 1: 'bg-blue-100 text-blue-800', 2: 'bg-green-100 text-green-800', 3: 'bg-gray-100 text-gray-700' };
+            return `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${colors[b.tier] || colors[3]}">${b.tier_label}</span>`;
+        }
+
+        function agentChip(agentId) {
+            const a = _agentData.find(x => x.id === agentId);
+            if (!a) return `<span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">${agentId}</span>`;
+            return `<span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded text-xs font-medium" title="${a.description}"><i class="fa-solid ${a.icon} mr-1 text-xs"></i>${a.name}</span>`;
+        }
+
+        function skillPill(s) {
+            return `<span class="px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-xs">${s}</span>`;
+        }
+
+        function renderBusinessCatalog() {
+            const groups = {};
+            _bizData.forEach(b => {
+                const k = b.tier_label;
+                if (!groups[k]) groups[k] = [];
+                groups[k].push(b);
+            });
+            const order = ['Special Tier 6 — Elite','Tier 1 — Highest Profit','Tier 2 — High Profit','Tier 3 — Medium Profit','Professional Services'];
+            const el = document.getElementById('business-catalog-grid');
+            el.innerHTML = order.filter(k => groups[k]).map(k => `
+                <div>
+                    <h3 class="text-base font-bold text-gray-700 mb-3 flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full inline-block ${k.includes('Elite') ? 'bg-yellow-400' : k.includes('1') ? 'bg-blue-500' : k.includes('2') ? 'bg-green-500' : 'bg-gray-400'}"></span>
+                        ${k}
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        ${groups[k].map(b => `
+                        <div class="bg-white rounded-xl shadow border-l-4 ${TIER_BORDER[b.tier] || 'border-gray-300'} p-4 hover:shadow-md transition">
+                            <div class="flex items-start justify-between mb-2">
+                                <h4 class="font-semibold text-gray-900 text-sm leading-tight flex-1 mr-2">${b.name}</h4>
+                                <span class="text-green-600 font-bold text-sm whitespace-nowrap">${b.monthly_revenue}/mo</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mb-3 leading-relaxed">${b.description}</p>
+                            <div class="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                                <span><i class="fa-solid fa-clock mr-1"></i>${b.time_commitment} time</span>
+                                <span><i class="fa-solid fa-robot mr-1"></i>${b.automation_level} auto</span>
+                            </div>
+                            <div class="mb-2">
+                                <p class="text-xs font-medium text-gray-600 mb-1">Agents:</p>
+                                <div class="flex flex-wrap gap-1">${(b.agents || []).map(agentChip).join('')}</div>
+                            </div>
+                            <div>
+                                <p class="text-xs font-medium text-gray-600 mb-1">Key Skills:</p>
+                                <div class="flex flex-wrap gap-1">${(b.skills_needed || []).slice(0,4).map(skillPill).join('')}</div>
+                            </div>
+                        </div>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderAgentCatalog() {
+            const tierColors = { core:'blue', management:'indigo', specialist:'purple', specialized:'amber' };
+            const tierLabels = { core:'Core Ops', management:'Management', specialist:'Specialist', specialized:'Specialized 2025' };
+            const filtered = _agentFilter === 'all' ? _agentData : _agentData.filter(a => a.tier === _agentFilter);
+            const el = document.getElementById('agent-catalog-grid');
+            el.innerHTML = filtered.map(a => {
+                const c = tierColors[a.tier] || 'gray';
+                return `<div class="bg-white rounded-xl shadow p-4 hover:shadow-md transition border border-gray-100" data-agent-tier="${a.tier}">
+                    <div class="flex items-center mb-3">
+                        <div class="w-10 h-10 rounded-xl bg-${c}-100 text-${c}-600 flex items-center justify-center mr-3 flex-shrink-0">
+                            <i class="fa-solid ${a.icon}"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 text-sm">${a.name}</h4>
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-${c}-50 text-${c}-700 font-medium">${tierLabels[a.tier] || a.tier}</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3 leading-relaxed">${a.description}</p>
+                    <p class="text-xs font-semibold text-gray-700 mb-2">Skills (${a.skills.length}):</p>
+                    <div class="flex flex-wrap gap-1">
+                        ${a.skills.map(s => `<span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">${s}</span>`).join('')}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderComposerLists() {
+            const bizList = document.getElementById('composer-biz-list');
+            const agentList = document.getElementById('composer-agent-list');
+            bizList.innerHTML = _bizData.map(b => `
+                <label class="flex items-start gap-2 cursor-pointer hover:bg-gray-50 rounded p-1">
+                    <input type="checkbox" class="composer-biz-cb mt-0.5" value="${b.id}">
+                    <span class="leading-tight"><span class="font-medium text-gray-800">${b.name}</span><br><span class="text-gray-400 text-xs">${b.monthly_revenue}/mo</span></span>
+                </label>`).join('');
+            agentList.innerHTML = _agentData.map(a => `
+                <label class="flex items-start gap-2 cursor-pointer hover:bg-gray-50 rounded p-1">
+                    <input type="checkbox" class="composer-agent-cb mt-0.5" value="${a.id}">
+                    <span class="leading-tight"><span class="font-medium text-gray-800"><i class="fa-solid ${a.icon} text-xs text-gray-500 mr-1"></i>${a.name}</span><br><span class="text-gray-400 text-xs">${a.tier}</span></span>
+                </label>`).join('');
+        }
+
+        window.showCatalogTab = function(tab) {
+            document.querySelectorAll('.catalog-panel').forEach(p => p.classList.add('hidden'));
+            document.getElementById('cat-' + tab).classList.remove('hidden');
+            document.querySelectorAll('.catalog-tab').forEach(t => {
+                t.classList.remove('bg-primary','text-white');
+                t.classList.add('text-gray-600','hover:bg-gray-100');
+            });
+            const active = document.getElementById('cat-tab-' + tab);
+            active.classList.add('bg-primary','text-white');
+            active.classList.remove('text-gray-600','hover:bg-gray-100');
+        };
+
+        window.filterAgents = function(tier) {
+            _agentFilter = tier;
+            document.querySelectorAll('.agent-filter-btn').forEach(b => {
+                b.classList.remove('bg-primary','text-white');
+                b.classList.add('bg-gray-200','text-gray-700');
+            });
+            event.target.classList.add('bg-primary','text-white');
+            event.target.classList.remove('bg-gray-200','text-gray-700');
+            renderAgentCatalog();
+        };
+
+        window.runComposer = async function() {
+            const bizIds = [...document.querySelectorAll('.composer-biz-cb:checked')].map(c => c.value);
+            const agentIds = [...document.querySelectorAll('.composer-agent-cb:checked')].map(c => c.value);
+            const note = document.getElementById('composer-note').value.trim();
+            const resultEl = document.getElementById('composer-result');
+
+            resultEl.innerHTML = `<div class="text-center py-16 text-gray-400">
+                <i class="fa-solid fa-wand-magic-sparkles fa-spin text-4xl text-primary mb-4"></i>
+                <p class="text-lg font-medium text-gray-600">Paperclip AI is designing your company...</p>
+            </div>`;
+
+            try {
+                const res = await fetch('/api/catalog/compose', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('access_token') || '') },
+                    body: JSON.stringify({ business_ids: bizIds, agent_ids: agentIds, custom_note: note || null })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Error');
+
+                const powered = data.powered_by === 'paperclip'
+                    ? '<span class="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-medium"><i class="fa-solid fa-paperclip mr-1"></i>Paperclip AI</span>'
+                    : '<span class="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">Offline Mode</span>';
+
+                const md = data.concept.replace(/^## (.+)$/gm, '<h2 class="text-lg font-bold text-gray-900 mt-4 mb-2">$1</h2>')
+                    .replace(/^### (.+)$/gm, '<h3 class="text-base font-semibold text-gray-800 mt-3 mb-1">$1</h3>')
+                    .replace(/^\*\*(.+?)\*\*(.*)$/gm, '<strong>$1</strong>$2')
+                    .replace(/^- (.+)$/gm, '<li class="ml-4 text-gray-700">$1</li>')
+                    .replace(/\n/g, '<br>');
+
+                resultEl.innerHTML = `
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
+                        <h3 class="font-bold text-gray-900 text-base">Your Custom Company</h3>
+                        ${powered}
+                    </div>
+                    <div class="prose prose-sm max-w-none text-gray-700 text-sm leading-relaxed">${md}</div>
+                    ${data.selected_businesses.length ? `
+                    <div class="mt-6 pt-4 border-t border-gray-100">
+                        <p class="text-xs font-semibold text-gray-500 mb-2">Selected Models:</p>
+                        <div class="flex flex-wrap gap-2">${data.selected_businesses.map(b => `<span class="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">${b.name}</span>`).join('')}</div>
+                    </div>` : ''}
+                    ${data.selected_agents.length ? `
+                    <div class="mt-3">
+                        <p class="text-xs font-semibold text-gray-500 mb-2">Agent Stack:</p>
+                        <div class="flex flex-wrap gap-2">${data.selected_agents.map(a => `<span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-medium"><i class="fa-solid ${a.icon} mr-1"></i>${a.name}</span>`).join('')}</div>
+                    </div>` : ''}`;
+            } catch(e) {
+                resultEl.innerHTML = `<div class="text-center py-12 text-red-500"><i class="fa-solid fa-triangle-exclamation text-3xl mb-3"></i><p>${e.message}</p></div>`;
+            }
+        };
+
+        // Hook into nav view switching
+        const origNav = window.switchView;
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function() {
+                    if (this.dataset.view === 'catalog') loadCatalog();
+                });
+            });
+        });
+    })();
+    </script>
 </body>
 </html>
