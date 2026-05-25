@@ -1,0 +1,22 @@
+{
+  "labels": {
+    "echo:strategy": {
+      "route": "echo_prime",
+      "hermes_mcp": "echo_prime",
+      "bbb_skip_autonomous_task": false,
+      "default_role": "executive"
+    },
+    "bbb:execute": {
+      "route": "bbb",
+      "hermes_mcp": "bbb_ops",
+      "bbb_skip_autonomous_task": false,
+      "default_role": "sales"
+    },
+    "human:apollo": {
+      "route": "human",
+      "bbb_skip_autonomous_task": true,
+      "instructions": "Run Apollo in BBB Headhunter GUI, then comment results on the issue."
+    }
+  },
+  "role_label_prefix": "role:"
+}

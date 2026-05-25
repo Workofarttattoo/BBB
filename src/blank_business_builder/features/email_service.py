@@ -38,11 +38,32 @@ class EmailService:
         from_email: str,
         to_emails: List[str],
         subject: str,
-        html_content: str
+        html_content: str,
+        *,
+        business_name: str = "default",
+        role: str = "marketer",
+        approval_id: str | None = None,
+        skip_gate: bool = False,
     ) -> bool:
         """
         Send an email using SendGrid.
         """
+        if not skip_gate:
+            from ..approval_gates import GateAction, gate_from_policy
+            from ..enterprise_agent_policy import Capability, resolve_business_policy
+
+            policy = resolve_business_policy(business_name).policy_for_role(role)
+            gate_from_policy(
+                mode_requires_approval=policy.requires_approval_before_side_effect(
+                    Capability.EMAIL_SEND
+                ),
+                action=GateAction.EMAIL_SEND,
+                business_name=business_name,
+                role=role,
+                approval_id=approval_id,
+                metadata={"subject": subject, "to": to_emails},
+                force_manual=policy.is_manual_only(Capability.EMAIL_SEND),
+            )
         try:
             # Try sending with ECH0 first
             return await self.ech0_service.send_email(from_email, to_emails[0], subject, html_content)

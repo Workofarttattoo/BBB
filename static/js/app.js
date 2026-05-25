@@ -81,13 +81,16 @@ function switchView(viewName) {
         'businesses': 'My Businesses',
         'ai-tools': 'AI Tools',
         'campaigns': 'Campaigns',
-        'settings': 'Account Settings'
+        'settings': 'Settings & Agent Ops'
     };
     document.getElementById('current-view-title').textContent = titles[viewName] || 'Dashboard';
 
     // Load data specific to view if needed
     if (viewName === 'businesses' && State.businesses.length === 0) {
         loadBusinesses();
+    }
+    if (viewName === 'settings' && typeof EnterpriseOps !== 'undefined') {
+        EnterpriseOps.onSettingsViewOpen();
     }
 }
 
@@ -227,6 +230,13 @@ function handleBusinessSelection(businessId) {
     if (selector) selector.value = businessId;
 
     showToast(`Switched to business context`, "success");
+
+    const tplEl = document.getElementById("ent-business-template");
+    const biz = State.businesses.find((b) => b.id === businessId);
+    if (tplEl && biz && biz.business_name) {
+        tplEl.value = biz.business_name;
+        if (typeof EnterpriseOps !== "undefined") EnterpriseOps.saveSettings();
+    }
 
     // Switch to dashboard if on businesses view
     if (State.currentView === 'businesses') {
@@ -589,6 +599,12 @@ async function initApp() {
             loadBusinesses()
         ]);
         switchView('dashboard');
+        if (typeof EnterpriseOps !== 'undefined') {
+            EnterpriseOps.init();
+        }
+        if (typeof EnterpriseChat !== 'undefined') {
+            EnterpriseChat.init();
+        }
     } catch (e) {
         console.error("App init failed", e);
     } finally {

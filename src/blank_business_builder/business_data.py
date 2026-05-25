@@ -7,7 +7,7 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Iterable, List
+from typing import Dict, Iterable, List
 
 from .business_models_2025 import get_all_business_models
 
@@ -26,6 +26,7 @@ class BusinessIdea:
     automation_level: float = 0.0
     difficulty: str = "Medium"
     required_roles: List[str] = field(default_factory=list)
+    capability_overrides: Dict[str, Dict[str, str]] = field(default_factory=dict)
 
     @property
     def monthly_profit(self) -> float:
@@ -48,7 +49,8 @@ def default_ideas() -> Iterable[BusinessIdea]:
             description=m.description,
             automation_level=m.automation_level,
             difficulty=m.difficulty,
-            required_roles=m.required_roles
+            required_roles=m.required_roles,
+            capability_overrides=getattr(m, "capability_overrides", None) or {},
         ) for m in get_all_business_models()
     ]
 
