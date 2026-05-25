@@ -447,21 +447,27 @@ class Level6Agent:
         # Auto-generate marketing campaigns for businesses without recent campaigns
         businesses = db.query(Business).filter(Business.status == "active").all()
 
+        # Pre-fetch recent marketing campaign counts to avoid N+1 queries
+        from sqlalchemy import func
+        business_ids = [b.id for b in businesses]
+        recent_campaign_counts = {}
+        if business_ids:
+            from datetime import timezone
+            thirty_days_ago = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=30)
+            counts = db.query(
+                MarketingCampaign.business_id, func.count(MarketingCampaign.id)
+            ).filter(
+                MarketingCampaign.business_id.in_(business_ids),
+                MarketingCampaign.created_at > thirty_days_ago
+            ).group_by(MarketingCampaign.business_id).all()
+            recent_campaign_counts = {biz_id: count for biz_id, count in counts}
+
         for business in businesses:
-            if self._needs_marketing_campaign(business, db):
+            if recent_campaign_counts.get(business.id, 0) == 0:
                 decision = await self._create_auto_campaign(business, db)
                 decisions.append(decision)
 
         return decisions
-
-    def _needs_marketing_campaign(self, business: Business, db: Session) -> bool:
-        """Check if business needs a new marketing campaign."""
-        recent_campaigns = db.query(MarketingCampaign).filter(
-            MarketingCampaign.business_id == business.id,
-            MarketingCampaign.created_at > datetime.utcnow() - timedelta(days=30)
-        ).count()
-
-        return recent_campaigns == 0
 
     async def _create_auto_campaign(self, business: Business, db: Session) -> AgentDecision:
         """Automatically create marketing campaign for business."""
@@ -474,10 +480,13 @@ class Level6Agent:
             tone="professional"
         )
 
+        from datetime import timezone
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+
         # Create campaign in database
         campaign = MarketingCampaign(
             business_id=business.id,
-            campaign_name=f"Auto-generated Campaign - {datetime.utcnow().strftime('%Y-%m-%d')}",
+            campaign_name=f"Auto-generated Campaign - {now.strftime('%Y-%m-%d')}",
             platform="multi-platform",
             campaign_type="awareness",
             content=campaign_copy,
@@ -492,7 +501,7 @@ class Level6Agent:
             confidence=0.85,
             reasoning=f"Business {business.business_name} has no recent campaigns, auto-generating",
             data={"business_id": str(business.id), "campaign_id": str(campaign.id)},
-            timestamp=datetime.utcnow(),
+            timestamp=now,
             requires_approval=True  # Require approval before publishing
         )
 
