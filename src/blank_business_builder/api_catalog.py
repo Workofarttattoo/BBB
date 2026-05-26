@@ -209,6 +209,16 @@ class ComposeRequest(BaseModel):
     custom_note: Optional[str] = None
 
 
+@router.get("/intelligence/status")
+async def intelligence_status():
+    """Return paperclip adapter provider health — which brain is active."""
+    try:
+        from .paperclip_adapter import paperclip
+        return paperclip.status()
+    except Exception as e:
+        return {"active": "unknown", "error": str(e)}
+
+
 @router.get("/businesses")
 async def get_businesses():
     return {"businesses": BUSINESSES, "total": len(BUSINESSES)}

@@ -37,6 +37,10 @@ class ECH0LLMEngine:
         """Generate an operational response, using deterministic fallback on provider failure."""
         prompt = self._construct_prompt(user_message, context)
         try:
+            if self.provider == "hermes":
+                return self._call_hermes(user_message, context)
+            if self.provider == "paperclip":
+                return self._call_paperclip(user_message, context)
             if self.provider == "huggingface":
                 return self._call_huggingface_space(prompt)
             if self.provider == "together":
@@ -47,6 +51,23 @@ class ECH0LLMEngine:
         except Exception as exc:
             logger.warning("Echo Prime inference failed via %s: %s", self.provider, exc)
             return self._fallback_response()
+
+    def _call_hermes(self, user_message: str, context: str = "") -> str:
+        """Route through Hermes VPS adapter."""
+        from .integrations.hermes import get_hermes
+        hermes = get_hermes()
+        if not hermes.is_configured():
+            raise ValueError("HERMES_VPS_URL is not set — cannot use hermes provider")
+        system = context or (
+            "You are Echo Prime, BBB's autonomous business reasoning core. "
+            "Be concise and operationally precise."
+        )
+        return hermes.chat(user_message, system=system)
+
+    def _call_paperclip(self, user_message: str, context: str = "") -> str:
+        """Route through the full paperclip provider chain (Hermes → Claude → Ollama → fallback)."""
+        from .paperclip_adapter import paperclip
+        return paperclip.think(user_message, system=context or None)
 
     @staticmethod
     def _construct_prompt(user_message: str, context: str) -> str:

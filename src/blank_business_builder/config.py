@@ -35,7 +35,8 @@ class Config:
     TWILIO_API_KEY_SECRET = os.getenv("TWILIO_API_KEY_SECRET", "")
     TWILIO_FROM_NUMBER = os.getenv("TWILIO_FROM_NUMBER", "")
 
-    ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
+    # ElevenLabs replaced by Bland AI TTS (see integrations/bland.py → text_to_speech)
+    # ELEVENLABS_API_KEY removed — use BLAND_API_KEY for all voice synthesis
     
     TWITTER_CONSUMER_KEY = os.getenv("TWITTER_CONSUMER_KEY", "")
     TWITTER_CONSUMER_SECRET = os.getenv("TWITTER_CONSUMER_SECRET", "")
@@ -62,14 +63,22 @@ class Config:
     ALGORITHM = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 
-    # Ollama / Echo
-    LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama")
+    # Intelligence providers
+    # LLM_PROVIDER priority: paperclip (auto-chain) > hermes > claude > ollama
+    LLM_PROVIDER = os.getenv("LLM_PROVIDER", "paperclip")
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "ech0-fine-tuned-v2:latest")
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "hermes3")
     ECH0_LLM_PROVIDER = os.getenv("ECH0_LLM_PROVIDER", LLM_PROVIDER)
     ECH0_LLM_ENDPOINT = os.getenv("ECH0_LLM_ENDPOINT", "")
     ECH0_LLM_API_KEY = os.getenv("ECH0_LLM_API_KEY", "")
     ECH0_LLM_TIMEOUT_SECONDS = int(os.getenv("ECH0_LLM_TIMEOUT_SECONDS", "180"))
+
+    # Hermes VPS — always-on private intelligence
+    # Install: ollama pull hermes3 on your VPS, then OLLAMA_HOST=0.0.0.0 ollama serve
+    HERMES_VPS_URL = os.getenv("HERMES_VPS_URL", "")           # e.g. http://1.2.3.4:11434
+    HERMES_MODEL = os.getenv("HERMES_MODEL", "hermes3")         # Ollama model tag or HF repo
+    HERMES_API_KEY = os.getenv("HERMES_API_KEY", "")            # leave blank for Ollama
+    HERMES_TIMEOUT = int(os.getenv("HERMES_TIMEOUT", "60"))
 
     # Outreach stack (Bland + Apollo + Slack + Echo private reasoning)
     BLAND_API_KEY = os.getenv("BLAND_API_KEY", "")

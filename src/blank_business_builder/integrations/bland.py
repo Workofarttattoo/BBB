@@ -143,3 +143,63 @@ class BlandService:
             hashlib.sha256,
         ).hexdigest()
         return hmac.compare_digest(digest, signature.strip())
+
+    # ── Text-to-Speech (replaces ElevenLabs) ────────────────────────────────
+
+    def list_voices(self) -> Dict[str, Any]:
+        """Return available Bland voices for TTS selection."""
+        return self._request("GET", "/v1/voices")
+
+    def text_to_speech(
+        self,
+        text: str,
+        voice_id: Optional[str] = None,
+        *,
+        language: Optional[str] = None,
+        sample_rate: int = 24000,
+    ) -> bytes:
+        """
+        Convert text to speech using Bland's voice synthesis API.
+        Returns raw audio bytes (mp3).
+
+        Replaces ElevenLabs TTS — set BLAND_VOICE_ID in .env to choose a voice.
+        Leave voice_id blank to use Bland's default voice.
+        """
+        body: Dict[str, Any] = {
+            "text": text,
+            "sample_rate": sample_rate,
+        }
+        vid = voice_id or os.getenv("BLAND_VOICE_ID", "")
+        if vid:
+            body["voice_id"] = vid
+        if language:
+            body["language"] = language
+
+        if not self.api_key:
+            raise ValueError("BLAND_API_KEY is required for text_to_speech")
+
+        response = self.session.post(
+            f"{self.base_url}/v1/voices/tts",
+            json=body,
+            headers={
+                "Authorization": self._authorization_values()[0],
+                "Content-Type": "application/json",
+                "Accept": "audio/mpeg",
+            },
+            timeout=self.timeout_seconds,
+        )
+        response.raise_for_status()
+        return response.content
+
+    def speak_notification(self, message: str, voice_id: Optional[str] = None) -> Optional[bytes]:
+        """
+        Convenience wrapper — generate TTS audio for a notification message.
+        Returns None (with a warning) if Bland is not configured rather than crashing.
+        """
+        if not self.api_key:
+            import logging
+            logging.getLogger(__name__).warning(
+                "speak_notification skipped — BLAND_API_KEY not set"
+            )
+            return None
+        return self.text_to_speech(message, voice_id=voice_id)
