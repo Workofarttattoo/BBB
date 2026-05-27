@@ -21,6 +21,8 @@ if TYPE_CHECKING:
         TaskStatus,
     )
 
+from .task_locks import TaskLockStore
+
 logger = logging.getLogger(__name__)
 
 PAPERCLIP_LABEL_ROLE_MAP = {
@@ -28,6 +30,9 @@ PAPERCLIP_LABEL_ROLE_MAP = {
     "echo:strategy": "executive",
     "human:apollo": None,
 }
+
+PLANNER_LABEL_PREFIX = "plan:"
+JUDGE_LABEL_PREFIX = "judge:"
 
 ISSUE_STATUS_TO_TASK = {
     "backlog": "pending",
@@ -82,9 +87,28 @@ class PaperclipWorkSourceSync:
     def __init__(self, orchestrator: "AutonomousBusinessOrchestrator"):
         self.orchestrator = orchestrator
         self._issue_index: Dict[str, str] = {}
+        self.locks = TaskLockStore()
+
+    def is_planner_issue(self, issue: PaperclipIssuePayload) -> bool:
+        return any(label.startswith(PLANNER_LABEL_PREFIX) for label in issue.labels)
+
+    def is_judge_only_issue(self, issue: PaperclipIssuePayload) -> bool:
+        return any(label.startswith(JUDGE_LABEL_PREFIX) for label in issue.labels)
 
     def _resolve_role(self, issue: PaperclipIssuePayload) -> "AgentRole":
         from .autonomous_business import AgentRole
+
+        if self.is_planner_issue(issue):
+            return AgentRole.EXECUTIVE
+        if self.is_judge_only_issue(issue):
+            for label in issue.labels:
+                if label.startswith(JUDGE_LABEL_PREFIX):
+                    domain = label.split(":", 1)[1]
+                    try:
+                        return AgentRole(f"judge_{domain}")
+                    except ValueError:
+                        pass
+            return AgentRole.META_MANAGER
 
         if issue.assignee_role:
             try:
@@ -110,13 +134,22 @@ class PaperclipWorkSourceSync:
         return TaskStatus(key)
 
     def should_skip_autonomous_task(self, issue: PaperclipIssuePayload) -> bool:
-        """human:apollo and unlabeled board-only work stay out of the agent loop."""
+        """human:apollo, planner-only, and terminal issues stay out of worker loop."""
         labels = {label.lower() for label in issue.labels}
         if "human:apollo" in labels:
+            return True
+        if self.is_planner_issue(issue):
             return True
         if issue.status in ("done", "cancelled"):
             return True
         return False
+
+    def acquire_issue_lock(self, issue: PaperclipIssuePayload, holder: str) -> bool:
+        lock_type = "plan" if self.is_planner_issue(issue) else "execute"
+        return self.locks.acquire(issue.issue_id, holder, lock_type=lock_type)
+
+    def release_issue_lock(self, issue_id: str, holder: Optional[str] = None) -> bool:
+        return self.locks.release(issue_id, holder)
 
     def upsert_issue(self, issue: PaperclipIssuePayload) -> Dict[str, Any]:
         from .autonomous_business import AutonomousTask
@@ -125,9 +158,20 @@ class PaperclipWorkSourceSync:
             raise ValueError("issue_id is required")
 
         if self.should_skip_autonomous_task(issue):
+            reason = "human_or_terminal_issue"
+            if self.is_planner_issue(issue):
+                reason = "planner_issue"
             return {
                 "synced": False,
-                "reason": "human_or_terminal_issue",
+                "reason": reason,
+                "issue_id": issue.issue_id,
+            }
+
+        holder = issue.assignee_agent_id or "bbb-sync"
+        if not self.acquire_issue_lock(issue, holder):
+            return {
+                "synced": False,
+                "reason": "issue_locked",
                 "issue_id": issue.issue_id,
             }
 

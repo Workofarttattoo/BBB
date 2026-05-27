@@ -55,6 +55,28 @@ class EnterpriseChatResponse(BaseModel):
     context: Optional[Dict[str, Any]] = None
 
 
+class MilestoneReviewRequest(BaseModel):
+    business_name: str
+    milestone_id: str
+    title: str
+    summary: str
+    artifact_type: str = "milestone_pack"
+    content: str
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class JudgeArtifactRequest(BaseModel):
+    business_name: str
+    artifact_type: str
+    content: str
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class MiddleManagerHeartbeatRequest(BaseModel):
+    business_name: str = "SaaS Micro-Tools Empire"
+    mission: Optional[str] = None
+
+
 def _get_orchestrator(business_name: str):
     from ..autonomous_business import AutonomousBusinessOrchestrator
 
@@ -161,6 +183,57 @@ async def sync_paperclip_issues(body: PaperclipSyncRequest) -> Dict[str, Any]:
     return orchestrator.sync_paperclip_issues(body.issues)
 
 
+@router.post("/middle-manager/heartbeat")
+async def middle_manager_heartbeat(body: MiddleManagerHeartbeatRequest) -> Dict[str, Any]:
+    from ..middle_manager_loop import MiddleManagerLoop
+
+    orchestrator = _get_orchestrator(body.business_name)
+    report = await MiddleManagerLoop(orchestrator).run_heartbeat(mission=body.mission)
+    return report.to_dict()
+
+
+@router.get("/middle-manager/last-report")
+async def middle_manager_last_report(
+    business_name: Optional[str] = None,
+) -> Dict[str, Any]:
+    from ..middle_manager_loop import load_last_report
+
+    report = load_last_report(business_name)
+    if not report:
+        raise HTTPException(status_code=404, detail="no middle manager reports yet")
+    return report
+
+
+@router.post("/middle-manager/judge")
+async def middle_manager_judge(body: JudgeArtifactRequest) -> Dict[str, Any]:
+    from ..middle_manager_loop import MiddleManagerLoop
+
+    orchestrator = _get_orchestrator(body.business_name)
+    return await MiddleManagerLoop(orchestrator).judge_artifact(
+        artifact_type=body.artifact_type,
+        content=body.content,
+        metadata=body.metadata,
+    )
+
+
+@router.post("/middle-manager/milestone-review")
+async def middle_manager_milestone_review(body: MilestoneReviewRequest) -> Dict[str, Any]:
+    from ..middle_manager_loop import MiddleManagerLoop
+    from ..milestone_parliament import MilestonePack
+
+    orchestrator = _get_orchestrator(body.business_name)
+    pack = MilestonePack(
+        milestone_id=body.milestone_id,
+        business_name=body.business_name,
+        title=body.title,
+        summary=body.summary,
+        artifact_type=body.artifact_type,
+        content=body.content,
+        metadata=body.metadata or {},
+    )
+    return await MiddleManagerLoop(orchestrator).review_milestone(pack)
+
+
 @router.get("/mcp-bridge")
 async def mcp_bridge_manifest() -> Dict[str, Any]:
     """
@@ -175,6 +248,9 @@ async def mcp_bridge_manifest() -> Dict[str, Any]:
             "leads_search": "/api/v1/enterprise/leads/search",
             "leads_ingest": "/api/v1/enterprise/leads/ingest",
             "paperclip_sync": "/api/v1/enterprise/paperclip/sync-issues",
+            "middle_manager_heartbeat": "/api/v1/enterprise/middle-manager/heartbeat",
+            "middle_manager_judge": "/api/v1/enterprise/middle-manager/judge",
+            "middle_manager_milestone": "/api/v1/enterprise/middle-manager/milestone-review",
             "enterprise_chat": "/api/v1/enterprise/chat",
             "echo_prime_health": "/api/v1/echo-prime/health",
             "echo_prime_chat": "/api/v1/echo-prime/chat",

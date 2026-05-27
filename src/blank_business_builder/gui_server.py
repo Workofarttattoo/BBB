@@ -23,6 +23,9 @@ from .business_data import BusinessIdea, default_ideas
 from .fiduciary import FiduciaryManager
 from .features.market_research import MarketResearch
 from .ech0_service import ECH0Service
+from .agent_ops_service import AgentOpsService
+from .agent_ops_state import is_viktor_mode_enabled
+from .hive_mind_service import get_hive_mind_service
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -32,6 +35,8 @@ app = FastAPI(title="Business Builder API")
 
 # Initialize Services
 ech0 = ECH0Service()
+agent_ops = AgentOpsService()
+hive_mind = get_hive_mind_service()
 
 # CORS configuration
 cors_origins_str = os.getenv("CORS_ORIGINS", "")
@@ -74,6 +79,30 @@ class BusinessSelection(BaseModel):
 class ChatRequest(BaseModel):
     message: str
 
+class AgentOpsSettingsUpdate(BaseModel):
+    viktor_mode_enabled: Optional[bool] = None
+    viktor_strategist_enabled: Optional[bool] = None
+    viktor_oracle_enabled: Optional[bool] = None
+    viktor_proactive_beat_enabled: Optional[bool] = None
+    workspace: Optional[str] = None
+    business_name: Optional[str] = None
+
+class ProactiveRunRequest(BaseModel):
+    job_id: str  # arxiv-ingest | daily-ops
+
+class MemorySeedRequest(BaseModel):
+    workspace: Optional[str] = None
+    overwrite: bool = False
+
+class HiveMindTaskRequest(BaseModel):
+    description: str
+    capability: str = "strategy"
+    priority: str = "normal"
+    parameters: Optional[Dict[str, Any]] = None
+
+class HiveMindIntentRequest(BaseModel):
+    text: str
+
 class AcquisitionSetupRequest(BaseModel):
     target_customer: str
     lead_keywords: str
@@ -89,7 +118,7 @@ class AcquisitionSetupRequest(BaseModel):
     bland_webhook_url: Optional[str] = None
 
 # --- State Management (Simple In-Memory + JSON Sync) ---
-STATE_FILE = "business_state.json"
+STATE_FILE = os.getenv("BBB_STATE_FILE", "business_state.json")
 
 def get_app_state():
     if Path(STATE_FILE).exists():
@@ -420,7 +449,95 @@ async def chat_with_echo(request: ChatRequest):
     """Chat with Echo via Ollama."""
     try:
         response = await ech0.chat(request.message)
-        return {"response": response}
+        return {
+            "response": response,
+            "viktor_mode": is_viktor_mode_enabled(),
+        }
     except Exception as e:
         logger.error(f"Chat error: {e}")
-        return {"response": "I'm having trouble connecting to my brain right now. Please check if Ollama is running."}
+        return {
+            "response": "I'm having trouble connecting to my brain right now. Please check if Ollama is running.",
+            "viktor_mode": is_viktor_mode_enabled(),
+        }
+
+
+@app.get("/api/v1/agent-ops/settings")
+async def get_agent_ops_settings():
+    """Viktor / agent-ops settings for the Command Center panel."""
+    return agent_ops.get_settings()
+
+
+@app.patch("/api/v1/agent-ops/settings")
+async def patch_agent_ops_settings(body: AgentOpsSettingsUpdate):
+    """Update Viktor toggles from the GUI (persisted in business_state.json)."""
+    updates = body.model_dump(exclude_none=True)
+    if not updates:
+        raise HTTPException(status_code=400, detail="No settings provided")
+    return agent_ops.update_settings(updates)
+
+
+@app.get("/api/v1/agent-ops/memory")
+async def get_agent_memory_preview(workspace: Optional[str] = None):
+    """Memory counts + preview snippets for the dashboard."""
+    return {
+        "status": agent_ops.memory_status(workspace),
+        "preview": agent_ops.memory_preview(workspace),
+    }
+
+
+@app.post("/api/v1/agent-ops/memory/seed")
+async def seed_agent_memory(body: MemorySeedRequest):
+    """Seed semantic memory from defaults (GUI button)."""
+    return agent_ops.seed_memory(workspace=body.workspace, overwrite=body.overwrite)
+
+
+@app.get("/api/v1/agent-ops/proactive/schedule")
+async def get_proactive_schedule():
+    """Scheduled proactive jobs (Celery beat)."""
+    return {"jobs": agent_ops.proactive_schedule()}
+
+
+@app.post("/api/v1/agent-ops/proactive/run")
+async def run_proactive_job(body: ProactiveRunRequest):
+    """Run arXiv ingest or daily ops now (Celery or inline fallback)."""
+    allowed = {"arxiv-ingest", "daily-ops"}
+    if body.job_id not in allowed:
+        raise HTTPException(status_code=400, detail=f"job_id must be one of {sorted(allowed)}")
+    return await agent_ops.run_proactive_job(body.job_id)
+
+
+@app.get("/api/v1/agent-ops/proactive/runs")
+async def get_proactive_runs(limit: int = 8):
+    """Recent proactive job runs from GUI / Celery."""
+    return {"runs": agent_ops.recent_proactive_runs(limit=limit)}
+
+
+@app.get("/api/v1/hive-mind/status")
+async def hive_mind_status():
+    """QuLab Hive Mind Intel Mesh — registry, queue, knowledge bus."""
+    await hive_mind.ensure_started()
+    return hive_mind.status()
+
+
+@app.post("/api/v1/hive-mind/tasks")
+async def hive_mind_submit_task(body: HiveMindTaskRequest):
+    """Submit a business task to the Hive Mind task distributor."""
+    return await hive_mind.submit_business_task(
+        description=body.description,
+        role_capability=body.capability,
+        priority=body.priority,
+        parameters=body.parameters,
+    )
+
+
+@app.post("/api/v1/hive-mind/intent")
+async def hive_mind_parse_intent(body: HiveMindIntentRequest):
+    """Parse natural language into crystalline intent (experiment / goal structure)."""
+    return hive_mind.parse_intent(body.text)
+
+
+@app.get("/api/v1/hive-mind/knowledge")
+async def hive_mind_knowledge(limit: int = 8):
+    """Latest knowledge bus topics from agent coordination."""
+    await hive_mind.ensure_started()
+    return {"topics": hive_mind.knowledge_topics(limit=limit)}

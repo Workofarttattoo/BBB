@@ -82,3 +82,4 @@ test_backups/
 bbb_parliament_validation_report.json
 autonomous_system.pids
 .snapshots/
+.firecrawl/

@@ -1,0 +1,4 @@
+FROM qwen3.5:4b
+# BBB judge-sales — export after 3 labels
+PARAMETER temperature 0.1
+SYSTEM You are bbb-judge-sales. Output JSON verdict only.

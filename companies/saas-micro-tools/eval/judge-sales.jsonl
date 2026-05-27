@@ -1,0 +1,3 @@
+{"artifact_type":"lead_batch","mission":"Find 10 SaaS founder leads in US","content":"{\"leads\":[{\"name\":\"Acme DevTools\",\"url\":\"https://acme.dev\",\"score\":85,\"notes\":\"ICP fit\"}]}","metadata":{"lead_count":1},"verdict":"pass","score":0.9,"policy_flags":[]}
+{"artifact_type":"lead_batch","mission":"Find leads","content":"","metadata":{"lead_count":0},"verdict":"revise","score":0.0,"fixes":["Artifact is empty"],"policy_flags":[]}
+{"artifact_type":"email_draft","mission":"Follow up warm lead","content":"Hi — quick question about your workflow.","metadata":{"requires_approval":true},"verdict":"escalate","score":0.6,"policy_flags":["approval_required_before_send"]}

@@ -1,0 +1,70 @@
+# BBB agent curriculum — domains for SFT seeds, skills enrichment, and eval rubrics.
+# Pilot: SaaS Micro-Tools Empire. Expand JSONL from real approved tasks over time.
+
+strategy: unified_base_plus_role_prompts
+# One corporate-base model (9B–14B) + per-role SKILL.md + system prompt.
+# Optional small LoRA adapters only for judges with 100+ labeled pass/fail examples.
+
+base_model_candidates:
+  - qwen3.5:9b
+  - qwen3.5:4b
+  - llama3.2:3b
+  - mistral:7b
+
+tiers:
+  corporate_core:
+    description: Shared behavior for every agent instance
+    domains:
+      - business_operations
+      - customer_service
+      - retail_operations
+      - real_business_practices
+      - english_professional
+      - communication
+      - critical_thinking
+      - time_management
+      - autonomous_agent_conduct
+      - approval_and_compliance
+  technical:
+    description: Engineering depth for builder and judge-code roles
+    domains:
+      - software_engineering_phd
+      - systems_design
+      - coding_2026_best_practices
+      - electrical_engineering_basics
+      - devops_and_reliability
+  wellbeing:
+    description: Runtime protocols (skills + lifecycle), not primary SFT weights
+    domains:
+      - meditation_stress
+      - shift_handoffs
+      - sleep_consolidation
+      - dream_memory_sort
+
+roles:
+  sales:
+    curriculum: [corporate_core, customer_service, retail_operations]
+    model_tier: flash_worker
+  marketer:
+    curriculum: [corporate_core, communication, english_professional]
+    model_tier: flash_worker
+  support:
+    curriculum: [corporate_core, customer_service, meditation_stress]
+    model_tier: flash_worker
+  saas_builder:
+    curriculum: [corporate_core, technical]
+    model_tier: flash_worker
+  executive:
+    curriculum: [corporate_core, business_operations, systems_design, critical_thinking]
+    model_tier: csuite
+  meta_manager:
+    curriculum: [corporate_core, time_management, autonomous_agent_conduct]
+    model_tier: supervisor
+
+export_paths:
+  sft_unified: training/exports/sft-corporate-base.jsonl
+  modelfile_unified: training/exports/Modelfile.corporate-base
+  sft_by_domain: training/exports/domains/{domain}.jsonl
+
+min_examples_for_lora: 100
+min_examples_for_modelfile_create: 20

@@ -51,6 +51,7 @@ from .approval_gates import (
     gate_from_policy,
 )
 from .paperclip_work_source import PaperclipWorkSourceSync
+from .config import settings
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -965,6 +966,7 @@ class AutonomousBusinessOrchestrator:
             business_concept
         )
         self.paperclip_sync = PaperclipWorkSourceSync(self)
+        self.judge_revise_counts: Dict[str, int] = {}
 
         # Identify required roles for the selected business concept
         self.required_roles = self._identify_required_roles(business_concept)
@@ -1432,8 +1434,19 @@ class AutonomousBusinessOrchestrator:
                 continue
 
             if isinstance(result, dict) and result.get("success"):
-                self._set_task_status(task, TaskStatus.COMPLETED, result=result)
-                normalized_results.append(result)
+                agent = self.agents.get(task.assigned_to) if task.assigned_to else None
+                judged = await self._apply_auto_judge(task, result, agent)
+                if judged.get("requeued_for_revise") or judged.get("requires_approval"):
+                    normalized_results.append(judged)
+                    continue
+                if judged.get("success") and judged.get("judge_verdict", "pass") == "pass":
+                    self._set_task_status(task, TaskStatus.COMPLETED, result=judged)
+                elif not judged.get("success"):
+                    if task.status not in (TaskStatus.FAILED, TaskStatus.BLOCKED):
+                        self._set_task_status(task, TaskStatus.FAILED, result=judged)
+                else:
+                    self._set_task_status(task, TaskStatus.COMPLETED, result=judged)
+                normalized_results.append(judged)
             else:
                 failed_result = (
                     result
@@ -1452,6 +1465,53 @@ class AutonomousBusinessOrchestrator:
                 normalized_results.append(failed_result)
 
         return normalized_results
+
+    async def _apply_auto_judge(
+        self,
+        task: AutonomousTask,
+        result: Dict,
+        agent: Optional["Level6BusinessAgent"] = None,
+    ) -> Dict:
+        """Run post-worker judge when enabled; enrich artifact from role runner."""
+        if not settings.AUTO_JUDGE_ENABLED:
+            return result
+
+        from .auto_judge_loop import AutoJudgeLoop
+        from .role_agent_runner import RoleAgentRunner
+
+        role_value = agent.role.value if agent else task.role.value
+        if not result.get("artifact_type"):
+            try:
+                runner = RoleAgentRunner(self.business_concept)
+                artifact = await runner.run_task(
+                    role=role_value,
+                    task_id=task.task_id,
+                    description=task.description,
+                )
+                result.setdefault("artifact_type", artifact.get("artifact_type"))
+                result.setdefault("content", artifact.get("content"))
+                result.setdefault("metadata", artifact.get("metadata", {}))
+            except Exception as exc:
+                logger.debug("Role runner enrichment skipped: %s", exc)
+
+        if not result.get("content"):
+            result["content"] = json.dumps(
+                {
+                    "outcome": result.get("outcome"),
+                    "task_description": result.get("task_description", task.description),
+                }
+            )
+        if not result.get("artifact_type"):
+            result["artifact_type"] = (
+                "lead_batch" if role_value == "sales" else f"{role_value}_draft"
+            )
+
+        loop = AutoJudgeLoop(
+            self.business_concept,
+            self,
+            max_revise=settings.AUTO_JUDGE_MAX_REVISE,
+        )
+        return await loop.evaluate_worker_result(task, result)
 
     async def _update_metrics(self, results: List[Dict]) -> None:
         """Update business metrics based on task results."""
