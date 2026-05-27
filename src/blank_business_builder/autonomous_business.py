@@ -779,18 +779,20 @@ class ChiefEnhancementOfficer:
 
     async def _check_bottlenecks(self):
         """Analyze task queues for blocked tasks."""
-        blocked_tasks = [t for t in self.orchestrator.task_queue if t.status == TaskStatus.BLOCKED]
-        pending_tasks = [t for t in self.orchestrator.task_queue if t.status == TaskStatus.PENDING]
+        # ⚡ Bolt Optimization: Use O(1) task_status_counts instead of O(N) list comprehension
+        # Impact: Reduces CPU usage and event loop blocking during scale-up scenarios
+        blocked_count = self.orchestrator.task_status_counts.get(TaskStatus.BLOCKED, 0)
+        pending_count = self.orchestrator.task_status_counts.get(TaskStatus.PENDING, 0)
 
-        if len(blocked_tasks) > 2:
+        if blocked_count > 2:
             logger.warning(
-                f"[CEO Daemon] Detected {len(blocked_tasks)} blocked tasks. Analyzing root cause..."
+                f"[CEO Daemon] Detected {blocked_count} blocked tasks. Analyzing root cause..."
             )
             # In a real system, this would trigger a re-planning or resource reallocation
 
-        if len(pending_tasks) > 10:
+        if pending_count > 10:
             logger.warning(
-                f"[CEO Daemon] High backlog detected ({len(pending_tasks)} tasks). Suggesting scale-up."
+                f"[CEO Daemon] High backlog detected ({pending_count} tasks). Suggesting scale-up."
             )
 
     async def _make_improvement(self):
@@ -1329,6 +1331,12 @@ class AutonomousBusinessOrchestrator:
         """Execute all in-progress tasks in parallel."""
         # Requeue stale in-progress tasks before execution to avoid deadlocks.
         self._reconcile_orphaned_in_progress_tasks()
+
+        # ⚡ Bolt Optimization: Short-circuit if no tasks are in progress
+        # Impact: Avoids O(N) full queue iteration when system is idle
+        if self.task_status_counts.get(TaskStatus.IN_PROGRESS, 0) == 0:
+            return []
+
         in_progress = [t for t in self.task_queue if t.status == TaskStatus.IN_PROGRESS]
 
         if not in_progress:
