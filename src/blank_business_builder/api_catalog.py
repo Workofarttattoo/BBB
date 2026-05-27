@@ -317,3 +317,126 @@ Set ANTHROPIC_API_KEY in your environment to unlock AI-generated company concept
         "selected_agents": agents,
         "powered_by": "offline",
     }
+
+
+# ---------------------------------------------------------------------------
+# Board of Directors API endpoints
+# ---------------------------------------------------------------------------
+
+class BoardConsultRequest(BaseModel):
+    topic: str
+    context: Optional[str] = None
+    include_chairman: bool = True
+
+class BoardExpertRequest(BaseModel):
+    role: str   # ceo | coo | cfo | cto | cmo | cso | chairman
+    question: str
+
+class EchoOperatorRequest(BaseModel):
+    task: str
+    start_url: Optional[str] = None
+    extract: Optional[str] = None
+    max_steps: int = 15
+
+
+@router.get("/board/status")
+async def board_status():
+    """Return online/offline status for each C-suite AI board member."""
+    try:
+        from .board.board_room import get_board
+        return get_board().status()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@router.get("/board/members")
+async def board_members():
+    """Return the full C-suite roster: roles, models, and expertise."""
+    return {
+        "members": [
+            {"role": "chairman", "title": "Board Chairman",          "model": "claude-opus-4-7 (via paperclip)", "expertise": ["Meta-oversight", "Ethical review", "Final veto"], "vps": "Anthropic API"},
+            {"role": "ceo",      "title": "Chief Executive Officer", "model": "deepseek-r1:14b",                  "expertise": ["Strategic vision", "Risk assessment", "Capital allocation"], "install": "ollama pull deepseek-r1:14b"},
+            {"role": "coo",      "title": "Chief Operating Officer", "model": "hermes3:8b",                       "expertise": ["Agent orchestration", "Workflow design", "KPI tracking"],       "install": "ollama pull hermes3:8b"},
+            {"role": "cfo",      "title": "Chief Financial Officer", "model": "qwen2.5:7b",                       "expertise": ["P&L management", "Cash flow", "Budget approval"],              "install": "ollama pull qwen2.5:7b"},
+            {"role": "cto",      "title": "Chief Technology Officer","model": "deepseek-coder-v2:16b",            "expertise": ["System architecture", "Security review", "Scalability"],       "install": "ollama pull deepseek-coder-v2:16b"},
+            {"role": "cmo",      "title": "Chief Marketing Officer", "model": "llama3.2:3b",                      "expertise": ["Brand strategy", "Content marketing", "Growth tactics"],       "install": "ollama pull llama3.2:3b"},
+            {"role": "cso",      "title": "Chief Strategy Officer",  "model": "qwen3:30b-a3b (or Grok-1)",       "expertise": ["Competitive strategy", "Market disruption", "Scenario planning"], "install": "ollama pull qwen3:30b-a3b  # or set GROK_VPS_URL"},
+        ]
+    }
+
+
+@router.post("/board/consult")
+async def board_consult(req: BoardConsultRequest):
+    """
+    Call a full board meeting on any topic.
+    All C-suite members deliberate in parallel; Chairman reviews.
+    """
+    try:
+        from .board.board_room import get_board
+        board = get_board()
+        minutes = board.deliberate(req.topic, context=req.context, include_chairman=req.include_chairman)
+        return {
+            "topic":            minutes.topic,
+            "majority":         minutes.majority,
+            "vote_tally":       minutes.vote_tally,
+            "consensus":        minutes.consensus,
+            "chairman_verdict": minutes.chairman_verdict,
+            "decisions":        [
+                {
+                    "member":         d.member,
+                    "role":           d.role,
+                    "model":          d.model,
+                    "opinion":        d.opinion,
+                    "recommendation": d.recommendation,
+                    "confidence":     d.confidence,
+                    "reasoning":      d.reasoning,
+                    "conditions":     d.conditions,
+                }
+                for d in minutes.decisions
+            ],
+            "available_members":   minutes.available_members,
+            "unavailable_members": minutes.unavailable_members,
+            "duration_seconds":    minutes.duration_seconds,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/board/ask")
+async def board_ask_expert(req: BoardExpertRequest):
+    """Route a question to a specific C-suite board member for domain advice."""
+    try:
+        from .board.board_room import get_board
+        answer = get_board().ask_expert(req.role, req.question)
+        return {"role": req.role, "question": req.question, "answer": answer}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/echo/operate")
+async def echo_operate(req: EchoOperatorRequest):
+    """
+    Run Echo Operator on a browser task.
+    Vision model sees the screen; Hermes decides actions.
+    Requires: playwright + qwen2.5-vl:3b on VPS.
+    """
+    try:
+        from .computer_use.echo_operator import EchoOperator
+        async with EchoOperator() as echo:
+            result = await echo.browse(
+                task=req.task,
+                start_url=req.start_url,
+                extract=req.extract,
+                max_steps=req.max_steps,
+            )
+        return {
+            "task":           result.task,
+            "success":        result.success,
+            "steps":          result.steps,
+            "extracted_data": result.extracted_data,
+            "error":          result.error,
+            "duration":       result.duration_seconds,
+            "screenshots":    result.screenshots_taken,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

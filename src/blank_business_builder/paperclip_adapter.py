@@ -160,6 +160,30 @@ class PaperclipAdapter:
         logger.info("paperclip → deterministic fallback")
         return _deterministic(prompt)
 
+    def board_consult(self, topic: str, context: Optional[str] = None) -> str:
+        """
+        Escalate a decision to the full AI board of directors.
+        Returns formatted meeting minutes as a string.
+        Use for major decisions: new business launch, large spend, strategy pivots.
+        """
+        try:
+            from .board.board_room import get_board
+            board = get_board()
+            minutes = board.deliberate(topic, context=context)
+            return minutes.summary()
+        except Exception as exc:
+            logger.warning("Board consult failed: %s — falling back to think()", exc)
+            return self.think(f"As a board of directors, deliberate on: {topic}", system=context)
+
+    def ask_expert(self, role: str, question: str) -> str:
+        """Route a question to a specific C-suite board member."""
+        try:
+            from .board.board_room import get_board
+            return get_board().ask_expert(role, question)
+        except Exception as exc:
+            logger.warning("Expert consult failed: %s — falling back to think()", exc)
+            return self.think(question)
+
     def active_provider(self) -> str:
         """Return name of the currently active provider (for status displays)."""
         if _hermes_available():
