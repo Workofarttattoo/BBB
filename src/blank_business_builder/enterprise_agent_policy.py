@@ -332,3 +332,18 @@ class EnterpriseAgentPolicy:
         if to_remove:
             self._save_approvals()
             logger.info(f"Cleared {len(to_remove)} old resolved approvals")
+
+
+# Standalone function for easy import
+def policy_for_role(role: str, company_pack: str = "saas-micro-tools") -> EnterpriseAgentPolicy:
+    """
+    Get policy instance for a specific role.
+    
+    Args:
+        role: Role name (e.g., 'sales_outreach', 'receptionist_agent')
+        company_pack: Company pack name
+        
+    Returns:
+        EnterpriseAgentPolicy instance
+    """
+    return EnterpriseAgentPolicy(company_pack=company_pack)
