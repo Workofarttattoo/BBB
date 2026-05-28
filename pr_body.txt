@@ -1,3 +1,15 @@
-🎯 **What:** Adds unit tests for the asynchronous `run_autonomous_loop` and `launch_magic_rd_lab_business` functions in `magic_rd_lab_autonomous_agents.py`. The infinite loop and sleeping functionality are mocked to allow fast, deterministic tests without running into timeout issues.
-📊 **Coverage:** Covered loop entry, loop exit conditions via mocked exceptions, agent deployments, invocation of underlying methods, and ensuring metrics sum exactly appropriately after 1 pass through the loop.
-✨ **Result:** Enhanced test coverage that protects core async loop functionality from regressions.
+💡 What:
+1. Refactored `manage_marketing_campaigns` in `src/blank_business_builder/level6_agent.py` to use a pre-fetching `IN` clause with `group_by`.
+2. Replaced deprecated `datetime.utcnow()` with timezone-aware `datetime.now(timezone.utc).replace(tzinfo=None)` throughout `level6_agent.py`.
+
+🎯 Why:
+1. The autonomous `manage_marketing_campaigns` operation was running an N+1 database query pattern by performing a separate `.count()` for recent campaigns inside the loop over all active businesses. As user/business bases scale, this causes significant performance degradation and potential event loop blocking since the database calls are synchronous.
+2. `datetime.utcnow()` is deprecated in Python 3.12 and scheduled for removal in future versions.
+
+📊 Impact:
+1. Reduces database queries inside the `manage_marketing_campaigns` loop from O(N) to O(1) by batching the campaign lookup. This prevents potential bottlenecks when managing large portfolios of businesses autonomously.
+2. Prevents deprecation warnings and future-proofs datetime handling without breaking SQLAlchemy naive datetime compatibility.
+
+🔬 Measurement:
+1. Monitor autonomous campaign creation loops for reduced total execution time and fewer database queries.
+2. Ensure no deprecation warnings are thrown regarding `datetime.utcnow()` execution.
