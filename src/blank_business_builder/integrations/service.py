@@ -8,7 +8,6 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from .apollo import ApolloService
-from .bland import BlandService
 from .legacy import (
     AnthropicService,
     BufferService,
@@ -20,13 +19,14 @@ from .legacy import (
 )
 from .legacy import IntegrationFactory as LegacyIntegrationFactory
 from .slack import SlackService
+from .elevenlabs_voice import ElevenLabsVoiceAgent
 
 
 @dataclass
 class IntegrationContainer:
     """Holds instantiated provider clients for outreach orchestration."""
 
-    bland: BlandService = field(default_factory=BlandService)
+    voice: ElevenLabsVoiceAgent = field(default_factory=ElevenLabsVoiceAgent)
     apollo: ApolloService = field(default_factory=ApolloService)
     slack: SlackService = field(default_factory=SlackService)
 
@@ -43,8 +43,8 @@ class IntegrationFactory(LegacyIntegrationFactory):
         return cls._container
 
     @classmethod
-    def get_bland_service(cls) -> BlandService:
-        return cls.get_container().bland
+    def get_voice_agent(cls) -> ElevenLabsVoiceAgent:
+        return cls.get_container().voice
 
     @classmethod
     def get_apollo_service(cls) -> ApolloService:
@@ -63,9 +63,9 @@ class IntegrationFactory(LegacyIntegrationFactory):
 __all__ = [
     "AnthropicService",
     "ApolloService",
-    "BlandService",
     "BufferService",
     "ECH0Service",
+    "ElevenLabsVoiceAgent",
     "IntegrationContainer",
     "IntegrationFactory",
     "OpenAIService",

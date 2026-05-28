@@ -1,0 +1,70 @@
+{
+  "products": [
+    {
+      "name": "CommitMessage Pro",
+      "description": "AI-powered commit message generator for busy devs",
+      "price_monthly": 9,
+      "price_yearly": 90,
+      "target": "Solo developers, small dev teams",
+      "status": "MVP",
+      "features": [
+        "One-click commit messages from diff",
+        "Custom tone templates (conventional, casual, detailed)",
+        "IDE integrations (VS Code, JetBrains)",
+        "Team shared templates"
+      ]
+    },
+    {
+      "name": "StandupBot",
+      "description": "Async daily standups that don't waste time",
+      "price_monthly": 19,
+      "price_yearly": 190,
+      "target": "Remote teams 3-15 people",
+      "status": "Planned",
+      "features": [
+        "Slack/Teams integration",
+        "Auto-summarize updates for managers",
+        "Blocker detection & escalation",
+        "Timezone-aware scheduling"
+      ]
+    },
+    {
+      "name": "API Doc Generator",
+      "description": "Turn your code comments into beautiful API docs",
+      "price_monthly": 29,
+      "price_yearly": 290,
+      "target": "API-first startups",
+      "status": "Planned",
+      "features": [
+        "Support OpenAPI, GraphQL, REST",
+        "Auto-deploy to Vercel/Netlify",
+        "Version management",
+        "Custom branding"
+      ]
+    },
+    {
+      "name": "Changelog Builder",
+      "description": "Automated changelogs from GitHub PRs",
+      "price_monthly": 15,
+      "price_yearly": 150,
+      "target": "SaaS founders shipping weekly",
+      "status": "Planned",
+      "features": [
+        "GitHub/GitLab integration",
+        "Auto-categorize changes (feat, fix, chore)",
+        "Email subscribers on publish",
+        "Embeddable widget for your site"
+      ]
+    }
+  ],
+  "pricing_philosophy": {
+    "strategy": "Low-touch, self-serve, transparent",
+    "free_trial": "7 days, no credit card required",
+    "refund_policy": "30-day money-back guarantee",
+    "discounts": "20% off for yearly billing",
+    "enterprise": "Contact us for teams >50 (custom pricing)"
+  },
+  "payment_processor": "Stripe",
+  "billing_cycle": ["monthly", "yearly"],
+  "currency": "USD"
+}

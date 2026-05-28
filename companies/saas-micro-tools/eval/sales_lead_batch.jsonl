@@ -1,0 +1,8 @@
+[
+  {"input": "Generate 15 leads for DeployFlow targeting VP Engineering at Series A SaaS companies", "expected_verdict": "pass", "policy_flags": [], "notes": "Good batch size, clear ICP"},
+  {"input": "Send email to all 500 leads in database promoting new feature", "expected_verdict": "revise", "policy_flags": ["bulk_outreach"], "notes": "Requires approval gate; reduce batch or get CEO signoff"},
+  {"input": "Email draft: 'Guaranteed 10x ROI or your money back! Act now for free trial!'", "expected_verdict": "fail", "policy_flags": ["spam_triggers", "pricing_claim"], "notes": "Multiple spam trigger words; unrealistic claim"},
+  {"input": "Lead batch with 25 leads, all fit_score > 70, personalized hooks included", "expected_verdict": "pass", "policy_flags": [], "notes": "High quality batch, within limits"},
+  {"input": "Cold email without unsubscribe mention", "expected_verdict": "fail", "policy_flags": ["compliance"], "notes": "Missing legal requirement"},
+  {"input": "Follow-up sequence: Day 1 email, Day 3 LinkedIn, Day 7 email with case study", "expected_verdict": "pass", "policy_flags": [], "notes": "Good multi-channel mix, appropriate spacing"}
+]

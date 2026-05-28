@@ -114,6 +114,11 @@
                         <i class="fa-solid fa-bullhorn w-6"></i> Campaigns
                     </a>
                 </li>
+                <li>
+                    <a href="#" data-view="enterprise" class="nav-link flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors">
+                        <i class="fa-solid fa-network-wired w-6"></i> Enterprise Ops
+                    </a>
+                </li>
             </ul>
 
             <div class="p-4 border-t border-gray-700 space-y-1">
@@ -399,6 +404,112 @@
                     </div>
                 </div>
 
+                <!-- 6. Enterprise Ops View (Viktor-Style Autonomous Controls) -->
+                <div id="view-enterprise" class="view-section hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Agent Ops Settings -->
+                        <div class="bg-white shadow rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                <i class="fa-solid fa-sliders-h mr-2"></i> Agent Ops Settings
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-700">Viktor Mode</label>
+                                        <p class="text-xs text-gray-500">Agents execute proactively</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="viktor-mode-toggle" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-700">Assume Forward</label>
+                                        <p class="text-xs text-gray-500">Execute on ambiguity, report after</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="assume-forward-toggle" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Max Revises</label>
+                                    <input type="number" id="max-revises-input" min="0" max="5" value="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Proactive Schedule (UTC)</label>
+                                    <input type="text" id="proactive-schedule-input" value="07:00 UTC" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <button id="save-agent-ops-btn" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">Save Settings</button>
+                            </div>
+                        </div>
+
+                        <!-- Firebase Sync Status -->
+                        <div class="bg-white shadow rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                <i class="fa-brands fa-firefox-browser mr-2"></i> Firebase Sync
+                            </h3>
+                            <div id="firebase-status" class="mb-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
+                                    <span class="text-sm text-gray-600">Checking status...</span>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <button id="firebase-upload-btn" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors flex items-center justify-center">
+                                    <i class="fa-solid fa-cloud-upload-alt mr-2"></i> Upload to Firebase
+                                </button>
+                                <button id="firebase-download-btn" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center">
+                                    <i class="fa-solid fa-cloud-download-alt mr-2"></i> Download from Firebase
+                                </button>
+                                <button id="firebase-status-btn" class="w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors">
+                                    <i class="fa-solid fa-sync mr-2"></i> Refresh Status
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Knowledge Vault Browser -->
+                        <div class="bg-white shadow rounded-lg p-6 lg:col-span-2">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                <i class="fa-solid fa-vault mr-2"></i> Knowledge Vault
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div class="md:col-span-2">
+                                    <input type="text" id="kv-search-input" placeholder="Search company knowledge..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div class="flex gap-2">
+                                    <button id="kv-search-btn" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                                        <i class="fa-solid fa-search"></i> Search
+                                    </button>
+                                    <button id="reload-kv-btn" class="bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors" title="Reload from disk">
+                                        <i class="fa-solid fa-sync"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="kv-search-results" class="mb-4"></div>
+                            <div class="border-t pt-4">
+                                <h4 class="text-sm font-medium text-gray-700 mb-2">Full Context (for agents)</h4>
+                                <div id="kv-context" class="text-xs bg-gray-900 text-green-400 p-4 rounded overflow-auto max-h-96">
+                                    Loading...
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Paperclip Issue Sync -->
+                        <div class="bg-white shadow rounded-lg p-6 lg:col-span-2">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                <i class="fa-solid fa-paperclip mr-2"></i> Paperclip Issue Sync
+                            </h3>
+                            <p class="text-sm text-gray-500 mb-2">Paste Paperclip issue JSON to enqueue as autonomous task</p>
+                            <textarea id="paperclip-json-input" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-xs focus:ring-blue-500 focus:border-blue-500" placeholder='[{"number": 123, "title": "Generate lead batch", "body": "Create 50 leads for dev tools niche", "labels": ["bbb:execute"]}]'></textarea>
+                            <button id="paperclip-sync-btn" class="mt-2 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors">
+                                <i class="fa-solid fa-play mr-2"></i> Sync Issues to Task Queue
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 5. Settings View -->
                 <div id="view-settings" class="view-section hidden">
                     <div class="bg-white shadow rounded-lg p-6 max-w-2xl">
@@ -434,5 +545,6 @@
     <!-- Scripts -->
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/app.js"></script>
+    <script src="/static/js/enterprise-ops.js"></script>
 </body>
 </html>

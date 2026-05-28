@@ -1,0 +1,142 @@
+{
+  "version": "1.0.0",
+  "business_id": "chattertech-ai",
+  "last_updated": "2024-01-15T00:00:00Z",
+  
+  "approval_gates": {
+    "outbound_email": {
+      "enabled": true,
+      "threshold_daily": 20,
+      "reason": "Spam risk management - protect domain reputation",
+      "approvers": ["CEO"],
+      "auto_approve_if": ["reply_to_inbound", "trial_followup"]
+    },
+    "bulk_apollo_search": {
+      "enabled": true,
+      "threshold_results": 50,
+      "reason": "Cost control and lead quality assurance",
+      "approvers": ["CEO"]
+    },
+    "discounts": {
+      "enabled": true,
+      "threshold_percent": 20,
+      "reason": "Revenue protection and pricing consistency",
+      "approvers": ["CEO"]
+    },
+    "custom_integrations": {
+      "enabled": true,
+      "reason": "Technical complexity and support burden",
+      "approvers": ["CEO", "CTO"]
+    },
+    "stripe_charges": {
+      "enabled": true,
+      "threshold_usd": 0,
+      "reason": "All charges require approval until Stripe is in production mode",
+      "approvers": ["CEO"]
+    },
+    "phone_outbound": {
+      "enabled": true,
+      "threshold_daily_calls": 50,
+      "reason": "Cost control and TCPA compliance",
+      "approvers": ["CEO"]
+    }
+  },
+  
+  "compliance_rules": {
+    "tcpa_compliance": {
+      "description": "Telephone Consumer Protection Act compliance for outbound calls",
+      "rules": [
+        "Do not call numbers on DNC registry",
+        "Only call businesses, not consumers",
+        "Maintain call recordings for 2 years",
+        "Provide opt-out mechanism in all calls"
+      ]
+    },
+    "can_spam_compliance": {
+      "description": "CAN-SPAM Act compliance for outbound email",
+      "rules": [
+        "Include physical address in all emails",
+        "Include clear unsubscribe link",
+        "Honor unsubscribe within 10 business days",
+        "Use accurate subject lines (no deception)"
+      ]
+    },
+    "data_retention": {
+      "call_recordings_days": 730,
+      "transcripts_days": 730,
+      "lead_data_days": 1095,
+      "analytics_days": 365
+    }
+  },
+  
+  "brand_guidelines": {
+    "tone": "Professional but approachable",
+    "style": "Confident, not salesy, focused on ROI",
+    "language": "Concrete numbers over vague promises",
+    "personality": "Reliable helper, not pushy salesman",
+    "forbidden_phrases": [
+      "guaranteed results",
+      "best in the world",
+      "never miss a call again",
+      "completely automated"
+    ],
+    "preferred_phrases": [
+      "industry-leading answer rate",
+      "customers recover 5-10x the cost",
+      "catches 94%+ of calls",
+      "AI-powered with human oversight"
+    ]
+  },
+  
+  "operational_policies": {
+    "trial_policy": {
+      "length_days": 7,
+      "credit_card_required": false,
+      "features_included": "all",
+      "conversion_offer": "First month 50% off if converted within trial",
+      "max_trials_per_business": 1
+    },
+    "refund_policy": {
+      "type": "money-back guarantee",
+      "length_days": 30,
+      "terms": "Full refund if not satisfied within first 30 days, no questions asked",
+      "approver": "CEO"
+    },
+    "support_hours": {
+      "timezone": "America/New_York",
+      "hours": "9am-6pm Monday-Friday",
+      "emergency_contact": "inventor@aios.is"
+    },
+    "sla": {
+      "uptime_guarantee": "99.5%",
+      "response_time_hours": 4,
+      "resolution_time_hours": 24
+    }
+  },
+  
+  "escalation_matrix": {
+    "technical_issue": {
+      "level_1": "AI Agent (auto-resolve common issues)",
+      "level_2": "Human Support (escalate if unresolved in 1 hour)",
+      "level_3": "CTO/Founder (escalate if service outage)"
+    },
+    "billing_dispute": {
+      "level_1": "AI Agent (explain charges, offer payment plan)",
+      "level_2": "CEO (approve refunds, exceptions)"
+    },
+    "sales_objection": {
+      "level_1": "AI Agent (handle standard objections)",
+      "level_2": "Human Sales (escalate high-value prospects)",
+      "level_3": "CEO (enterprise deals >$500/mo)"
+    }
+  },
+  
+  "metrics_targets": {
+    "answered_rate_min": 0.94,
+    "avg_handle_time_max_minutes": 4,
+    "trial_to_paid_conversion_min": 0.30,
+    "monthly_churn_max": 0.05,
+    "nps_min": 50,
+    "first_response_time_max_minutes": 30
+  }
+}

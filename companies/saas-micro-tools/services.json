@@ -1,0 +1,44 @@
+{
+  "business_name": "SaaS Micro-Tools Empire",
+  "tagline": "Focused B2B tools for solo founders and small teams",
+  "mission": "Ship niche productivity tools faster than platforms can build features",
+  "target_customer": {
+    "primary": "Solo founders (1-5 person teams)",
+    "secondary": "Small dev teams (5-20 people)",
+    "geography": "US/EU English-speaking markets",
+    "pain_points": [
+      "Overwhelmed by complex enterprise tools",
+      "Need specific workflow solutions, not platforms",
+      "Value speed and simplicity over feature sprawl",
+      "Willing to pay $9-49/mo for focused solutions"
+    ]
+  },
+  "value_proposition": {
+    "speed": "Ship MVP in days, not months",
+    "focus": "One job, done perfectly",
+    "pricing": "Transparent, affordable, no hidden fees",
+    "support": "Human response within 24 hours"
+  },
+  "brand_voice": {
+    "tone": "Direct, helpful, no fluff",
+    "personality": "Builder-to-builder, peer-level",
+    "avoid": [
+      "Marketing speak",
+      "Enterprise jargon",
+      "Over-promising",
+      "Feature dumping"
+    ]
+  },
+  "operating_principles": [
+    "Revenue is the scoreboard",
+    "Speed beats perfection",
+    "Niche down until it hurts",
+    "Charge from day one",
+    "Humans in the loop for money/reputation decisions"
+  ],
+  "contact": {
+    "email": "hello@saasmicrotools.example.com",
+    "website": "https://saasmicrotools.example.com",
+    "twitter": "@saasmicrotools"
+  }
+}

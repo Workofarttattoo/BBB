@@ -1,0 +1,118 @@
+{
+  "company_name": "QuLab Infinite",
+  "tagline": "Trustworthy Computational Co-Pilots for Quantum Mechanics, Materials Science, and Biology",
+  "founder_vision": "QuLab Infinite was built from first principles by an independent researcher who needed better tools for rapid, honest iteration across quantum mechanics, materials science, and biology. The goal is not to replace wet labs, but to make them dramatically more efficient by providing trustworthy computational co-pilots. The platform continues to evolve with transparent validation, rigorous testing against literature, and a commitment to clarity over hype.",
+  "mission": "De-risk scientific ideas fast using multi-physics digital twins and validation gauntlets",
+  "target_customer": {
+    "primary": "Materials science research teams (2-20 people)",
+    "secondary": "Quantum biology labs",
+    "tertiary": "Independent researchers in computational chemistry/physics",
+    "geography": "Global (US/EU primary)",
+    "pain_points": [
+      "Failed lab experiments cost $20k-$100k+",
+      "Need rapid iteration without expensive wet lab time",
+      "Require trustworthy computational validation before committing resources",
+      "Overwhelmed by hype-driven AI tools lacking rigorous testing"
+    ]
+  },
+  "value_proposition": [
+    "Avoid one bad experimental direction or identify promising optimizations",
+    "Run live material simulations in Discovery Hour sessions",
+    "Multi-physics digital twins validated against literature",
+    "Transparent validation gauntlets with clear confidence scores",
+    "Clarity over hype - honest assessment of computational predictions"
+  ],
+  "brand_voice": {
+    "tone": "Rigorous, transparent, humble, evidence-based",
+    "avoid": ["Hype", "Overpromising", "Black box claims", "Replacing wet labs"],
+    "emphasize": ["Validation", "Literature testing", "Clear limitations", "Co-pilot not replacement"]
+  },
+  "services": [
+    {
+      "name": "Discovery Hour",
+      "price": 100,
+      "currency": "USD",
+      "description": "One focused question per session - stress test one material, plan one synthesis route, or run one FMO spectroscopy scenario",
+      "deliverables": [
+        "Live MCP (Model-Context-Protocol) access demo",
+        "Concrete insights on your specific material/question",
+        "Clear recommendation for next step (Pilot engagement)"
+      ],
+      "rules": [
+        "Limit to one focused question per session",
+        "Always end with clear recommendation for Pilot",
+        "Zero-risk way to see gauntlet and report quality"
+      ],
+      "positioning": "Low-commitment entry point - many consider $100 well spent to avoid $20k+ failed experiment"
+    },
+    {
+      "name": "Pilot Engagement",
+      "price_tier": "Custom quoted after Discovery Hour",
+      "description": "Full validation gauntlet on top candidate materials or synthesis routes",
+      "deliverables": [
+        "Comprehensive multi-physics simulation",
+        "Literature validation report",
+        "Confidence scores and limitation analysis",
+        "Actionable recommendations for wet lab work"
+      ],
+      "ideal_for": "Teams who found value in Discovery Hour and want to de-risk their top candidates"
+    }
+  ],
+  "pricing_strategy": {
+    "model": "Land-and-expand via Discovery Hour",
+    "psychology": "Frame $100 against $20k-$100k+ failed experiment cost",
+    "objection_handling": {
+      "price_pushback": "Most teams start with our $100 Discovery Hour so they can see the quality of the gauntlet and reports with zero risk. If it delivers value, we can discuss a full pilot.",
+      "value_explanation": "A single failed lab experiment can easily cost $20k–$100k+. Our Discovery Hour often helps teams avoid one bad direction or identify a promising optimization — many consider that $100 well spent."
+    }
+  },
+  "sales_playbook": {
+    "cold_call_opener": "Hi [Name], this is Joshua from QuLab Infinite. We help materials and quantum-biology teams de-risk ideas fast using multi-physics digital twins and validation gauntlets. We offer a low-commitment $100 one-hour Discovery Session where we run one of your materials live and give you concrete insights. Would you be open to booking a quick slot next week?",
+    "discovery_close": "Great — let's start with the $100 Discovery Hour so you can see the output quality firsthand. If it's useful, we can move to a full pilot on your top candidates.",
+    "selling_philosophy": {
+      "approach": "Cold Calling 3.0 - Connection not Interruption",
+      "principles": [
+        "Warm the path with compelling messages before calling",
+        "Filter leads so every connection is qualified",
+        "Present as intelligent opportunity addressing buyer needs",
+        "Call with authority and make intelligent statements",
+        "Evolve pitch based on prospect responses",
+        "Invest in knowledge and presentation skills"
+      ],
+      "mindset": [
+        "Decide success is non-negotiable (want it like air to breathe)",
+        "Focus on abundance and opportunities others miss",
+        "Action is everything - nothing happens until something is sold",
+        "Prepare completely for every call",
+        "Respect prospects and yourself always"
+      ],
+      "avoid": [
+        "Numbers game / spray-and-pray cold calling",
+        "Hard pitches like 'what would it take to sign today'",
+        "Treating selling as dirty word",
+        "Activity without strategy"
+      ]
+    }
+  },
+  "competitive_advantages": [
+    "Built by independent researcher for researchers - understands real pain",
+    "Multi-physics approach (not single-domain tools)",
+    "Transparent validation gauntlets tested against literature",
+    "Commitment to clarity over hype",
+    "Low-risk Discovery Hour entry point",
+    "Live MCP access during sessions"
+  ],
+  "success_metrics": {
+    "customer_outcomes": [
+      "Avoided failed experiments ($20k-$100k+ savings)",
+      "Identified promising optimizations faster",
+      "Reduced wet lab iteration cycles",
+      "Increased confidence before committing resources"
+    ],
+    "business_goals": [
+      "Convert Discovery Hour to Pilot engagements",
+      "Build reputation for rigorous, honest computational science",
+      "Grow through word-of-mouth in research community"
+    ]
+  }
+}

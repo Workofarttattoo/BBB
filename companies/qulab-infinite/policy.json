@@ -1,0 +1,152 @@
+{
+  "business_id": "qulab-infinite",
+  "version": "1.0.0",
+  "capabilities": {
+    "outbound_email": {
+      "enabled": true,
+      "requires_approval": true,
+      "daily_limit": 50,
+      "approval_threshold": "batch_size > 10"
+    },
+    "apollo_search": {
+      "enabled": true,
+      "requires_approval": true,
+      "bulk_ingest_requires_approval": true
+    },
+    "crm_ingest": {
+      "enabled": true,
+      "requires_approval": true
+    },
+    "stripe_payments": {
+      "enabled": false,
+      "requires_approval": true,
+      "note": "Manual invoicing for Discovery Hour and Pilot engagements"
+    },
+    "code_deployment": {
+      "enabled": true,
+      "requires_approval": true,
+      "sandbox_required": true
+    },
+    "social_media_posting": {
+      "enabled": true,
+      "requires_approval": true,
+      "platforms": ["LinkedIn", "Twitter/X"]
+    }
+  },
+  "approval_gates": {
+    "outbound_email": {
+      "trigger": "any_outbound_email",
+      "approver_role": "ceo",
+      "gui_required": true
+    },
+    "bulk_apollo": {
+      "trigger": "batch_size > 10",
+      "approver_role": "ceo",
+      "gui_required": true
+    },
+    "crm_ingest": {
+      "trigger": "any_crm_ingest",
+      "approver_role": "ceo",
+      "gui_required": true
+    },
+    "payments": {
+      "trigger": "any_payment_action",
+      "approver_role": "ceo",
+      "gui_required": true
+    },
+    "code_production": {
+      "trigger": "any_production_deploy",
+      "approver_role": "ceo",
+      "sandbox_pass_required": true,
+      "gui_required": true
+    }
+  },
+  "compliance_rules": {
+    "tone_requirements": {
+      "must_be": ["rigorous", "transparent", "humble", "evidence-based"],
+      "must_avoid": ["hype", "overpromising", "black box claims", "claiming to replace wet labs"]
+    },
+    "scientific_integrity": {
+      "always_validate_against_literature": true,
+      "clear_confidence_scores_required": true,
+      "limitations_must_be_stated": true,
+      "position_as_copilot_not_replacement": true
+    },
+    "pricing_communications": {
+      "frame_discovery_hour_against_experiment_cost": true,
+      "never_pressure_close": true,
+      "always_offer_zero_risk_entry": true
+    }
+  },
+  "judge_criteria": {
+    "sales_outreach": {
+      "required_fields": [
+        "prospect_name",
+        "company_name",
+        "research_focus",
+        "personalized_hook",
+        "discovery_hour_offer",
+        "clear_call_to_action"
+      ],
+      "tone_checks": [
+        "no_hype_language",
+        "evidence_based_claims",
+        "respectful_of_prospect_time",
+        "positions_as_opportunity_not_pitch"
+      ],
+      "quality_thresholds": {
+        "personalization_score_min": 0.7,
+        "value_prop_clarity_min": 0.8,
+        "call_to_action_clarity_min": 0.9
+      }
+    },
+    "technical_reports": {
+      "required_sections": [
+        "methodology",
+        "validation_approach",
+        "confidence_scores",
+        "limitations",
+        "literature_comparison",
+        "actionable_recommendations"
+      ],
+      "integrity_checks": [
+        "no_overstated_confidence",
+        "clear_uncertainty_quantification",
+        "literature_citations_present",
+        "copilot_positioning_maintained"
+      ]
+    }
+  },
+  "escalation_rules": {
+    "scientific_ethics_concern": {
+      "trigger_keywords": ["misleading", "overstate", "hide limitations", "guarantee results"],
+      "escalate_to": "ceo",
+      "halt_execution": true
+    },
+    "pricing_objection": {
+      "handle_autonomously": true,
+      "use_playbook": "objection_handling",
+      "escalate_if": "prospect_requests_custom_pricing"
+    },
+    "technical_question_beyond_scope": {
+      "handle_autonomously": false,
+      "escalate_to": "ceo",
+      "draft_response_required": true
+    }
+  },
+  "viktor_mode_settings": {
+    "assume_forward_enabled": true,
+    "ambiguity_confidence_threshold": 0.7,
+    "max_revision_attempts": 3,
+    "proactive_triggers": [
+      "new_arxiv_paper_in_domain",
+      "lead_followup_reminder",
+      "pilot_engagement_milestone"
+    ],
+    "memory_layers": {
+      "working": "current_task_and_tool_calls",
+      "episodic": "compressed_session_summaries",
+      "semantic": "facts_about_qulab_prospects_and_preferences"
+    }
+  }
+}

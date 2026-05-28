@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BBB - Viktor Autonomous Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .pulse-dot {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .task-status-queued { border-left: 4px solid #fbbf24; }
+        .task-status-running { border-left: 4px solid #3b82f6; }
+        .task-status-completed { border-left: 4px solid #10b981; }
+        .task-status-failed { border-left: 4px solid #ef4444; }
+        .task-status-error { border-left: 4px solid #dc2626; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="app" class="min-h-screen">
+        <!-- Header -->
+        <header class="gradient-bg text-white shadow-lg">
+            <div class="container mx-auto px-4 py-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-bold"><i class="fas fa-robot mr-2"></i>Viktor Autonomous Dashboard</h1>
+                        <p class="text-purple-200 mt-1">SaaS Micro-Tools Empire - AI Business Operator</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-right">
+                            <div class="text-sm text-purple-200">Viktor Mode</div>
+                            <div class="text-2xl font-bold">
+                                <i :class="agentOps.viktor_mode_enabled ? 'fas fa-check-circle text-green-400' : 'fas fa-times-circle text-red-400'"></i>
+                                {{ agentOps.viktor_mode_enabled ? 'ACTIVE' : 'INACTIVE' }}
+                            </div>
+                        </div>
+                        <button @click="toggleViktorMode" 
+                                :class="agentOps.viktor_mode_enabled ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'"
+                                class="px-4 py-2 rounded-lg font-semibold transition">
+                            {{ agentOps.viktor_mode_enabled ? 'Disable' : 'Enable' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="container mx-auto px-4 py-8">
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-lg card-shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Active Tasks</p>
+                            <p class="text-3xl font-bold text-blue-600">{{ stats.activeTasks }}</p>
+                        </div>
+                        <i class="fas fa-tasks text-4xl text-blue-200"></i>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg card-shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Pending Approvals</p>
+                            <p class="text-3xl font-bold text-yellow-600">{{ stats.pendingApprovals }}</p>
+                        </div>
+                        <i class="fas fa-clock text-4xl text-yellow-200"></i>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg card-shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Judge Pass Rate</p>
+                            <p class="text-3xl font-bold text-green-600">{{ judgeStats.passRate }}%</p>
+                        </div>
+                        <i class="fas fa-chart-line text-4xl text-green-200"></i>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg card-shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Revise Rate</p>
+                            <p class="text-3xl font-bold" :class="judgeStats.reviseRate < 20 ? 'text-green-600' : 'text-yellow-600'">{{ judgeStats.reviseRate }}%</p>
+                        </div>
+                        <i class="fas fa-sync text-4xl text-purple-200"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Main Column - Task Queue -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Active Tasks -->
+                    <div class="bg-white rounded-lg card-shadow p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold text-gray-800"><i class="fas fa-list-ul mr-2"></i>Active Tasks</h2>
+                            <button @click="refreshTasks" class="text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
+                        </div>
+                        
+                        <div v-if="tasks.length === 0" class="text-center py-8 text-gray-400">
+                            <i class="fas fa-inbox text-4xl mb-2"></i>
+                            <p>No active tasks</p>
+                        </div>
+                        
+                        <div v-else class="space-y-3">
+                            <div v-for="task in tasks" :key="task.task_id" 
+                                 :class="'task-status-' + task.status + ' bg-gray-50 rounded p-4'">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2 mb-1">
+                                            <span class="font-semibold">{{ task.task_id }}</span>
+                                            <span :class="{
+                                                'bg-yellow-100 text-yellow-800': task.status === 'queued',
+                                                'bg-blue-100 text-blue-800': task.status === 'running',
+                                                'bg-green-100 text-green-800': task.status === 'completed',
+                                                'bg-red-100 text-red-800': task.status === 'failed' || task.status === 'error'
+                                            }" class="px-2 py-1 rounded text-xs font-semibold uppercase">
+                                                {{ task.status }}
+                                            </span>
+                                        </div>
+                                        <p class="text-sm text-gray-600 mb-2">{{ task.instruction.substring(0, 100) }}...</p>
+                                        <div class="flex items-center space-x-4 text-xs text-gray-500">
+                                            <span><i class="fas fa-user-tag mr-1"></i>{{ task.role }}</span>
+                                            <span><i class="fas fa-file-alt mr-1"></i>{{ task.artifact_type }}</span>
+                                            <span><i class="fas fa-source mr-1"></i>{{ task.source }}</span>
+                                            <span v-if="task.judge_verdict"><i class="fas fa-gavel mr-1"></i>Judge: {{ task.judge_verdict }}</span>
+                                            <span v-if="task.revises !== undefined"><i class="fas fa-redo mr-1"></i>Revises: {{ task.revises }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Paperclip Sync -->
+                    <div class="bg-white rounded-lg card-shadow p-6">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4"><i class="fab fa-github mr-2"></i>Paperclip Issue Sync</h2>
+                        <p class="text-sm text-gray-600 mb-4">Paste Paperclip issue JSON to sync with autonomous task queue</p>
+                        
+                        <textarea v-model="paperclipJson" 
+                                  placeholder='[{"number": 123, "body": "Find 10 leads for SaaS tools", "labels": ["bbb:execute"]}]'
+                                  class="w-full h-32 p-3 border border-gray-300 rounded-lg font-mono text-sm mb-4"
+                                  rows="4"></textarea>
+                        
+                        <div class="flex items-center space-x-4">
+                            <button @click="syncPaperclip" 
+                                    :disabled="syncing"
+                                    class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 transition">
+                                <i class="fas fa-sync mr-2"></i>{{ syncing ? 'Syncing...' : 'Sync Issues' }}
+                            </button>
+                            <label class="flex items-center">
+                                <input v-model="businessId" type="text" class="border border-gray-300 rounded px-3 py-1 text-sm" placeholder="Business ID">
+                                <span class="ml-2 text-sm text-gray-600">Business ID</span>
+                            </label>
+                        </div>
+                        
+                        <div v-if="syncResult" :class="syncResult.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'" 
+                             class="mt-4 p-3 rounded">
+                            {{ syncResult.message }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="space-y-6">
+                    <!-- Approvals Panel -->
+                    <div class="bg-white rounded-lg card-shadow p-6">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-shield-alt mr-2"></i>Pending Approvals</h2>
+                        
+                        <div v-if="approvals.length === 0" class="text-center py-8 text-gray-400">
+                            <i class="fas fa-check-circle text-4xl mb-2 text-green-400"></i>
+                            <p>All caught up!</p>
+                        </div>
+                        
+                        <div v-else class="space-y-4">
+                            <div v-for="approval in approvals" :key="approval.id" 
+                                 class="border border-yellow-200 rounded-lg p-4 bg-yellow-50">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-semibold text-sm">{{ approval.action_type }}</span>
+                                    <span class="text-xs text-gray-500">{{ approval.task_id }}</span>
+                                </div>
+                                <pre class="text-xs bg-white p-2 rounded overflow-auto max-h-32">{{ JSON.stringify(approval.payload, null, 2) }}</pre>
+                                <div class="flex space-x-2 mt-3">
+                                    <button @click="resolveApproval(approval.id, true)" 
+                                            class="flex-1 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">
+                                        <i class="fas fa-check mr-1"></i>Approve
+                                    </button>
+                                    <button @click="resolveApproval(approval.id, false)" 
+                                            class="flex-1 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700">
+                                        <i class="fas fa-times mr-1"></i>Reject
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Agent Ops Settings -->
+                    <div class="bg-white rounded-lg card-shadow p-6">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-cog mr-2"></i>Agent Operations</h2>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-semibold">Assume Forward</p>
+                                    <p class="text-xs text-gray-500">Execute on ambiguity</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input v-model="agentOps.assume_forward" type="checkbox" class="sr-only peer" @change="saveSettings">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                </label>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">Max Revises</label>
+                                <input v-model.number="agentOps.max_revises" type="number" min="0" max="5" 
+                                       class="w-full border border-gray-300 rounded px-3 py-2"
+                                       @change="saveSettings">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">Proactive Schedule (UTC)</label>
+                                <input v-model="agentOps.proactive_schedule" type="time" 
+                                       class="w-full border border-gray-300 rounded px-3 py-2"
+                                       @change="saveSettings">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hive Mind Status -->
+                    <div class="bg-white rounded-lg card-shadow p-6">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-network-wired mr-2"></i>Hive Mind Intel Mesh</h2>
+                        
+                        <div v-if="hiveStatus" class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Status</span>
+                                <span class="font-semibold text-green-600">{{ hiveStatus.status }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Active Tasks</span>
+                                <span class="font-semibold">{{ hiveStatus.active_tasks }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Completed Today</span>
+                                <span class="font-semibold">{{ hiveStatus.completed_today }}</span>
+                            </div>
+                        </div>
+                        <div v-else class="text-gray-400 text-center py-4">
+                            Loading...
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="bg-white rounded-lg card-shadow p-6">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-bolt mr-2"></i>Quick Actions</h2>
+                        
+                        <div class="space-y-2">
+                            <button @click="chatCommand('approve latest')" 
+                                    class="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-left">
+                                <i class="fas fa-check-double mr-2"></i>Approve Latest
+                            </button>
+                            <button @click="chatCommand('list tasks')" 
+                                    class="w-full px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 text-left">
+                                <i class="fas fa-list mr-2"></i>List Tasks
+                            </button>
+                            <button @click="chatCommand('viktor enable')" 
+                                    class="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-left">
+                                <i class="fas fa-power-off mr-2"></i>Enable Viktor
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Interface -->
+            <div class="mt-8 bg-white rounded-lg card-shadow p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-comments mr-2"></i>Talk to CEO & Agents</h2>
+                
+                <div class="bg-gray-50 rounded-lg p-4 h-64 overflow-y-auto mb-4 border border-gray-200" ref="chatContainer">
+                    <div v-for="(msg, idx) in chatMessages" :key="idx" 
+                         :class="msg.isUser ? 'text-right' : 'text-left'" class="mb-3">
+                        <div :class="msg.isUser ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'" 
+                             class="inline-block px-4 py-2 rounded-lg max-w-2xl">
+                            {{ msg.text }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <input v-model="chatInput" @keyup.enter="sendChat" 
+                           type="text" 
+                           placeholder="Type a message or command (e.g., 'approve latest', 'list tasks', 'viktor enable')..."
+                           class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <button @click="sendChat" 
+                            class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    agentOps: {
+                        viktor_mode_enabled: true,
+                        assume_forward: true,
+                        max_revises: 3,
+                        proactive_schedule: '07:00'
+                    },
+                    tasks: [],
+                    approvals: [],
+                    judgeStats: {
+                        total_evaluations: 0,
+                        pass_count: 0,
+                        revise_count: 0,
+                        fail_count: 0,
+                        revise_rate: 0,
+                        pass_rate: 0
+                    },
+                    paperclipJson: '',
+                    businessId: 'saas-micro-tools',
+                    syncing: false,
+                    syncResult: null,
+                    hiveStatus: null,
+                    chatMessages: [],
+                    chatInput: '',
+                    stats: {
+                        activeTasks: 0,
+                        pendingApprovals: 0
+                    }
+                }
+            },
+            mounted() {
+                this.loadSettings();
+                this.refreshAll();
+                setInterval(() => this.refreshAll(), 10000); // Auto-refresh every 10s
+            },
+            methods: {
+                async loadSettings() {
+                    try {
+                        const res = await fetch('/api/v1/agent-ops/settings');
+                        this.agentOps = await res.json();
+                    } catch (e) {
+                        console.error('Failed to load settings:', e);
+                    }
+                },
+                async saveSettings() {
+                    try {
+                        await fetch('/api/v1/agent-ops/settings', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.agentOps)
+                        });
+                    } catch (e) {
+                        console.error('Failed to save settings:', e);
+                    }
+                },
+                async toggleViktorMode() {
+                    this.agentOps.viktor_mode_enabled = !this.agentOps.viktor_mode_enabled;
+                    await this.saveSettings();
+                    this.refreshAll();
+                },
+                async refreshAll() {
+                    await Promise.all([
+                        this.refreshTasks(),
+                        this.refreshApprovals(),
+                        this.refreshHiveStatus()
+                    ]);
+                    this.updateStats();
+                },
+                async refreshTasks() {
+                    try {
+                        const res = await fetch('/api/v1/enterprise/tasks');
+                        const data = await res.json();
+                        this.tasks = data.active || [];
+                    } catch (e) {
+                        console.error('Failed to refresh tasks:', e);
+                    }
+                },
+                async refreshApprovals() {
+                    try {
+                        const res = await fetch('/api/v1/enterprise/approvals');
+                        this.approvals = await res.json();
+                    } catch (e) {
+                        console.error('Failed to refresh approvals:', e);
+                    }
+                },
+                async refreshHiveStatus() {
+                    try {
+                        const res = await fetch('/api/v1/hive-mind/status');
+                        this.hiveStatus = await res.json();
+                    } catch (e) {
+                        console.error('Failed to refresh hive status:', e);
+                    }
+                },
+                updateStats() {
+                    this.stats.activeTasks = this.tasks.filter(t => ['queued', 'running'].includes(t.status)).length;
+                    this.stats.pendingApprovals = this.approvals.length;
+                    
+                    const total = this.judgeStats.total_evaluations || 1;
+                    this.judgeStats.pass_rate = Math.round((this.judgeStats.pass_count / total) * 100);
+                    this.judgeStats.revise_rate = Math.round((this.judgeStats.revise_count / total) * 100);
+                },
+                async syncPaperclip() {
+                    if (!this.paperclipJson.trim()) return;
+                    
+                    this.syncing = true;
+                    this.syncResult = null;
+                    
+                    try {
+                        const res = await fetch('/api/v1/enterprise/paperclip/sync-issues', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                issues_json: this.paperclipJson,
+                                business_id: this.businessId
+                            })
+                        });
+                        
+                        const result = await res.json();
+                        this.syncResult = {
+                            success: res.ok,
+                            message: result.message || JSON.stringify(result)
+                        };
+                        
+                        if (res.ok) {
+                            this.paperclipJson = '';
+                            setTimeout(() => this.refreshTasks(), 1000);
+                        }
+                    } catch (e) {
+                        this.syncResult = {
+                            success: false,
+                            message: 'Error: ' + e.message
+                        };
+                    } finally {
+                        this.syncing = false;
+                    }
+                },
+                async resolveApproval(approvalId, approved) {
+                    try {
+                        await fetch(`/api/v1/enterprise/approvals/${approvalId}/resolve`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ approved, notes: '' })
+                        });
+                        await this.refreshApprovals();
+                    } catch (e) {
+                        alert('Failed to resolve approval: ' + e.message);
+                    }
+                },
+                async sendChat() {
+                    if (!this.chatInput.trim()) return;
+                    
+                    const userMsg = this.chatInput;
+                    this.chatMessages.push({ isUser: true, text: userMsg });
+                    this.chatInput = '';
+                    
+                    try {
+                        const res = await fetch('/api/v1/enterprise/chat', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ message: userMsg })
+                        });
+                        
+                        const data = await res.json();
+                        this.chatMessages.push({ isUser: false, text: data.response });
+                        
+                        // Scroll to bottom
+                        this.$nextTick(() => {
+                            const container = this.$refs.chatContainer;
+                            if (container) container.scrollTop = container.scrollHeight;
+                        });
+                        
+                        // Refresh if command was executed
+                        if (userMsg.toLowerCase().includes('approve') || userMsg.toLowerCase().includes('task')) {
+                            setTimeout(() => this.refreshAll(), 500);
+                        }
+                    } catch (e) {
+                        this.chatMessages.push({ isUser: false, text: 'Error: ' + e.message });
+                    }
+                },
+                chatCommand(cmd) {
+                    this.chatInput = cmd;
+                    this.sendChat();
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

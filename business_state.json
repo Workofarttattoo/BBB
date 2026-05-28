@@ -1,0 +1,24 @@
+{
+  "agent_ops": {
+    "viktor_mode_enabled": true,
+    "assume_forward": true,
+    "max_revises": 3,
+    "proactive_schedule": "07:00 UTC"
+  },
+  "profile": {},
+  "analysis_results": [],
+  "research_logs": [],
+  "selected_business": null,
+  "revenue_total": 0.0,
+  "wallet": 0.0,
+  "pending_approvals": [],
+  "active_tasks": [],
+  "task_history": [],
+  "judge_stats": {
+    "total_evaluations": 0,
+    "pass_count": 0,
+    "revise_count": 0,
+    "fail_count": 0,
+    "revise_rate": 0.0
+  }
+}
