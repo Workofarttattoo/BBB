@@ -1,0 +1,95 @@
+{
+  "currency": "USD",
+  "billing_cycle": "monthly",
+  "products": [
+    {
+      "id": "after-hours",
+      "name": "After-Hours Answering",
+      "price": 99,
+      "description": "Perfect for medical offices and professional services that need coverage when closed.",
+      "features": [
+        "Answers calls after business hours",
+        "Takes detailed messages",
+        "Forwards emergencies only",
+        "Email/SMS message delivery",
+        "Basic call reporting"
+      ],
+      "ideal_for": ["Medical practices", "Dental offices", "Law firms", "Accounting firms"],
+      "setup_fee": 0,
+      "contract_length": "month-to-month"
+    },
+    {
+      "id": "virtual-receptionist",
+      "name": "24/7 Virtual Receptionist",
+      "price": 199,
+      "description": "Never miss a lead. Our AI handles all calls, books appointments, and answers FAQs.",
+      "features": [
+        "24/7/365 availability",
+        "Unlimited incoming calls",
+        "Appointment booking (calendar integration)",
+        "FAQ handling (hours, pricing, location)",
+        "Lead qualification",
+        "Call recording & transcription",
+        "Weekly analytics report"
+      ],
+      "ideal_for": ["HVAC companies", "Plumbers", "Roofers", "Real estate agents", "Auto repair shops"],
+      "setup_fee": 49,
+      "contract_length": "month-to-month",
+      "most_popular": true
+    },
+    {
+      "id": "call-center",
+      "name": "Multi-Line Call Center",
+      "price": 399,
+      "description": "Handle high call volumes with intelligent routing and CRM integration.",
+      "features": [
+        "Unlimited simultaneous calls",
+        "Intelligent call routing (by department/location)",
+        "CRM integration (HubSpot, Salesforce, Pipedrive)",
+        "Custom call flows & IVR",
+        "Advanced analytics dashboard",
+        "Priority support",
+        "Dedicated account manager",
+        "Custom voice training (optional)"
+      ],
+      "ideal_for": ["Home builders", "Property management companies", "Multi-location clinics", "Insurance agencies"],
+      "setup_fee": 99,
+      "contract_length": "month-to-month"
+    }
+  ],
+  "add_ons": [
+    {
+      "id": "custom-voice",
+      "name": "Custom Voice Training",
+      "price": 149,
+      "billing": "one-time",
+      "description": "Train the AI to sound like your best receptionist using your recordings."
+    },
+    {
+      "id": "spanish-support",
+      "name": "Spanish Language Support",
+      "price": 50,
+      "billing": "monthly",
+      "description": "Bilingual call handling in English and Spanish."
+    },
+    {
+      "id": "crm-integration",
+      "name": "Premium CRM Integration",
+      "price": 29,
+      "billing": "monthly",
+      "description": "Deep integration with HubSpot, Salesforce, or custom CRM via API."
+    }
+  ],
+  "trial": {
+    "length_days": 7,
+    "price": 0,
+    "features_included": "All features of selected plan",
+    "credit_card_required": false,
+    "conversion_offer": "First month 50% off if converted within trial period"
+  },
+  "guarantee": {
+    "type": "money-back",
+    "length_days": 30,
+    "terms": "Full refund if not satisfied within first 30 days, no questions asked."
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "business": "saas-micro-tools",
+  "version": "1.0.0",
+  "capabilities": {
+    "internal_draft": true,
+    "code_sandbox": true,
+    "market_research": true,
+    "content_creation": true,
+    "lead_scoring": true,
+    "email_draft": true,
+    "crm_ingest": false,
+    "apollo_bulk_search": false,
+    "outbound_email": false,
+    "stripe_payment": false,
+    "social_posting": false
+  },
+  "approval_gates": {
+    "outbound_email": {
+      "required": true,
+      "threshold_usd": 0,
+      "description": "Any outbound email to prospects requires CEO approval"
+    },
+    "bulk_crm_ingest": {
+      "required": true,
+      "threshold_count": 10,
+      "description": "Bulk CRM ingest (>10 leads) requires CEO approval"
+    },
+    "apollo_bulk_search": {
+      "required": true,
+      "threshold_count": 50,
+      "description": "Bulk Apollo search (>50 leads) requires CEO approval"
+    },
+    "stripe_payment": {
+      "required": true,
+      "threshold_usd": 100,
+      "description": "Any Stripe payment/charge requires CEO approval"
+    },
+    "social_posting": {
+      "required": false,
+      "threshold_count": 5,
+      "description": "Social posting >5 posts/day requires approval"
+    }
+  },
+  "policy_flags": {
+    "pii_detection": true,
+    "tone_check": true,
+    "competitor_mention": true,
+    "pricing_claim": true,
+    "legal_review_trigger": ["refund", "guarantee", "lawsuit", "compliance"]
+  },
+  "model_tiers": {
+    "worker": "qwen3.5:4b",
+    "judge": "qwen3.5:4b",
+    "middle_manager": "qwen3.5:9b",
+    "executive": "ech0-fine-tuned-v2:latest"
+  },
+  "viktor_mode": {
+    "enabled": true,
+    "assume_forward": true,
+    "max_revises": 3,
+    "proactive_schedule": "07:00 UTC"
+  }
+}

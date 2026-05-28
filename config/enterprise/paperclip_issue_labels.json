@@ -1,0 +1,39 @@
+{
+  "labels": {
+    "plan:decompose": {
+      "description": "Break down epic into smaller tasks",
+      "allowed_agents": ["planner", "meta_manager"],
+      "action": "create_child_issues"
+    },
+    "plan:milestone": {
+      "description": "Create milestone tracking issue",
+      "allowed_agents": ["planner", "executive"],
+      "action": "create_milestone"
+    },
+    "bbb:execute": {
+      "description": "Execute worker task (default: sales)",
+      "allowed_agents": ["sales", "engineer", "marketer", "support", "researcher"],
+      "action": "run_worker_with_judge"
+    },
+    "judge:review": {
+      "description": "Meta-manager review only, no execution",
+      "allowed_agents": ["meta_manager"],
+      "action": "review_and_comment"
+    },
+    "echo:strategy": {
+      "description": "Route to Echo Prime for strategic analysis",
+      "allowed_agents": ["ech0_overseer", "executive"],
+      "action": "route_to_echo_prime"
+    },
+    "human:apollo": {
+      "description": "Human must run Headhunter GUI for Apollo operations",
+      "allowed_agents": [],
+      "action": "escalate_to_human"
+    }
+  },
+  "routing_rules": {
+    "default_label": "bbb:execute",
+    "planner_never_executes": true,
+    "human_gates": ["human:apollo"]
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "business_name": "ChatterTech.ai",
+  "domain": "chattertech.ai",
+  "contact_email": "echo@chattertech.ai",
+  "capabilities": {
+    "outbound_email": false,
+    "outbound_sms": false,
+    "outbound_calls": false,
+    "stripe_charges": false,
+    "calendar_write": true,
+    "crm_write": false,
+    "github_push": false,
+    "production_deploy": false
+  },
+  "approval_gates": {
+    "outbound_email": {
+      "required": true,
+      "threshold": "any",
+      "approver_role": "ceo"
+    },
+    "outbound_sms": {
+      "required": true,
+      "threshold": "any",
+      "approver_role": "ceo"
+    },
+    "outbound_calls": {
+      "required": true,
+      "threshold": "any",
+      "approver_role": "ceo",
+      "notes": "Cold calling campaigns require CEO approval. Inbound call handling is auto-approved."
+    },
+    "stripe_charges": {
+      "required": true,
+      "threshold_usd": 50,
+      "approver_role": "ceo"
+    },
+    "voice_cloning": {
+      "required": true,
+      "threshold": "any",
+      "approver_role": "ceo",
+      "notes": "All voice cloning deployments require human verification before going live"
+    },
+    "crm_bulk_ingest": {
+      "required": true,
+      "threshold_records": 10,
+      "approver_role": "ceo"
+    }
+  },
+  "tone_guidelines": {
+    "primary": "professional",
+    "secondary": "warm",
+    "avoid": ["robotic", "overly_casual", "pushy", "aggressive"],
+    "examples": {
+      "good": "Thank you for calling ChatterTech. I'd be happy to help you book an appointment.",
+      "bad": "Hey what's up? Want to book something?"
+    }
+  },
+  "compliance_flags": {
+    "gdpr_call_recording": true,
+    "ccpa_data_retention": true,
+    "tcpa_outbound_calls": true,
+    "hipaa_healthcare_clients": false
+  },
+  "max_autonomous_actions": {
+    "concurrent_calls": 10,
+    "daily_outreach_limit": 0,
+    "auto_refund_max_usd": 25
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "chattertech_targets": {
+    "primary_icp": {
+      "title": "24/7 Virtual Receptionist - Home Services",
+      "price": "$199/mo",
+      "description": "AI phone agent that answers calls 24/7, books appointments, and transfers urgent calls",
+      "target_titles": [
+        "Owner", "Founder", "CEO", "Operations Manager", "Office Manager", "Business Manager"
+      ],
+      "industries": [
+        "HVAC", "Plumbing", "Electrical", "Roofing", "General Contractor", "Home Repair", 
+        "Landscaping", "Pest Control", "Garage Door", "Water Damage Restoration"
+      ],
+      "company_size": "2-20 employees",
+      "geo_focus": ["United States", "Canada"],
+      "pain_points": [
+        "Missing after-hours calls = lost revenue",
+        "Can't afford 24/7 human receptionist",
+        "Voicemail loses 60% of callers",
+        "Need to book more appointments automatically"
+      ],
+      "search_keywords": [
+        "HVAC company", "plumbing services", "emergency repair", "24 hour", 
+        "local contractor", "home services", "residential", "commercial"
+      ],
+      "apollo_filters": {
+        "industry_tags": ["Construction", "Home Services", "Facilities Services"],
+        "employee_count": "1-50",
+        "has_phone": true,
+        "has_email": true
+      }
+    },
+    "secondary_icp": {
+      "title": "After-Hours Answering - Medical/Dental",
+      "price": "$99/mo",
+      "description": "HIPAA-compliant AI receptionist for after-hours patient calls and emergencies",
+      "target_titles": [
+        "Practice Manager", "Office Manager", "Doctor", "Dentist", "Clinic Director"
+      ],
+      "industries": [
+        "Medical Practice", "Dental Office", "Veterinary Clinic", "Urgent Care",
+        "Physical Therapy", "Chiropractor", "Mental Health"
+      ],
+      "company_size": "2-15 employees",
+      "geo_focus": ["United States"],
+      "pain_points": [
+        "Patients can't reach office after hours",
+        "Emergency calls going to voicemail",
+        "Need HIPAA-compliant answering",
+        "On-call staff overwhelmed"
+      ],
+      "apollo_filters": {
+        "industry_tags": ["Medical Practice", "Healthcare", "Hospital & Health Care"],
+        "employee_count": "1-50",
+        "specialties": ["Family Medicine", "Dental", "Pediatrics"]
+      }
+    },
+    "tertiary_icp": {
+      "title": "Multi-Line Call Center - Real Estate",
+      "price": "$399/mo",
+      "description": "Handle unlimited property inquiries, schedule showings, qualify leads 24/7",
+      "target_titles": [
+        "Broker", "Property Manager", "Real Estate Agent", "Leasing Manager", "Asset Manager"
+      ],
+      "industries": [
+        "Real Estate", "Property Management", "Apartment Complex", "Commercial Real Estate"
+      ],
+      "company_size": "5-100 employees",
+      "geo_focus": ["United States", "Canada"],
+      "pain_points": [
+        "Missing lead calls during busy periods",
+        "Can't handle high call volume",
+        "Need to qualify leads before showing",
+        "After-hours inquiries going unanswered"
+      ],
+      "apollo_filters": {
+        "industry_tags": ["Real Estate", "Property Management"],
+        "employee_count": "5-200",
+        "specialties": ["Residential", "Commercial", "Property Management"]
+      }
+    }
+  },
+  "outbound_strategy": {
+    "volume": "50-100 prospects/day per ICP",
+    "channels": ["Email", "LinkedIn", "Phone"],
+    "message_angle": "Missed calls = lost revenue. Our AI receptionist answers 24/7 for less than $7/day.",
+    "offer": "Free 7-day trial + setup included",
+    "follow_up_sequence": [
+      "Day 1: Initial outreach with case study",
+      "Day 3: Value-add tip about call conversion",
+      "Day 7: Social proof (testimonial)",
+      "Day 14: Breakup email with limited offer"
+    ]
+  },
+  "sample_search_queries": {
+    "hvac": "HVAC OR heating OR cooling OR air conditioning AND (owner OR founder) AND employees:1-50",
+    "plumbing": "Plumbing OR plumber AND (owner OR CEO) AND emergency AND employees:1-50",
+    "dental": "Dental OR dentist OR orthodontist AND (practice manager OR office manager) AND employees:1-20",
+    "property_mgmt": "Property management OR real estate AND (property manager OR leasing) AND employees:5-100"
+  }
+}

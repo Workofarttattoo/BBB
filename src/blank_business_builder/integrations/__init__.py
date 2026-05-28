@@ -3,7 +3,6 @@ Public integrations package exports.
 """
 
 from .apollo import ApolloService
-from .bland import BlandService
 from .legacy import (
     AnthropicService,
     BufferService,
@@ -15,13 +14,14 @@ from .legacy import (
 )
 from .service import IntegrationContainer, IntegrationFactory
 from .slack import SlackService
+from .elevenlabs_voice import ElevenLabsVoiceAgent
 
 __all__ = [
     "AnthropicService",
     "ApolloService",
-    "BlandService",
     "BufferService",
     "ECH0Service",
+    "ElevenLabsVoiceAgent",
     "IntegrationContainer",
     "IntegrationFactory",
     "OpenAIService",

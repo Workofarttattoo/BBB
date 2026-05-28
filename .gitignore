@@ -1,84 +1,61 @@
-# Environment & Secrets
-.env
-.env.*
-!.env.example
-!.env.production.example
-*.pem
-*.key
-
-# Python cache
+```
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-
-# Test & Coverage
-.coverage
-.coverage.*
-htmlcov/
-.pytest_cache/
-.tox/
-.nox/
-
-# Build artifacts
-dist/
+.Python
 build/
-*.egg-info/
-*.egg
+develop-eggs/
+dist/
+downloads/
+eggs/
 .eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# Environment
+.env
+.env.local
+.env.*
 
-# Log files
+# Logs
 *.log
 logs/
 
-# PID files
-*.pid
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-
 # Database
-*.db
-*.sqlite
-*.sqlite3
+tasks.db
 
-# Temporary files
-tmp/
-temp/
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+
+# Temp files
 *.tmp
+*.swp
+*.swo
 
-# Jupyter
-.ipynb_checkpoints/
-
-# ChromaDB
-chroma_db/
-
-# Local state files
-ech0_state_*.json
-*_credentials.json
-
-# Virtual Environment
-venv/
-.venv/
-env/
+# Coverage reports
 .coverage
-test_coverage.json
-test_dashboard.html
-backups/
-test_backups/
-.env.production
+coverage/
+htmlcov/
 
-# Additional artifacts (must not be tracked)
-*.backup
-bbb_parliament_validation_report.json
-autonomous_system.pids
-.snapshots/
+# Testing
+.pytest_cache/
+.mypy_cache/
+
+# Editors
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+```

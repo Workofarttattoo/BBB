@@ -1,0 +1,35 @@
+{
+  "business_id": "qulab-infinite",
+  "currency": "USD",
+  "products": [
+    {
+      "name": "Discovery Hour",
+      "price": 100,
+      "billing": "one-time",
+      "description": "One focused question per session - stress test one material, plan one synthesis route, or run one FMO spectroscopy scenario",
+      "deliverables": [
+        "Live MCP access demo",
+        "Concrete insights on your specific material/question",
+        "Clear recommendation for next step (Pilot)"
+      ],
+      "positioning": "Low-commitment entry point - many consider $100 well spent to avoid $20k+ failed experiment"
+    },
+    {
+      "name": "Pilot Engagement",
+      "price": "custom",
+      "billing": "project-based",
+      "description": "Full validation gauntlet on top candidate materials or synthesis routes",
+      "deliverables": [
+        "Comprehensive multi-physics simulation",
+        "Literature validation report",
+        "Confidence scores and limitation analysis",
+        "Actionable recommendations for wet lab work"
+      ],
+      "prerequisites": "Discovery Hour completion recommended"
+    }
+  ],
+  "value_framing": {
+    "comparison": "Single failed lab experiment: $20k-$100k+",
+    "discovery_hour_value": "Avoid one bad direction or identify promising optimization"
+  }
+}

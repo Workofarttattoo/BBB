@@ -1,0 +1,92 @@
+{
+  "business_name": "ChatterTech.ai",
+  "tagline": "AI Receptionists That Never Sleep",
+  "founder": "Joshua Cole",
+  "contact_email": "inventor@aios.is",
+  "website": "https://chattertech.ai",
+  
+  "value_proposition": "One missed call can cost you $200+. Our AI receptionist costs $99/month and catches every single one.",
+  
+  "target_customer": {
+    "primary": {
+      "segment": "Medical/Dental Practices",
+      "size": "2-10 employees",
+      "pain_point": "Miss 30% of calls after hours, each worth $200+ in lost revenue",
+      "geography": "United States"
+    },
+    "secondary": {
+      "segment": "Home Services (HVAC, Plumbing, Roofing)",
+      "size": "2-20 employees", 
+      "pain_point": "Emergency calls go to competitors when lines are busy or unanswered",
+      "geography": "United States"
+    },
+    "tertiary": {
+      "segment": "Real Estate & Property Management",
+      "size": "2-15 employees",
+      "pain_point": "High-value leads need instant response, not voicemail",
+      "geography": "United States"
+    }
+  },
+  
+  "core_services": [
+    {
+      "name": "AI Receptionist",
+      "description": "24/7 call answering with natural conversation, appointment booking, and lead qualification",
+      "delivery_method": "Cloud-based phone system with Twilio integration",
+      "turnaround": "Live within 24 hours of setup"
+    },
+    {
+      "name": "Appointment Booking",
+      "description": "Direct calendar integration books appointments automatically during calls",
+      "integrations": ["Google Calendar", "Calendly", "Acuity", "Microsoft Outlook"],
+      "delivery_method": "API webhook to client calendar"
+    },
+    {
+      "name": "Lead Qualification",
+      "description": "AI asks qualifying questions and scores leads before routing to sales team",
+      "output": "Structured lead data sent to CRM or email",
+      "customizable": true
+    },
+    {
+      "name": "After-Hours Coverage",
+      "description": "Handles all calls when business is closed, forwards emergencies only",
+      "configuration": "Custom business hours, emergency contact rules",
+      "delivery_method": "SMS/email alerts for urgent matters"
+    }
+  ],
+  
+  "technical_capabilities": {
+    "voice_synthesis": "ElevenLabs professional voices",
+    "speech_recognition": "Deepgram real-time transcription",
+    "phone_system": "Twilio PSTN integration",
+    "intelligence": "Ollama local LLM (Qwen 3.5) for conversation logic",
+    "integrations": ["Calendar APIs", "CRM webhooks", "Slack notifications", "Email/SMS"],
+    "analytics": "Call duration, outcome, transcription, sentiment analysis"
+  },
+  
+  "brand_voice": {
+    "tone": "Professional but approachable",
+    "style": "Confident, not salesy, focused on ROI",
+    "language": "Concrete numbers over vague promises",
+    "personality": "Reliable helper, not pushy salesman"
+  },
+  
+  "competitive_positioning": {
+    "vs_answering_services": "1/3 the cost, instant scaling, never sick days",
+    "vs_voicemail": "Actually answers, books appointments, qualifies leads",
+    "vs_human_receptionist": "$99/mo vs $2000/mo, 24/7 availability, consistent quality"
+  },
+  
+  "success_stories": [
+    {
+      "industry": "Dental Practice",
+      "result": "Recovered 8 missed calls in first week, booked 3 new patients",
+      "roi": "$600 new revenue vs $99 cost"
+    },
+    {
+      "industry": "HVAC Company", 
+      "result": "Caught 3 emergency calls at 2 AM, converted to $1,200 jobs",
+      "roi": "Paid for 10 months of service in one night"
+    }
+  ]
+}
