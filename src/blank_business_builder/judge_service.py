@@ -12,6 +12,7 @@ import re
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 from .local_model_client import LocalModelClient
 from .company_pack import judge_domain_for_artifact, load_judge_skill
@@ -140,7 +141,13 @@ class JudgeService:
             if lead_count == 0:
                 fixes.append("Lead batch appears empty")
                 score -= 0.4
-            if "example.com" in lowered:
+            has_placeholder_example_host = False
+            for token in re.findall(r"https?://[^\s\"'<>]+", content):
+                host = urlparse(token).hostname
+                if host and (host == "example.com" or host.endswith(".example.com")):
+                    has_placeholder_example_host = True
+                    break
+            if has_placeholder_example_host:
                 fixes.append("Remove placeholder example.com leads")
                 score -= 0.3
 
