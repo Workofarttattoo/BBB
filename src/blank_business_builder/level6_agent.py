@@ -16,6 +16,8 @@ from sqlalchemy.orm import Session
 from .database import User, Business, MarketingCampaign, Subscription
 from .integrations import IntegrationFactory
 from .payments import StripeService
+from .approval_gates import ApprovalGateError, GateAction, gate_from_policy
+from .enterprise_agent_policy import AutomationMode, Capability, resolve_business_policy
 
 
 class AutonomyLevel(Enum):
@@ -51,11 +53,50 @@ class Level6Agent:
     - Strategic planning (Maximum mode only)
     """
 
-    def __init__(self, autonomy_level: AutonomyLevel = AutonomyLevel.FULL):
+    def __init__(
+        self,
+        autonomy_level: AutonomyLevel = AutonomyLevel.FULL,
+        business_name: str = "Better Business Builder",
+    ):
         self.autonomy_level = autonomy_level
+        self.business_name = business_name
         self.openai = IntegrationFactory.get_openai_service()
         self.sendgrid = IntegrationFactory.get_sendgrid_service()
         self.buffer = IntegrationFactory.get_buffer_service()
+
+    def _sendgrid_gated(
+        self,
+        *,
+        to_email: str,
+        subject: str,
+        html_content: str,
+        role: str = "marketer",
+        approval_id: str | None = None,
+        campaign: bool = False,
+    ) -> bool:
+        """Platform-level email with enterprise approval gates."""
+        cap = Capability.EMAIL_CAMPAIGN if campaign else Capability.EMAIL_SEND
+        action = GateAction.EMAIL_CAMPAIGN if campaign else GateAction.EMAIL_SEND
+        policy = resolve_business_policy(self.business_name).policy_for_role(role)
+        try:
+            gate_from_policy(
+                mode_requires_approval=policy.requires_approval_before_side_effect(cap),
+                action=action,
+                business_name=self.business_name,
+                role=role,
+                approval_id=approval_id,
+                metadata={"to": to_email, "subject": subject},
+                force_manual=policy.is_manual_only(cap),
+            )
+        except ApprovalGateError:
+            return False
+        if policy.mode_for(cap) == AutomationMode.DRAFT:
+            return False
+        return self.sendgrid.send_email(
+            to_email=to_email,
+            subject=subject,
+            html_content=html_content,
+        )
 
     async def run_autonomous_operations(self, db: Session) -> List[AgentDecision]:
         """
@@ -152,11 +193,11 @@ class Level6Agent:
             ]
         )
 
-        # Send onboarding email
-        self.sendgrid.send_email(
+        self._sendgrid_gated(
             to_email=user.email,
             subject=email_data["subject"],
-            html_content=email_data["body"]
+            html_content=email_data["body"],
+            campaign=True,
         )
 
         return AgentDecision(
@@ -191,10 +232,11 @@ class Level6Agent:
             ]
         )
 
-        self.sendgrid.send_email(
+        self._sendgrid_gated(
             to_email=user.email,
             subject=email_data["subject"],
-            html_content=email_data["body"]
+            html_content=email_data["body"],
+            campaign=True,
         )
 
         return AgentDecision(
@@ -229,10 +271,11 @@ class Level6Agent:
             ]
         )
 
-        self.sendgrid.send_email(
+        self._sendgrid_gated(
             to_email=user.email,
             subject=email_data["subject"],
-            html_content=email_data["body"]
+            html_content=email_data["body"],
+            campaign=True,
         )
 
         return AgentDecision(
@@ -351,10 +394,11 @@ class Level6Agent:
             ]
         )
 
-        self.sendgrid.send_email(
+        self._sendgrid_gated(
             to_email=user.email,
             subject=email_data["subject"],
-            html_content=email_data["body"]
+            html_content=email_data["body"],
+            campaign=True,
         )
 
         return AgentDecision(

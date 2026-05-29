@@ -340,6 +340,135 @@
             line-height: 1.8;
         }
 
+        .agent-ops-panel {
+            margin-top: 1rem;
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: rgba(0, 255, 136, 0.04);
+        }
+
+        .hive-mind-panel {
+            margin-top: 1rem;
+            padding: 1.25rem;
+            border: 1px solid rgba(0, 219, 233, 0.35);
+            border-radius: 12px;
+            background: rgba(0, 219, 233, 0.06);
+        }
+
+        .hive-node-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(10px, 1fr));
+            gap: 5px;
+            max-width: 420px;
+            margin: 0.75rem 0;
+        }
+
+        .hive-node {
+            width: 8px;
+            height: 8px;
+            border-radius: 1px;
+            background: rgba(59, 73, 75, 0.45);
+        }
+
+        .hive-node.active { background: #00dbe9; box-shadow: 0 0 6px #00dbe9; }
+        .hive-node.sync { background: #8b5cf6; }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.65rem 0;
+            border-bottom: 1px solid rgba(40, 53, 147, 0.35);
+        }
+
+        .toggle-row:last-child { border-bottom: none; }
+
+        .toggle-row label {
+            font-size: 0.95rem;
+            color: var(--text);
+        }
+
+        .toggle-row small {
+            display: block;
+            color: var(--text-dim);
+            font-size: 0.78rem;
+            margin-top: 0.2rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: #3949ab;
+            border-radius: 26px;
+            transition: 0.2s;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.2s;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background: var(--primary);
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(22px);
+        }
+
+        .memory-preview {
+            margin-top: 0.75rem;
+            max-height: 140px;
+            overflow-y: auto;
+            font-size: 0.82rem;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+
+        .memory-preview div {
+            padding: 0.35rem 0;
+            border-bottom: 1px dashed rgba(40, 53, 147, 0.35);
+        }
+
+        .viktor-badge {
+            margin-left: 0.5rem;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .viktor-badge.off {
+            background: rgba(158, 158, 158, 0.15);
+            color: var(--text-dim);
+            border-color: var(--text-dim);
+        }
+
         /* Admin Bypass */
         .admin-bypass {
             margin-top: 2rem;
@@ -820,6 +949,113 @@
                 </div>
 
                 <br><br>
+                <h3>Agent Command Center</h3>
+                <p style="color: var(--text-dim); margin-top: 0.5rem;">
+                    Viktor-mode proactive agents, semantic memory, and scheduled ops — no terminal required.
+                </p>
+                <div class="agent-ops-panel" id="agent-ops-panel">
+                    <div class="setup-grid">
+                        <div class="setup-card">
+                            <h3>Viktor Protocol</h3>
+                            <div class="toggle-row">
+                                <div>
+                                    <label for="toggle-viktor-mode">Viktor mode (assume-forward)</label>
+                                    <small>Crystalline → Parliament → Oracle → Echo chat &amp; tasks</small>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="toggle-viktor-mode" onchange="saveAgentOpsToggle('viktor_mode_enabled', this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-row">
+                                <div>
+                                    <label for="toggle-strategist">Strategist council</label>
+                                    <small>Semantic tensor + echo cascade planning</small>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="toggle-strategist" onchange="saveAgentOpsToggle('viktor_strategist_enabled', this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-row">
+                                <div>
+                                    <label for="toggle-oracle">Prediction oracle</label>
+                                    <small>Scenario planning before execution</small>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="toggle-oracle" onchange="saveAgentOpsToggle('viktor_oracle_enabled', this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-row">
+                                <div>
+                                    <label for="toggle-proactive-beat">Proactive schedule (Celery beat)</label>
+                                    <small>6:00 UTC arXiv ingest · 7:00 UTC daily ops</small>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="toggle-proactive-beat" onchange="saveAgentOpsToggle('viktor_proactive_beat_enabled', this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="setup-card">
+                            <h3>Semantic Memory</h3>
+                            <p id="memory-status-text" style="color: var(--text-dim); font-size: 0.9rem;">Loading…</p>
+                            <div class="memory-preview" id="memory-preview"></div>
+                            <br>
+                            <button type="button" class="btn" style="width:100%; margin-bottom:0.5rem;" onclick="seedAgentMemory(false)">Seed memory defaults</button>
+                            <button type="button" class="btn" style="width:100%; background: transparent; border: 1px solid var(--border);" onclick="seedAgentMemory(true)">Re-seed (overwrite)</button>
+                        </div>
+                        <div class="setup-card">
+                            <h3>Proactive Jobs</h3>
+                            <p id="proactive-schedule-text" style="color: var(--text-dim); font-size: 0.9rem;">Loading schedule…</p>
+                            <br>
+                            <button type="button" class="btn" style="width:100%; margin-bottom:0.5rem;" onclick="runProactiveJob('arxiv-ingest')">Run arXiv ingest now</button>
+                            <button type="button" class="btn" style="width:100%; margin-bottom:0.5rem;" onclick="runProactiveJob('daily-ops')">Run daily ops now</button>
+                            <div id="proactive-runs-log" class="console-log" style="display:none; margin-top:0.75rem; height:120px; font-size:0.8rem;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <br><br>
+                <h3>Hive Mind Intel Mesh</h3>
+                <p style="color: var(--text-dim); margin-top: 0.5rem;">
+                    QuLab multi-agent coordination — task queue, knowledge bus, and role-based workers.
+                </p>
+                <div class="hive-mind-panel" id="hive-mind-panel">
+                    <div class="setup-grid">
+                        <div class="setup-card">
+                            <h3>Mesh Status</h3>
+                            <p id="hive-status-text" style="color: var(--text-dim); font-size: 0.9rem;">Loading…</p>
+                            <div class="hive-node-grid" id="hive-node-grid"></div>
+                        </div>
+                        <div class="setup-card">
+                            <h3>Submit Task</h3>
+                            <input type="text" id="hive-task-desc" placeholder="Describe the business task…" style="width:100%; margin-bottom:0.5rem;">
+                            <select id="hive-task-capability" style="width:100%; margin-bottom:0.5rem;">
+                                <option value="strategy">strategy (executive)</option>
+                                <option value="outbound">outbound (sales)</option>
+                                <option value="content">content (marketing)</option>
+                                <option value="roadmap">roadmap (product)</option>
+                                <option value="leads">leads (acquisition)</option>
+                                <option value="metrics">metrics (analytics)</option>
+                                <option value="tickets">tickets (support)</option>
+                            </select>
+                            <button type="button" class="btn" style="width:100%;" onclick="submitHiveTask()">Dispatch to Hive</button>
+                            <div id="hive-task-log" class="console-log" style="display:none; margin-top:0.75rem; height:100px; font-size:0.8rem;"></div>
+                        </div>
+                        <div class="setup-card">
+                            <h3>Knowledge Bus</h3>
+                            <div id="hive-knowledge-list" class="memory-preview"></div>
+                            <br>
+                            <input type="text" id="hive-intent-text" placeholder="Parse intent (crystalline)…" style="width:100%; margin-bottom:0.5rem;">
+                            <button type="button" class="btn" style="width:100%; background: transparent; border: 1px solid var(--border);" onclick="parseHiveIntent()">Parse intent</button>
+                            <pre id="hive-intent-out" style="font-size:0.75rem; color: var(--text-dim); margin-top:0.5rem; white-space: pre-wrap;"></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <br><br>
                 <h3>Client Acquisition Pipeline</h3>
                 <div id="acquisition-status" style="margin-top: 1rem;">
                     Not launched yet.
@@ -832,7 +1068,7 @@
     <!-- Chat Widget -->
     <div id="chat-widget">
         <div id="chat-header" onclick="toggleChat()">
-            <span>🤖 Echo Assistant</span>
+            <span>🤖 Echo Assistant <span id="viktor-chat-badge" class="viktor-badge off" style="display:none;">Standard</span></span>
             <span id="chat-toggle-icon">▼</span>
         </div>
         <div id="chat-body">
@@ -1159,6 +1395,218 @@
                 </div>
             `;
             renderAcquisitionStatus(data.acquisition);
+            loadAgentOpsPanel();
+            loadHiveMindPanel();
+        }
+
+        function updateChatViktorBadge(enabled) {
+            const badge = document.getElementById('viktor-chat-badge');
+            if (!badge) return;
+            badge.style.display = 'inline';
+            if (enabled) {
+                badge.classList.remove('off');
+                badge.innerText = 'Viktor';
+            } else {
+                badge.classList.add('off');
+                badge.innerText = 'Standard';
+            }
+        }
+
+        async function loadAgentOpsPanel() {
+            try {
+                const [settingsRes, memoryRes, scheduleRes, runsRes] = await Promise.all([
+                    fetch(`${API}/agent-ops/settings`),
+                    fetch(`${API}/agent-ops/memory`),
+                    fetch(`${API}/agent-ops/proactive/schedule`),
+                    fetch(`${API}/agent-ops/proactive/runs?limit=5`),
+                ]);
+                if (!settingsRes.ok) return;
+                const settings = await settingsRes.json();
+                document.getElementById('toggle-viktor-mode').checked = !!settings.viktor_mode_enabled;
+                document.getElementById('toggle-strategist').checked = !!settings.viktor_strategist_enabled;
+                document.getElementById('toggle-oracle').checked = !!settings.viktor_oracle_enabled;
+                document.getElementById('toggle-proactive-beat').checked = !!settings.viktor_proactive_beat_enabled;
+                updateChatViktorBadge(!!settings.viktor_mode_enabled);
+
+                if (memoryRes.ok) {
+                    const mem = await memoryRes.json();
+                    const st = mem.status || {};
+                    document.getElementById('memory-status-text').innerText =
+                        `Workspace ${st.workspace}: ${st.semantic_count} semantic · ${st.episodic_count} episodic keys`;
+                    const preview = document.getElementById('memory-preview');
+                    preview.innerHTML = (mem.preview || []).map(item =>
+                        `<div><strong>${item.key}</strong> — ${item.content}</div>`
+                    ).join('') || '<div>No memory chunks yet. Click Seed memory.</div>';
+                }
+
+                if (scheduleRes.ok) {
+                    const sched = await scheduleRes.json();
+                    const lines = (sched.jobs || []).map(j =>
+                        `${j.job_id} @ ${j.utc_time} UTC`
+                    ).join(' · ');
+                    document.getElementById('proactive-schedule-text').innerText =
+                        lines || 'No scheduled jobs';
+                }
+
+                if (runsRes.ok) {
+                    const runs = await runsRes.json();
+                    renderProactiveRuns(runs.runs || []);
+                }
+            } catch (e) {
+                console.warn('Agent ops panel load failed', e);
+            }
+        }
+
+        async function saveAgentOpsToggle(key, value) {
+            try {
+                const res = await fetch(`${API}/agent-ops/settings`, {
+                    method: 'PATCH',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ [key]: value }),
+                });
+                if (!res.ok) throw await res.json();
+                const settings = await res.json();
+                updateChatViktorBadge(!!settings.viktor_mode_enabled);
+            } catch (e) {
+                alert('Could not save agent setting: ' + (e.detail || 'unknown error'));
+                loadAgentOpsPanel();
+            }
+        }
+
+        async function seedAgentMemory(overwrite) {
+            try {
+                const res = await fetch(`${API}/agent-ops/memory/seed`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ overwrite }),
+                });
+                if (!res.ok) throw await res.json();
+                await loadAgentOpsPanel();
+            } catch (e) {
+                alert('Memory seed failed: ' + (e.detail || 'unknown error'));
+            }
+        }
+
+        async function runProactiveJob(jobId) {
+            const log = document.getElementById('proactive-runs-log');
+            log.style.display = 'block';
+            log.innerHTML += `> Starting ${jobId}…<br>`;
+            try {
+                const res = await fetch(`${API}/agent-ops/proactive/run`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ job_id: jobId }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw data;
+                log.innerHTML += `> ${data.status}: ${data.message || data.output_preview || data.celery_task_id || 'done'}<br>`;
+                await loadAgentOpsPanel();
+            } catch (e) {
+                log.innerHTML += `> Error: ${e.detail || e.error || 'failed'}<br>`;
+            }
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function renderProactiveRuns(runs) {
+            const log = document.getElementById('proactive-runs-log');
+            if (!runs.length) {
+                log.style.display = 'none';
+                return;
+            }
+            log.style.display = 'block';
+            log.innerHTML = runs.map(r =>
+                `> [${r.job_id}] ${r.status}: ${(r.output_preview || r.message || r.error || '').slice(0, 120)}`
+            ).join('<br>');
+        }
+
+        function renderHiveNodeGrid(agentCount) {
+            const grid = document.getElementById('hive-node-grid');
+            if (!grid) return;
+            const n = Math.min(Math.max(agentCount * 12, 24), 120);
+            let html = '';
+            for (let i = 0; i < n; i++) {
+                const cls = i < agentCount * 8 ? 'active' : (i < agentCount * 10 ? 'sync' : '');
+                html += `<div class="hive-node ${cls}"></div>`;
+            }
+            grid.innerHTML = html;
+        }
+
+        async function loadHiveMindPanel() {
+            try {
+                const [statusRes, knowledgeRes] = await Promise.all([
+                    fetch(`${API}/hive-mind/status`),
+                    fetch(`${API}/hive-mind/knowledge?limit=6`),
+                ]);
+                if (statusRes.ok) {
+                    const st = await statusRes.json();
+                    const reg = st.registry || {};
+                    const queue = st.queue || {};
+                    document.getElementById('hive-status-text').innerText =
+                        `${reg.total_agents || 0} agents · load ${(reg.average_load || 0).toFixed(2)} · ` +
+                        `${queue.total_pending || 0} queued · ${queue.total_active || 0} active`;
+                    renderHiveNodeGrid(reg.total_agents || 0);
+                    const log = document.getElementById('hive-task-log');
+                    if (log && (st.recent_tasks || []).length) {
+                        log.style.display = 'block';
+                        log.innerHTML = (st.recent_tasks || []).map(t =>
+                            `> [${t.task_id?.slice(0, 8)}] ${t.status}: ${(t.description || '').slice(0, 80)}`
+                        ).join('<br>');
+                    }
+                }
+                if (knowledgeRes.ok) {
+                    const data = await knowledgeRes.json();
+                    const el = document.getElementById('hive-knowledge-list');
+                    el.innerHTML = (data.topics || []).map(t =>
+                        `<div><strong>${t.topic}</strong></div>`
+                    ).join('') || '<div>No knowledge broadcasts yet.</div>';
+                }
+            } catch (e) {
+                console.warn('Hive mind panel load failed', e);
+            }
+        }
+
+        async function submitHiveTask() {
+            const desc = document.getElementById('hive-task-desc').value.trim();
+            const capability = document.getElementById('hive-task-capability').value;
+            if (!desc) {
+                alert('Enter a task description.');
+                return;
+            }
+            const log = document.getElementById('hive-task-log');
+            log.style.display = 'block';
+            log.innerHTML += `> Dispatching: ${desc.slice(0, 60)}…<br>`;
+            try {
+                const res = await fetch(`${API}/hive-mind/tasks`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ description: desc, capability, priority: 'normal' }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw data;
+                log.innerHTML += `> Queued ${data.task_id?.slice(0, 8)} (${data.status})<br>`;
+                document.getElementById('hive-task-desc').value = '';
+                await loadHiveMindPanel();
+            } catch (e) {
+                log.innerHTML += `> Error: ${e.detail || e.error || 'failed'}<br>`;
+            }
+            log.scrollTop = log.scrollHeight;
+        }
+
+        async function parseHiveIntent() {
+            const text = document.getElementById('hive-intent-text').value.trim();
+            if (!text) return;
+            try {
+                const res = await fetch(`${API}/hive-mind/intent`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ text }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw data;
+                document.getElementById('hive-intent-out').innerText = JSON.stringify(data, null, 2);
+            } catch (e) {
+                document.getElementById('hive-intent-out').innerText = e.detail || 'Parse failed';
+            }
         }
 
         function renderAcquisitionStatus(acquisition) {
@@ -1244,6 +1692,8 @@
                     body: JSON.stringify({ message: text })
                 });
                 const data = await res.json();
+
+                updateChatViktorBadge(!!data.viktor_mode);
 
                 // Replace loading with response
                 const msgDiv = document.getElementById(loadingId);

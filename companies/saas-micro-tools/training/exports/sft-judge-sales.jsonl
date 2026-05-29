@@ -1,0 +1,3 @@
+{"prompt": "Mission: Find 10 SaaS founder leads in US\nArtifact: lead_batch\nContent: {\"leads\":[{\"name\":\"Acme DevTools\",\"url\":\"https://acme.dev\",\"score\":85,\"notes\":\"ICP fit\"}]}\n", "completion": "{\"verdict\": \"pass\", \"score\": 0.9, \"policy_flags\": []}"}
+{"prompt": "Mission: Find leads\nArtifact: lead_batch\nContent: \n", "completion": "{\"verdict\": \"revise\", \"score\": 0.0, \"policy_flags\": []}"}
+{"prompt": "Mission: Follow up warm lead\nArtifact: email_draft\nContent: Hi \u2014 quick question about your workflow.\n", "completion": "{\"verdict\": \"escalate\", \"score\": 0.6, \"policy_flags\": [\"approval_required_before_send\"]}"}

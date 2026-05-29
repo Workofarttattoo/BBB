@@ -1,0 +1,56 @@
+{
+  "labels": {
+    "echo:strategy": {
+      "route": "echo_prime",
+      "hermes_mcp": "echo_prime",
+      "bbb_skip_autonomous_task": false,
+      "default_role": "executive"
+    },
+    "bbb:execute": {
+      "route": "bbb",
+      "hermes_mcp": "bbb_ops",
+      "bbb_skip_autonomous_task": false,
+      "default_role": "sales",
+      "lock_type": "execute"
+    },
+    "plan:decompose": {
+      "route": "bbb",
+      "bbb_skip_autonomous_task": true,
+      "default_role": "executive",
+      "lock_type": "plan",
+      "instructions": "Planner creates child issues with bbb:execute; do not execute worker tasks on this issue."
+    },
+    "plan:milestone": {
+      "route": "bbb",
+      "bbb_skip_autonomous_task": true,
+      "default_role": "executive",
+      "lock_type": "plan"
+    },
+    "judge:sales": {
+      "route": "bbb",
+      "bbb_skip_autonomous_task": false,
+      "default_role": "meta_manager",
+      "review_only": true
+    },
+    "judge:content": {
+      "route": "bbb",
+      "bbb_skip_autonomous_task": false,
+      "default_role": "meta_manager",
+      "review_only": true
+    },
+    "judge:code": {
+      "route": "bbb",
+      "bbb_skip_autonomous_task": false,
+      "default_role": "meta_manager",
+      "review_only": true
+    },
+    "human:apollo": {
+      "route": "human",
+      "bbb_skip_autonomous_task": true,
+      "instructions": "Run Apollo in BBB Headhunter GUI, then comment results on the issue."
+    }
+  },
+  "role_label_prefix": "role:",
+  "planner_label_prefix": "plan:",
+  "judge_label_prefix": "judge:"
+}

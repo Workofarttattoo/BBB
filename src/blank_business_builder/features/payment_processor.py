@@ -31,10 +31,36 @@ class PaymentProcessor:
             stripe.api_key = api_key
         self.ech0_service = ECH0Service()
 
-    async def create_checkout_session(self, price_id: str, success_url: str, cancel_url: str) -> str:
+    async def create_checkout_session(
+        self,
+        price_id: str,
+        success_url: str,
+        cancel_url: str,
+        *,
+        business_name: str = "default",
+        role: str = "finance",
+        approval_id: str | None = None,
+        skip_gate: bool = False,
+    ) -> str:
         """
         Create a Stripe checkout session.
         """
+        if not skip_gate:
+            from ..approval_gates import GateAction, gate_from_policy
+            from ..enterprise_agent_policy import Capability, resolve_business_policy
+
+            policy = resolve_business_policy(business_name).policy_for_role(role)
+            gate_from_policy(
+                mode_requires_approval=policy.requires_approval_before_side_effect(
+                    Capability.PAYMENT_CHARGE
+                ),
+                action=GateAction.PAYMENT_CHARGE,
+                business_name=business_name,
+                role=role,
+                approval_id=approval_id,
+                metadata={"price_id": price_id},
+                force_manual=policy.is_manual_only(Capability.PAYMENT_CHARGE),
+            )
         try:
             # Try creating checkout session with ECH0 first
             return await self.ech0_service.create_checkout_session(price_id, success_url, cancel_url)

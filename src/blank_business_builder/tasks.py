@@ -55,6 +55,33 @@ app.conf.beat_schedule = {
     },
 }
 
+if os.getenv("MIDDLE_MANAGER_ENABLED", "true").lower() == "true":
+    _mm_minutes = os.getenv("MIDDLE_MANAGER_HEARTBEAT_MINUTES", "30")
+    app.conf.beat_schedule["middle-manager-heartbeat"] = {
+        "task": "blank_business_builder.tasks.middle_manager_heartbeat",
+        "schedule": crontab(minute=f"*/{_mm_minutes}"),
+        "kwargs": {
+            "business_name": os.getenv(
+                "MIDDLE_MANAGER_DEFAULT_BUSINESS",
+                "SaaS Micro-Tools Empire",
+            ),
+        },
+    }
+
+try:
+    from .agent_ops_state import get_agent_ops_settings
+
+    _viktor_beat_enabled = bool(
+        get_agent_ops_settings().get("viktor_proactive_beat_enabled", True)
+    )
+except Exception:
+    _viktor_beat_enabled = os.getenv("VIKTOR_PROACTIVE_BEAT_ENABLED", "true").lower() == "true"
+
+if _viktor_beat_enabled:
+    from .proactive_scheduler import ProactiveScheduler
+
+    app.conf.beat_schedule.update(ProactiveScheduler().celery_beat_schedule())
+
 
 @app.task(bind=True, max_retries=3)
 def health_check(self):
@@ -155,6 +182,127 @@ def process_pending_campaigns(self):
             session.close()
     except Exception as exc:
         logger.error(f"Campaign processing failed: {exc}")
+        raise self.retry(exc=exc, countdown=60)
+
+
+@app.task(bind=True, max_retries=2)
+def middle_manager_heartbeat(self, business_name: str = "SaaS Micro-Tools Empire"):
+    """Always-on supervisor heartbeat — audit tasks, approvals, loose ends."""
+    try:
+        import asyncio
+        from .api.enterprise_ops import _get_orchestrator
+        from .middle_manager_loop import MiddleManagerLoop
+
+        orchestrator = _get_orchestrator(business_name)
+        loop = MiddleManagerLoop(orchestrator)
+        report = asyncio.run(loop.run_heartbeat())
+        return report.to_dict()
+    except Exception as exc:
+        logger.error("Middle manager heartbeat failed: %s", exc)
+        raise self.retry(exc=exc, countdown=120)
+
+
+@app.task(bind=True, max_retries=2)
+def viktor_proactive_job(
+    self,
+    job_id: str = "daily-ops",
+    business_name: str = "SaaS Micro-Tools Empire",
+    workspace: str = "saas-micro-tools",
+):
+    """
+    Proactive Viktor job — arXiv ingest (6:00 UTC) or daily ops (7:00 UTC).
+    Requires VIKTOR_MODE_ENABLED for full council; falls back to role runner.
+    """
+    try:
+        import asyncio
+        from .agent_memory_seed import ensure_seeded
+        from .proactive_scheduler import ProactiveScheduler
+
+        from .agent_ops_state import is_viktor_mode_enabled, record_proactive_run
+
+        ensure_seeded(workspaces=[workspace, "ech0"])
+
+        async def _run() -> str:
+            scheduler = ProactiveScheduler()
+
+            async def handler(prompt: str) -> str:
+                if is_viktor_mode_enabled():
+                    from .ech0_viktor_runner import EchoViktorRunner
+
+                    runner = EchoViktorRunner(
+                        workspace=workspace,
+                        business_name=business_name,
+                    )
+                    return await runner.handle(
+                        prompt,
+                        agent_id="proactive",
+                        task_id=f"proactive-{job_id}",
+                    )
+                from .role_agent_runner import RoleAgentRunner
+
+                runner = RoleAgentRunner(business_name)
+                artifact = await runner.run_task(
+                    role="executive",
+                    task_id=f"proactive-{job_id}",
+                    description=prompt,
+                    agent_id="proactive",
+                )
+                return artifact.get("summary") or artifact.get("content") or str(artifact)
+
+            scheduler.handler = handler
+            out = await scheduler.run_job(job_id)
+            return out or f"proactive job {job_id} completed with no output"
+
+        result = asyncio.run(_run())
+        logger.info("Viktor proactive job %s finished (%d chars)", job_id, len(result))
+        payload = {"job_id": job_id, "workspace": workspace, "output_preview": result[:500]}
+        record_proactive_run(job_id, {"status": "completed", **payload})
+        return payload
+    except Exception as exc:
+        logger.error("viktor_proactive_job failed: %s", exc)
+        raise self.retry(exc=exc, countdown=120)
+
+
+@app.task(bind=True, max_retries=2)
+def run_role_agent_task(
+    self,
+    business_name: str = "SaaS Micro-Tools Empire",
+    role: str = "sales",
+    task_id: str = "",
+    description: str = "",
+):
+    """Execute a single role task with RoleAgentRunner + auto-judge."""
+    try:
+        import asyncio
+        from .api.enterprise_ops import _get_orchestrator
+        from .autonomous_business import AutonomousTask, TaskStatus, AgentRole
+        from .role_agent_runner import RoleAgentRunner
+
+        orchestrator = _get_orchestrator(business_name)
+        tid = task_id or f"celery-{self.request.id}"
+        runner = RoleAgentRunner(business_name)
+        artifact = asyncio.run(
+            runner.run_task(role=role, task_id=tid, description=description or "Worker task")
+        )
+        try:
+            agent_role = AgentRole(role)
+        except ValueError:
+            agent_role = AgentRole.SALES
+        task = AutonomousTask(
+            task_id=tid,
+            role=agent_role,
+            description=description or "Worker task",
+            status=TaskStatus.IN_PROGRESS,
+        )
+        artifact.setdefault("success", True)
+
+        async def _judge():
+            return await orchestrator._apply_auto_judge(task, artifact, None)
+
+        result = asyncio.run(_judge())
+        return result
+    except Exception as exc:
+        logger.error("run_role_agent_task failed: %s", exc)
         raise self.retry(exc=exc, countdown=60)
 
 

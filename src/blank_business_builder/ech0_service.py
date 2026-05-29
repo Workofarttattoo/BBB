@@ -101,6 +101,13 @@ class ECH0Service:
         """
         Direct chat interface for the GUI.
         """
+        from .agent_ops_state import is_viktor_mode_enabled
+
+        if is_viktor_mode_enabled():
+            from .ech0_viktor_runner import EchoViktorRunner
+
+            runner = EchoViktorRunner(workspace="ech0")
+            return await runner.handle(message)
         return await self._call_ollama(message)
 
     async def generate_content(self, topic: str, content_type: str) -> str:

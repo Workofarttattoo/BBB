@@ -5,7 +5,7 @@ Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 @dataclass
 class BusinessModel:
@@ -21,6 +21,8 @@ class BusinessModel:
     difficulty: str = "Medium"
     required_roles: List[str] = field(default_factory=lambda: ["marketer", "sales", "support", "finance", "executive"])
     tier: int = 1
+    # Per-role capability overrides: role -> { capability_key -> auto|draft|manual|approval_required }
+    capability_overrides: Dict[str, Dict[str, str]] = field(default_factory=dict)
 
 # --- Tier 1: Highest Profit, Easiest Automation ---
 
@@ -65,6 +67,10 @@ TIER_1_MODELS = [
         automation_level=0.95,
         difficulty="Medium",
         required_roles=["saas_builder", "marketer", "support", "finance"],
+        capability_overrides={
+            "sales": {"apollo_search": "manual", "lead_ingest": "approval_required"},
+            "marketer": {"email_campaign": "approval_required"},
+        },
         tier=1
     ),
     BusinessModel(

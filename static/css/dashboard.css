@@ -83,3 +83,23 @@
     color: white;
     border-left: 4px solid #3b82f6; /* Tailwind blue-500 */
 }
+
+.chat-bubble {
+    padding: 0.65rem 0.85rem;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+}
+
+.chat-bubble-user {
+    background-color: #3b82f6;
+    color: white;
+    margin-left: 2rem;
+}
+
+.chat-bubble-assistant {
+    background-color: white;
+    color: #1f2937;
+    border: 1px solid #e5e7eb;
+}

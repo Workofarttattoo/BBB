@@ -40,6 +40,18 @@ from .semantic_framework import semantic, on, send, every
 from .ech0_service import ECH0Service
 from .hive_mind_coordinator import HiveMindCoordinator, AgentType
 from .business_data import default_ideas
+from .enterprise_agent_policy import (
+    BusinessAutomationPolicy,
+    Capability,
+    resolve_business_policy,
+)
+from .approval_gates import (
+    ApprovalGateError,
+    GateAction,
+    gate_from_policy,
+)
+from .paperclip_work_source import PaperclipWorkSourceSync
+from .config import settings
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -200,6 +212,57 @@ class Level6BusinessAgent:
                 autonomy_level=self.autonomy_level,
             )
 
+    async def _maybe_send_email(
+        self,
+        *,
+        subject: str,
+        html_content: str,
+        capability: Capability,
+        task: AutonomousTask,
+        approval_id: Optional[str] = None,
+    ) -> None:
+        """Send email only when enterprise policy and approval gates allow."""
+        if not self.email_service:
+            return
+        policy = resolve_business_policy(self.business_concept).policy_for_role(
+            self.role.value
+        )
+        try:
+            gate_from_policy(
+                mode_requires_approval=policy.requires_approval_before_side_effect(
+                    capability
+                ),
+                action=GateAction.EMAIL_SEND,
+                business_name=self.business_concept,
+                role=self.role.value,
+                approval_id=approval_id,
+                metadata={"task_id": task.task_id, "subject": subject},
+                force_manual=policy.is_manual_only(capability),
+            )
+        except ApprovalGateError as exc:
+            logger.warning("[%s] Email blocked: %s", self.agent_id, exc)
+            return
+
+        mode = policy.mode_for(capability)
+        if mode.value == "draft":
+            logger.info(
+                "[%s] Email draft only (not sent): %s",
+                self.agent_id,
+                subject,
+            )
+            return
+
+        await self.email_service.send_email(
+            from_email="marketing@mybusiness.com",
+            to_emails=["customer@example.com"],
+            subject=subject,
+            html_content=html_content,
+            business_name=self.business_concept,
+            role=self.role.value,
+            approval_id=approval_id,
+            skip_gate=True,
+        )
+
     @property
     def current_shift(self) -> int:
         """Determine current 8-hour shift (1, 2, or 3)."""
@@ -337,13 +400,12 @@ class Level6BusinessAgent:
 
     async def _plan_marketing(self, task: AutonomousTask) -> Dict:
         """Marketing agent: Content creation, SEO, advertising."""
-        if self.email_service:
-            await self.email_service.send_email(
-                from_email="marketing@mybusiness.com",
-                to_emails=["customer@example.com"],
-                subject="Check out our new blog post!",
-                html_content="<p>We've just published a new blog post that you might find interesting.</p>",
-            )
+        await self._maybe_send_email(
+            subject="Check out our new blog post!",
+            html_content="<p>We've just published a new blog post that you might find interesting.</p>",
+            capability=Capability.EMAIL_SEND,
+            task=task,
+        )
 
         if self.social_media:
             await self.social_media.post_tweet("Check out our new blog post!")
@@ -367,11 +429,11 @@ class Level6BusinessAgent:
         sales_tactics = self.prompt_registry.get_prompt("sales_tactics")
         comm_guidelines = self.prompt_registry.get_prompt("communication_guidelines")
 
-        await self.email_service.send_email(
-            from_email="sales@mybusiness.com",
-            to_emails=["lead@example.com"],
+        await self._maybe_send_email(
             subject="Following up on your interest",
             html_content="<p>I'd love to schedule a quick call to discuss how we can help you.</p>",
+            capability=Capability.EMAIL_SEND,
+            task=task,
         )
         return {
             "action": "sales_outreach",
@@ -900,6 +962,11 @@ class AutonomousBusinessOrchestrator:
         self.ceo = ChiefEnhancementOfficer(self)
         self.hive_mind = HiveMindCoordinator()
         self.task_status_counts = {status: 0 for status in TaskStatus}
+        self.automation_policy: BusinessAutomationPolicy = resolve_business_policy(
+            business_concept
+        )
+        self.paperclip_sync = PaperclipWorkSourceSync(self)
+        self.judge_revise_counts: Dict[str, int] = {}
 
         # Identify required roles for the selected business concept
         self.required_roles = self._identify_required_roles(business_concept)
@@ -925,32 +992,22 @@ class AutonomousBusinessOrchestrator:
                 except ValueError:
                     logger.warning(f"Unknown role in business config: {role_str}")
 
-        # Always include minimal core team if nothing specific found (legacy fallback)
         if not required:
             required = [
-                AgentRole.RESEARCHER,
                 AgentRole.MARKETER,
                 AgentRole.SALES,
-                AgentRole.FULFILLMENT,
                 AgentRole.SUPPORT,
                 AgentRole.FINANCE,
-                AgentRole.HR,
-                AgentRole.META_MANAGER,
                 AgentRole.EXECUTIVE,
-                AgentRole.DEEP_RESEARCHER,
-                AgentRole.OSINT_SPECIALIST,
-                AgentRole.CREATIVE_DIRECTOR
             ]
-        else:
-             # Ensure Management/Executive/HR roles are always present for governance
-            if AgentRole.EXECUTIVE not in required:
-                required.append(AgentRole.EXECUTIVE)
-            if AgentRole.HR not in required:
-                required.append(AgentRole.HR)
-            if AgentRole.META_MANAGER not in required:
-                required.append(AgentRole.META_MANAGER)
+        elif AgentRole.EXECUTIVE not in required:
+            required.append(AgentRole.EXECUTIVE)
 
         return required
+
+    def sync_paperclip_issues(self, issues: List[Dict]) -> Dict:
+        """Ingest Paperclip issues as the canonical work queue."""
+        return self.paperclip_sync.sync_batch(issues)
 
     async def deploy_agents(self) -> None:
         """Deploy Level 6 agents for all required roles."""
@@ -1377,8 +1434,19 @@ class AutonomousBusinessOrchestrator:
                 continue
 
             if isinstance(result, dict) and result.get("success"):
-                self._set_task_status(task, TaskStatus.COMPLETED, result=result)
-                normalized_results.append(result)
+                agent = self.agents.get(task.assigned_to) if task.assigned_to else None
+                judged = await self._apply_auto_judge(task, result, agent)
+                if judged.get("requeued_for_revise") or judged.get("requires_approval"):
+                    normalized_results.append(judged)
+                    continue
+                if judged.get("success") and judged.get("judge_verdict", "pass") == "pass":
+                    self._set_task_status(task, TaskStatus.COMPLETED, result=judged)
+                elif not judged.get("success"):
+                    if task.status not in (TaskStatus.FAILED, TaskStatus.BLOCKED):
+                        self._set_task_status(task, TaskStatus.FAILED, result=judged)
+                else:
+                    self._set_task_status(task, TaskStatus.COMPLETED, result=judged)
+                normalized_results.append(judged)
             else:
                 failed_result = (
                     result
@@ -1397,6 +1465,53 @@ class AutonomousBusinessOrchestrator:
                 normalized_results.append(failed_result)
 
         return normalized_results
+
+    async def _apply_auto_judge(
+        self,
+        task: AutonomousTask,
+        result: Dict,
+        agent: Optional["Level6BusinessAgent"] = None,
+    ) -> Dict:
+        """Run post-worker judge when enabled; enrich artifact from role runner."""
+        if not settings.AUTO_JUDGE_ENABLED:
+            return result
+
+        from .auto_judge_loop import AutoJudgeLoop
+        from .role_agent_runner import RoleAgentRunner
+
+        role_value = agent.role.value if agent else task.role.value
+        if not result.get("artifact_type"):
+            try:
+                runner = RoleAgentRunner(self.business_concept)
+                artifact = await runner.run_task(
+                    role=role_value,
+                    task_id=task.task_id,
+                    description=task.description,
+                )
+                result.setdefault("artifact_type", artifact.get("artifact_type"))
+                result.setdefault("content", artifact.get("content"))
+                result.setdefault("metadata", artifact.get("metadata", {}))
+            except Exception as exc:
+                logger.debug("Role runner enrichment skipped: %s", exc)
+
+        if not result.get("content"):
+            result["content"] = json.dumps(
+                {
+                    "outcome": result.get("outcome"),
+                    "task_description": result.get("task_description", task.description),
+                }
+            )
+        if not result.get("artifact_type"):
+            result["artifact_type"] = (
+                "lead_batch" if role_value == "sales" else f"{role_value}_draft"
+            )
+
+        loop = AutoJudgeLoop(
+            self.business_concept,
+            self,
+            max_revise=settings.AUTO_JUDGE_MAX_REVISE,
+        )
+        return await loop.evaluate_worker_result(task, result)
 
     async def _update_metrics(self, results: List[Dict]) -> None:
         """Update business metrics based on task results."""

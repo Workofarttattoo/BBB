@@ -1,0 +1,28 @@
+# Hermes Agent MCP — wire Echo Prime and BBB into Paperclip heartbeats.
+# Copy to ~/.hermes/config.yaml under mcp_servers: (merge with existing config).
+#
+# Requires BBB + echo-prime reachable on the Docker network (see docker-compose.enterprise.yml).
+
+mcp_servers:
+  echo_prime:
+    url: "http://echo-prime:8001/mcp"
+    enabled: true
+    timeout: 120
+    connect_timeout: 30
+    headers: {}
+    tools:
+      include: []
+      exclude: []
+      resources: true
+      prompts: true
+
+  bbb_ops:
+    url: "http://api:8000/api/v1/enterprise/mcp-bridge"
+    enabled: true
+    timeout: 180
+    connect_timeout: 30
+    headers:
+      Authorization: "Bearer ${BBB_INTERNAL_API_TOKEN}"
+    tools:
+      include: []
+      exclude: []
