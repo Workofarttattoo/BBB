@@ -1,3 +1,11 @@
-🎯 **What:** Adds unit tests for the asynchronous `run_autonomous_loop` and `launch_magic_rd_lab_business` functions in `magic_rd_lab_autonomous_agents.py`. The infinite loop and sleeping functionality are mocked to allow fast, deterministic tests without running into timeout issues.
-📊 **Coverage:** Covered loop entry, loop exit conditions via mocked exceptions, agent deployments, invocation of underlying methods, and ensuring metrics sum exactly appropriately after 1 pass through the loop.
-✨ **Result:** Enhanced test coverage that protects core async loop functionality from regressions.
+💡 What
+Replaced multiple sequential generator expressions and list comprehensions with single O(N) loops in `get_business_metrics` and `generate_summary_report` across `qulab_rental_business.py`, `magic_rd_lab.py`, and `bbb_unified_business_library.py`.
+
+🎯 Why
+Dashboard rendering and metrics gathering functions were performing redundant iterations (up to 4-5 passes) over the same collections (`self.customers`, `self.sessions`, `businesses`). This caused unnecessary memory allocations and degraded performance as the datasets grew.
+
+📊 Impact
+Reduces time complexity of these aggregation methods from O(N * M) (where M is the number of distinct metrics being gathered) to a strict O(N). Prevents potential UI lag when loading business summaries for large libraries or rendering active dashboards for the magic lab and qulab businesses.
+
+🔬 Measurement
+Review the time taken to execute `get_business_metrics()` or `generate_summary_report()` on large datasets. They will perform linearly regardless of the number of unique sub-metrics calculated.
