@@ -13,6 +13,12 @@ from typing import Any, Dict, Optional
 
 import requests
 
+# ⚡ Bolt Optimization: Extracted inline tuples to module-level constant tuples
+# Impact: Prevents tuple reallocation on every execution of _default_department
+EXEC_KEYWORDS = ("finance", "cfo", "board", "vp", "ceo")
+MARKETING_KEYWORDS = ("marketing", "growth", "brand")
+SUPPORT_KEYWORDS = ("support", "helpdesk", "success")
+OPS_KEYWORDS = ("ops", "operations", "supply")
 
 class EchoMasterBrain:
     """Decisioning client for outreach and follow-up actions."""
@@ -52,13 +58,13 @@ class EchoMasterBrain:
                 str(lead_event.get("notes", "")),
             ]
         ).lower()
-        if any(token in text for token in ("finance", "cfo", "board", "vp", "ceo")):
+        if any(token in text for token in EXEC_KEYWORDS):
             return "exec"
-        if any(token in text for token in ("marketing", "growth", "brand")):
+        if any(token in text for token in MARKETING_KEYWORDS):
             return "marketing"
-        if any(token in text for token in ("support", "helpdesk", "success")):
+        if any(token in text for token in SUPPORT_KEYWORDS):
             return "support"
-        if any(token in text for token in ("ops", "operations", "supply")):
+        if any(token in text for token in OPS_KEYWORDS):
             return "ops"
         return "sales"
 
