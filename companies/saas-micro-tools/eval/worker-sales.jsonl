@@ -1,0 +1,1 @@
+{"role":"sales","task":"Score Firecrawl leads for micro-SaaS ICP","input":"Raw search results for indie SaaS founders","output":"{\"leads\":[{\"name\":\"Example Co\",\"url\":\"https://example.co\",\"score\":72,\"notes\":\"solo founder\"}]}"}

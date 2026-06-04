@@ -477,38 +477,127 @@
 
                 <!-- 6. Settings View -->
                 <div id="view-settings" class="view-section hidden">
-                    <div class="bg-white shadow rounded-lg p-6 max-w-2xl">
-                        <h3 class="text-xl font-medium text-gray-800 mb-6 border-b pb-2">Account Information</h3>
-                        <div class="space-y-4" id="settings-info">
-                            <!-- Populated via JS -->
-                            <div class="grid grid-cols-3 gap-4 border-b border-gray-100 pb-2">
-                                <div class="text-gray-500 font-medium">Email</div>
-                                <div class="col-span-2 text-gray-900" id="set-email">...</div>
-                            </div>
-                            <div class="grid grid-cols-3 gap-4 border-b border-gray-100 pb-2">
-                                <div class="text-gray-500 font-medium">Name</div>
-                                <div class="col-span-2 text-gray-900" id="set-name">...</div>
-                            </div>
-                            <div class="grid grid-cols-3 gap-4 border-b border-gray-100 pb-2">
-                                <div class="text-gray-500 font-medium">Tier</div>
-                                <div class="col-span-2">
-                                    <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 uppercase font-semibold" id="set-tier">...</span>
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 max-w-6xl">
+                        <div class="bg-white shadow rounded-lg p-6">
+                            <h3 class="text-xl font-medium text-gray-800 mb-6 border-b pb-2">Account Information</h3>
+                            <div class="space-y-4" id="settings-info">
+                                <div class="grid grid-cols-3 gap-4 border-b border-gray-100 pb-2">
+                                    <div class="text-gray-500 font-medium">Email</div>
+                                    <div class="col-span-2 text-gray-900" id="set-email">...</div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-4 border-b border-gray-100 pb-2">
+                                    <div class="text-gray-500 font-medium">Name</div>
+                                    <div class="col-span-2 text-gray-900" id="set-name">...</div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-4 border-b border-gray-100 pb-2">
+                                    <div class="text-gray-500 font-medium">Tier</div>
+                                    <div class="col-span-2">
+                                        <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 uppercase font-semibold" id="set-tier">...</span>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-4 pb-2">
+                                    <div class="text-gray-500 font-medium">License Status</div>
+                                    <div class="col-span-2 text-gray-900" id="set-license">...</div>
                                 </div>
                             </div>
-                            <div class="grid grid-cols-3 gap-4 pb-2">
-                                <div class="text-gray-500 font-medium">License Status</div>
-                                <div class="col-span-2 text-gray-900" id="set-license">...</div>
+                        </div>
+
+                        <div class="bg-white shadow rounded-lg p-6 xl:col-span-2">
+                            <div class="flex flex-wrap items-center justify-between gap-3 mb-4 border-b pb-3">
+                                <h3 class="text-xl font-medium text-gray-800">
+                                    <i class="fa-solid fa-network-wired text-primary mr-2"></i>Agent Ops &amp; Sync
+                                </h3>
+                                <button type="button" id="btn-ent-save-settings" class="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-md">
+                                    Save sync settings
+                                </button>
                             </div>
+                            <p class="text-sm text-gray-500 mb-4">One-click controls for Paperclip, Echo Prime, Apollo, and approval gates.</p>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Business template name</label>
+                                    <input type="text" id="ent-business-template" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" placeholder="SaaS Micro-Tools Empire">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Paperclip URL</label>
+                                    <input type="url" id="ent-paperclip-url" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" placeholder="http://127.0.0.1:3100">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Apollo search criteria</label>
+                                    <input type="text" id="ent-apollo-criteria" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Lead count</label>
+                                    <input type="number" id="ent-apollo-count" min="1" max="100" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                </div>
+                            </div>
+
+                            <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Policy &amp; routing</div>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mb-6">
+                                <button type="button" id="btn-ent-view-policy" class="px-3 py-2 text-sm bg-blue-50 text-blue-800 rounded-md hover:bg-blue-100 border border-blue-100"><i class="fa-solid fa-shield-halved mr-1"></i> View policy</button>
+                                <button type="button" id="btn-ent-routing-labels" class="px-3 py-2 text-sm bg-purple-50 text-purple-800 rounded-md hover:bg-purple-100 border border-purple-100"><i class="fa-solid fa-tags mr-1"></i> Routing labels</button>
+                                <button type="button" id="btn-ent-mcp-bridge" class="px-3 py-2 text-sm bg-indigo-50 text-indigo-800 rounded-md hover:bg-indigo-100 border border-indigo-100"><i class="fa-solid fa-plug mr-1"></i> MCP manifest</button>
+                                <button type="button" id="btn-ent-echo-health" class="px-3 py-2 text-sm bg-teal-50 text-teal-800 rounded-md hover:bg-teal-100 border border-teal-100"><i class="fa-solid fa-heart-pulse mr-1"></i> Echo health</button>
+                                <button type="button" id="btn-ent-open-paperclip" class="px-3 py-2 text-sm bg-gray-50 text-gray-800 rounded-md hover:bg-gray-100 border border-gray-200"><i class="fa-solid fa-external-link mr-1"></i> Open Paperclip</button>
+                            </div>
+
+                            <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Leads (Apollo)</div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-6">
+                                <button type="button" id="btn-ent-apollo-manual" class="px-3 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"><i class="fa-solid fa-user-check mr-1"></i> Manual search</button>
+                                <button type="button" id="btn-ent-apollo-agent" class="px-3 py-2 text-sm bg-amber-500 text-white rounded-md hover:bg-amber-600"><i class="fa-solid fa-robot mr-1"></i> Agent search</button>
+                                <button type="button" id="btn-ent-ingest-leads" class="px-3 py-2 text-sm bg-slate-700 text-white rounded-md hover:bg-slate-800"><i class="fa-solid fa-database mr-1"></i> Ingest to CRM</button>
+                            </div>
+
+                            <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Approvals &amp; Paperclip sync</div>
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                <button type="button" id="btn-ent-refresh-approvals" class="px-3 py-2 text-sm bg-yellow-50 text-yellow-900 rounded-md hover:bg-yellow-100 border border-yellow-200"><i class="fa-solid fa-rotate mr-1"></i> Refresh approvals</button>
+                                <button type="button" id="btn-ent-sync-paperclip" class="px-3 py-2 text-sm bg-primary text-white rounded-md hover:bg-blue-700"><i class="fa-solid fa-arrows-rotate mr-1"></i> Sync Paperclip issues</button>
+                                <button type="button" id="btn-ent-clear-output" class="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">Clear output</button>
+                            </div>
+                            <div id="ent-approvals-list" class="space-y-2 mb-4 min-h-[2rem]"></div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Paperclip issues JSON</label>
+                            <textarea id="ent-paperclip-issues" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md text-xs font-mono mb-4" placeholder='Paste from Paperclip: [ {...} ] or { "issues": [...] }'></textarea>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Operation output</label>
+                            <pre id="ent-output" class="w-full h-48 overflow-auto bg-gray-900 text-green-400 text-xs p-3 rounded-md font-mono"></pre>
                         </div>
                     </div>
                 </div>
 
             </div>
         </main>
+
+        <!-- Natural-language command center -->
+        <div id="enterprise-chat-dock" class="fixed bottom-6 right-6 z-30 w-full max-w-md pointer-events-none">
+            <div class="pointer-events-auto ml-auto">
+                <button type="button" id="btn-chat-toggle" class="ml-auto flex items-center gap-2 px-4 py-3 rounded-full shadow-lg bg-secondary text-white hover:bg-gray-800 transition-colors">
+                    <i class="fa-solid fa-comments text-primary"></i>
+                    <span class="font-medium text-sm">Talk to CEO &amp; agents</span>
+                    <i id="chat-toggle-icon" class="fa-solid fa-chevron-down text-xs opacity-70"></i>
+                </button>
+                <div id="enterprise-chat-panel" class="mt-3 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col h-[420px]">
+                    <div class="px-4 py-3 border-b border-gray-100 bg-gray-50">
+                        <p class="text-sm font-semibold text-gray-800">Command center</p>
+                        <p class="text-xs text-gray-500">Plain English — no commands. Approvals, leads, CEO tasks.</p>
+                        <div id="chat-suggestions" class="flex flex-wrap gap-1.5 mt-2 max-h-16 overflow-y-auto"></div>
+                    </div>
+                    <div id="enterprise-chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+                        <div class="chat-bubble chat-bubble-assistant mr-8">Hi — ask me anything. Try “What needs my approval?” or “CEO: review the pipeline.”</div>
+                    </div>
+                    <div class="p-3 border-t border-gray-100 bg-white flex gap-2">
+                        <input type="text" id="enterprise-chat-input" class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="Tell the CEO or an agent what to do…" autocomplete="off">
+                        <button type="button" id="btn-chat-send" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->
     <script src="/static/js/auth.js"></script>
+    <script src="/static/js/enterprise-ops.js"></script>
+    <script src="/static/js/enterprise-chat.js"></script>
     <script src="/static/js/app.js"></script>
 
     <!-- Catalog Script -->

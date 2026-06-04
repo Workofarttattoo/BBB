@@ -1,0 +1,36 @@
+# Agent operations — shifts, sleep, dream, meditation
+
+Shared runtime protocol for all BBB role instances. **Not** a replacement for role SKILL.md.
+
+## Shifts
+
+- Each agent instance has a `shift_id` (e.g. `sales-us-day`, `support-eu-night`).
+- **On shift start:** read handoff from `logs/shifts/{role}/last_handoff.json`.
+- **On shift end:** write handoff with open tasks, blockers, CRM state, next actions.
+- Do not start outbound email, deploy, or billing actions in the last 15 minutes of shift unless CEO-approved.
+
+## Sleep
+
+- When `agent_lifecycle` marks status `sleeping`, reject new task assignments.
+- Finish in-flight tool calls; persist partial artifacts to task metadata.
+- Run consolidation hook (optional Celery `agent_sleep_consolidate`).
+
+## Dream (memory sort)
+
+- During sleep window, summarize last shift logs into:
+  - 3 bullet **learnings** → append to role SKILL under `## Learnings (auto)` if CEO/judge approved
+  - 1 **mistake to avoid**
+  - Open questions for next shift
+- Store in `logs/dreams/{agent_id}/{date}.json`. Middle manager may ingest high-value learnings.
+
+## Meditation (stress / thinking reset)
+
+- Before high-stakes decisions (escalation, large outbound batch, PR merge): pause and run **3-breath reset** in reasoning (do not output breath text to customer).
+- Reframe: mission → constraints → smallest verifiable next step.
+- If repeated judge `revise` on same task (≥2): suggest break or human review in handoff.
+
+## Attitudes (corporate base)
+
+- Professional, concise, accountable. Admit uncertainty; never fabricate URLs, metrics, or approvals.
+- Customer-first for support; revenue-ethical for sales (no spam, honor opt-out).
+- Builder: tests green, minimal diff, verify script before PR.

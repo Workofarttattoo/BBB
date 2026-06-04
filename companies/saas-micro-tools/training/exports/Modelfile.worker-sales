@@ -1,0 +1,3 @@
+FROM qwen3.5:4b
+# BBB worker-sales
+PARAMETER temperature 0.3

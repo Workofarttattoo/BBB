@@ -1,0 +1,15 @@
+{
+  "business_name": "SaaS Micro-Tools Empire",
+  "company_slug": "saas-micro-tools",
+  "description": "Identifies market gaps, builds no-code tools, handles acquisition and support.",
+  "capability_overrides": {
+    "sales": {
+      "apollo_search": "manual",
+      "lead_ingest": "approval_required"
+    },
+    "marketer": {
+      "email_campaign": "approval_required"
+    }
+  },
+  "notes": "Export snapshot for agent prompts; live policy from resolve_business_policy()"
+}

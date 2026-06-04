@@ -68,6 +68,55 @@ class Config:
     LLM_PROVIDER = os.getenv("LLM_PROVIDER", "paperclip")
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "hermes3")
+
+    # Middle Manager + Judge (local long-horizon supervisor stack)
+    MIDDLE_MANAGER_ENABLED = os.getenv("MIDDLE_MANAGER_ENABLED", "true").lower() == "true"
+    MIDDLE_MANAGER_PROVIDER = os.getenv("MIDDLE_MANAGER_PROVIDER", "ollama")
+    MIDDLE_MANAGER_BASE_URL = os.getenv("MIDDLE_MANAGER_BASE_URL", OLLAMA_BASE_URL)
+    MIDDLE_MANAGER_MODEL = os.getenv(
+        "MIDDLE_MANAGER_MODEL",
+        os.getenv("QWEN_LOCAL_MODEL", "qwen3.5:9b"),
+    )
+    MIDDLE_MANAGER_TIMEOUT_SECONDS = int(os.getenv("MIDDLE_MANAGER_TIMEOUT_SECONDS", "300"))
+    MIDDLE_MANAGER_HEARTBEAT_MINUTES = int(os.getenv("MIDDLE_MANAGER_HEARTBEAT_MINUTES", "30"))
+    MIDDLE_MANAGER_LOG_PATH = os.getenv(
+        "MIDDLE_MANAGER_LOG_PATH",
+        str(Path(__file__).resolve().parent.parent.parent / "logs" / "middle_manager.jsonl"),
+    )
+    JUDGE_PROVIDER = os.getenv("JUDGE_PROVIDER", MIDDLE_MANAGER_PROVIDER)
+    JUDGE_BASE_URL = os.getenv("JUDGE_BASE_URL", OLLAMA_BASE_URL)
+    JUDGE_MODEL = os.getenv("JUDGE_MODEL", os.getenv("OLLAMA_MODEL", "hermes3"))
+    JUDGE_TIMEOUT_SECONDS = int(os.getenv("JUDGE_TIMEOUT_SECONDS", "120"))
+    LMSTUDIO_BASE_URL = os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234")
+    MILESTONE_PARLIAMENT_THRESHOLD = float(os.getenv("MILESTONE_PARLIAMENT_THRESHOLD", "0.85"))
+
+    # Per-role model tiers (flash worker / judge / supervisor / c-suite)
+    ROLE_WORKER_PROVIDER = os.getenv("ROLE_WORKER_PROVIDER", JUDGE_PROVIDER)
+    ROLE_WORKER_BASE_URL = os.getenv("ROLE_WORKER_BASE_URL", JUDGE_BASE_URL)
+    ROLE_WORKER_MODEL = os.getenv("ROLE_WORKER_MODEL", os.getenv("ROLE_FLASH_MODEL", "qwen3.5:4b"))
+    ROLE_WORKER_TIMEOUT_SECONDS = int(os.getenv("ROLE_WORKER_TIMEOUT_SECONDS", "120"))
+
+    ROLE_CSUITE_PROVIDER = os.getenv("ROLE_CSUITE_PROVIDER", LLM_PROVIDER)
+    ROLE_CSUITE_BASE_URL = os.getenv(
+        "ROLE_CSUITE_BASE_URL",
+        os.getenv("OPENAI_BASE_URL", OLLAMA_BASE_URL),
+    )
+    ROLE_CSUITE_MODEL = os.getenv("ROLE_CSUITE_MODEL", os.getenv("OLLAMA_MODEL", "hermes3"))
+    ROLE_CSUITE_TIMEOUT_SECONDS = int(os.getenv("ROLE_CSUITE_TIMEOUT_SECONDS", "300"))
+
+    DEFAULT_COMPANY_SLUG = os.getenv("DEFAULT_COMPANY_SLUG", "saas-micro-tools")
+    JUDGE_LOG_PATH = os.getenv(
+        "JUDGE_LOG_PATH",
+        str(Path(__file__).resolve().parent.parent.parent / "logs" / "judge.jsonl"),
+    )
+    BBB_TASK_LOCK_DIR = os.getenv(
+        "BBB_TASK_LOCK_DIR",
+        str(Path(__file__).resolve().parent.parent.parent / "logs" / "task_locks"),
+    )
+    AUTO_JUDGE_ENABLED = os.getenv("AUTO_JUDGE_ENABLED", "true").lower() == "true"
+    AUTO_JUDGE_MAX_REVISE = int(os.getenv("AUTO_JUDGE_MAX_REVISE", "3"))
+
+
     ECH0_LLM_PROVIDER = os.getenv("ECH0_LLM_PROVIDER", LLM_PROVIDER)
     ECH0_LLM_ENDPOINT = os.getenv("ECH0_LLM_ENDPOINT", "")
     ECH0_LLM_API_KEY = os.getenv("ECH0_LLM_API_KEY", "")
@@ -104,6 +153,16 @@ class Config:
 
     ECHO_BASE_URL = os.getenv("ECHO_BASE_URL", "")
     ECHO_PRIME_BASE_URL = os.getenv("ECHO_PRIME_BASE_URL", ECHO_BASE_URL)
+
+    # Viktor-mode: assume-forward execution + protocol council (Echo + role agents)
+    VIKTOR_MODE_ENABLED = os.getenv("VIKTOR_MODE_ENABLED", "false").lower() == "true"
+    VIKTOR_STRATEGIST_ENABLED = os.getenv("VIKTOR_STRATEGIST_ENABLED", "true").lower() == "true"
+    VIKTOR_ORACLE_ENABLED = os.getenv("VIKTOR_ORACLE_ENABLED", "true").lower() == "true"
+    VIKTOR_PROACTIVE_BEAT_ENABLED = os.getenv("VIKTOR_PROACTIVE_BEAT_ENABLED", "true").lower() == "true"
+    BBB_AGENT_MEMORY_DB = os.getenv(
+        "BBB_AGENT_MEMORY_DB",
+        str(Path(__file__).resolve().parent.parent.parent / "logs" / "agent_memory.db"),
+    )
 
 settings = Config()
 
