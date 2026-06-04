@@ -491,21 +491,24 @@ class Level6Agent:
         # Auto-generate marketing campaigns for businesses without recent campaigns
         businesses = db.query(Business).filter(Business.status == "active").all()
 
+        # ⚡ Bolt Optimization: Fix N+1 query for campaign checks
+        # Pre-fetch all businesses that had a campaign in the last 30 days
+        # Impact: Reduces queries from O(N) where N is active businesses to O(1)
+        business_ids = [b.id for b in businesses]
+        recent_campaign_business_ids = set()
+        if business_ids:
+            recent_campaigns = db.query(MarketingCampaign.business_id).filter(
+                MarketingCampaign.business_id.in_(business_ids),
+                MarketingCampaign.created_at > datetime.utcnow() - timedelta(days=30)
+            ).all()
+            recent_campaign_business_ids = {campaign.business_id for campaign in recent_campaigns}
+
         for business in businesses:
-            if self._needs_marketing_campaign(business, db):
+            if business.id not in recent_campaign_business_ids:
                 decision = await self._create_auto_campaign(business, db)
                 decisions.append(decision)
 
         return decisions
-
-    def _needs_marketing_campaign(self, business: Business, db: Session) -> bool:
-        """Check if business needs a new marketing campaign."""
-        recent_campaigns = db.query(MarketingCampaign).filter(
-            MarketingCampaign.business_id == business.id,
-            MarketingCampaign.created_at > datetime.utcnow() - timedelta(days=30)
-        ).count()
-
-        return recent_campaigns == 0
 
     async def _create_auto_campaign(self, business: Business, db: Session) -> AgentDecision:
         """Automatically create marketing campaign for business."""
