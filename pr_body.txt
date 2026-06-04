@@ -1,3 +1,11 @@
-🎯 **What:** Adds unit tests for the asynchronous `run_autonomous_loop` and `launch_magic_rd_lab_business` functions in `magic_rd_lab_autonomous_agents.py`. The infinite loop and sleeping functionality are mocked to allow fast, deterministic tests without running into timeout issues.
-📊 **Coverage:** Covered loop entry, loop exit conditions via mocked exceptions, agent deployments, invocation of underlying methods, and ensuring metrics sum exactly appropriately after 1 pass through the loop.
-✨ **Result:** Enhanced test coverage that protects core async loop functionality from regressions.
+💡 What
+Fixed an N+1 query issue in `Level6Agent.manage_marketing_campaigns()`. The iterator over `businesses` was calling `_needs_marketing_campaign()` on each step, triggering an independent `COUNT` query for every active business. Pre-fetched the active campaign state instead using a single `IN` clause.
+
+🎯 Why
+When dealing with hundreds or thousands of active businesses, the original logic could introduce severe latency and block the event loop or database connection pool by firing N independent queries in rapid succession.
+
+📊 Impact
+Reduces database query load in `manage_marketing_campaigns()` from O(N) to O(1).
+
+🔬 Measurement
+Review `test_perf.py` output; execution of the mocked logic verified only 0 `count()` queries occurred, scaling purely locally on memory after the `IN` fetch.
