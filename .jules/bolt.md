@@ -20,3 +20,6 @@
 ## 2026-03-04 - Optimize WebSocket Metrics Gathering
 **Learning:** In `_get_business_metrics_sync` (used heavily by periodic websocket connections), multiple `func.sum(case(...))` clauses within a single SQLAlchemy `.query()` can be slow and put unnecessary load on the DB engine due to table scanning. It's an anti-pattern when pulling segmented aggregates.
 **Action:** When gathering status counts across an entire associated table, use a much more efficient `GROUP BY` query (`group_by(AgentTask.status)`) combined with a simple Python iteration mapping the output. This greatly mitigates event loop blocking risks from synchronous IO delays under load.
+## 2026-03-05 - Optimize SQLAlchemy Engine and Session Maker Caching
+**Learning:** Creating a SQLAlchemy engine (`create_engine()`) directly inside a FastAPI dependency generator like `get_db()` breaks connection pooling by creating a new pool per request. This causes major performance regressions due to constant connection setup/teardown.
+**Action:** Always lazily cache the database engine and session maker globally (e.g., using a singleton pattern or module-level dictionary) to ensure they are reused across requests, preserving the connection pool.

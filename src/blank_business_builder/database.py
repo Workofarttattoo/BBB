@@ -421,23 +421,31 @@ class DepartmentRoute(Base):
 
 
 # Database connection helpers
+_engines = {}
+
 def get_db_engine(database_url: Optional[str] = None):
     """Create database engine"""
     if database_url is None:
         database_url = os.environ.get("DATABASE_URL", "postgresql://bbbuser:password@localhost:5432/bbb_production")
 
-    return create_engine(
-        database_url,
-        pool_pre_ping=True,  # Verify connections before use
-        pool_size=10,  # Connection pool size
-        max_overflow=20,  # Max connections beyond pool_size
-        echo=False  # Set to True for SQL logging
-    )
+    if database_url not in _engines:
+        _engines[database_url] = create_engine(
+            database_url,
+            pool_pre_ping=True,  # Verify connections before use
+            pool_size=10,  # Connection pool size
+            max_overflow=20,  # Max connections beyond pool_size
+            echo=False  # Set to True for SQL logging
+        )
+    return _engines[database_url]
 
+
+_session_makers = {}
 
 def get_session_maker(engine):
     """Create session maker"""
-    return sessionmaker(bind=engine, autocommit=False, autoflush=False)
+    if engine not in _session_makers:
+        _session_makers[engine] = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+    return _session_makers[engine]
 
 
 def get_session(engine):

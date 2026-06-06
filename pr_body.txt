@@ -1,3 +1,4 @@
-🎯 **What:** Adds unit tests for the asynchronous `run_autonomous_loop` and `launch_magic_rd_lab_business` functions in `magic_rd_lab_autonomous_agents.py`. The infinite loop and sleeping functionality are mocked to allow fast, deterministic tests without running into timeout issues.
-📊 **Coverage:** Covered loop entry, loop exit conditions via mocked exceptions, agent deployments, invocation of underlying methods, and ensuring metrics sum exactly appropriately after 1 pass through the loop.
-✨ **Result:** Enhanced test coverage that protects core async loop functionality from regressions.
+💡 What: Implement lazy caching (singletons) for the database engine and session maker in `src/blank_business_builder/database.py`. The `get_db_engine` and `get_session_maker` functions will now return cached instances.
+🎯 Why: `get_db()` is a FastAPI dependency called repeatedly (on every database-involved API request). Previously, `get_db_engine()` created a *new* SQLAlchemy engine on every request. This caused major performance regressions by preventing connection pooling entirely and tearing down/creating new connection pools constantly.
+📊 Impact: Expected significant reduction in database connection overhead and response time for all requests relying on `get_db()`.
+🔬 Measurement: Verify tests run successfully. Inspect database connections during application use. Run `python3 run_test_database.py`.
