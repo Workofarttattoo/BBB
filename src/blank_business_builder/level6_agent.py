@@ -491,21 +491,32 @@ class Level6Agent:
         # Auto-generate marketing campaigns for businesses without recent campaigns
         businesses = db.query(Business).filter(Business.status == "active").all()
 
+        # ⚡ Bolt Optimization: Pre-fetch campaign counts to avoid N+1 queries during loop
+        # Impact: Eliminates O(N) database queries for marketing campaign checks
+        from sqlalchemy import func
+        business_ids = [b.id for b in businesses]
+        recent_campaign_counts = {}
+        if business_ids:
+            thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+            counts = db.query(
+                MarketingCampaign.business_id, func.count(MarketingCampaign.id)
+            ).filter(
+                MarketingCampaign.business_id.in_(business_ids),
+                MarketingCampaign.created_at > thirty_days_ago
+            ).group_by(MarketingCampaign.business_id).all()
+            recent_campaign_counts = {b_id: count for b_id, count in counts}
+
         for business in businesses:
-            if self._needs_marketing_campaign(business, db):
+            campaign_count = recent_campaign_counts.get(business.id, 0)
+            if self._needs_marketing_campaign(campaign_count):
                 decision = await self._create_auto_campaign(business, db)
                 decisions.append(decision)
 
         return decisions
 
-    def _needs_marketing_campaign(self, business: Business, db: Session) -> bool:
+    def _needs_marketing_campaign(self, campaign_count: int) -> bool:
         """Check if business needs a new marketing campaign."""
-        recent_campaigns = db.query(MarketingCampaign).filter(
-            MarketingCampaign.business_id == business.id,
-            MarketingCampaign.created_at > datetime.utcnow() - timedelta(days=30)
-        ).count()
-
-        return recent_campaigns == 0
+        return campaign_count == 0
 
     async def _create_auto_campaign(self, business: Business, db: Session) -> AgentDecision:
         """Automatically create marketing campaign for business."""
