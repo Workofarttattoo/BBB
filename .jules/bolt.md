@@ -19,4 +19,8 @@
 
 ## 2026-03-04 - Optimize WebSocket Metrics Gathering
 **Learning:** In `_get_business_metrics_sync` (used heavily by periodic websocket connections), multiple `func.sum(case(...))` clauses within a single SQLAlchemy `.query()` can be slow and put unnecessary load on the DB engine due to table scanning. It's an anti-pattern when pulling segmented aggregates.
-**Action:** When gathering status counts across an entire associated table, use a much more efficient `GROUP BY` query (`group_by(AgentTask.status)`) combined with a simple Python iteration mapping the output. This greatly mitigates event loop blocking risks from synchronous IO delays under load.
+Action:** When gathering status counts across an entire associated table, use a much more efficient `GROUP BY` query (`group_by(AgentTask.status)`) combined with a simple Python iteration mapping the output. This greatly mitigates event loop blocking risks from synchronous IO delays under load.
+
+## 2025-02-27 - O(1) Accumulation in Metrics Gatherers
+**Learning:** Multiple list comprehensions over collections in metric gathering endpoints (`get_business_metrics`, `generate_summary_report`) cause redundant N traversals and intermediate list allocations. In python it is more efficient to accumulate everything in a single loop.
+**Action:** Next time I see multiple generators or comprehensions over a same list, I will replace them with a single loop that accumulates all stats.
