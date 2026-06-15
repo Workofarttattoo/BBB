@@ -346,25 +346,31 @@ class BBBUnifiedLibrary:
         return scored[:5]
 
     def generate_summary_report(self) -> Dict:
+        # ⚡ Bolt Optimization: Consolidate multiple O(N) sum generators over businesses into a single pass
+        # Impact: Reduces four sequential O(N) passes to a single loop, improving performance on large collections
         businesses = self.get_all_businesses()
-        categories = sorted({business.category for business in businesses})
+
+        categories_set = set()
+        total_startup_cost = 0
+        total_monthly_revenue = 0
+        total_automation_level = 0
+
+        for business in businesses:
+            categories_set.add(business.category)
+            total_startup_cost += business.startup_cost
+            total_monthly_revenue += business.monthly_revenue_potential
+            total_automation_level += business.automation_level
+
+        categories = sorted(categories_set)
+        business_count = max(len(businesses), 1)
+
         return {
             "total_businesses": len(businesses),
             "total_categories": len(categories),
             "categories": categories,
             "ai_automation_count": len(self.ai_automation_businesses),
             "legacy_count": len(self.legacy_businesses),
-            "average_startup_cost": round(
-                sum(business.startup_cost for business in businesses) / max(len(businesses), 1),
-                2,
-            ),
-            "average_monthly_revenue": round(
-                sum(business.monthly_revenue_potential for business in businesses)
-                / max(len(businesses), 1),
-                2,
-            ),
-            "average_automation_level": round(
-                sum(business.automation_level for business in businesses) / max(len(businesses), 1),
-                2,
-            ),
+            "average_startup_cost": round(total_startup_cost / business_count, 2),
+            "average_monthly_revenue": round(total_monthly_revenue / business_count, 2),
+            "average_automation_level": round(total_automation_level / business_count, 2),
         }
