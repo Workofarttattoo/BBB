@@ -19,4 +19,10 @@
 
 ## 2026-03-04 - Optimize WebSocket Metrics Gathering
 **Learning:** In `_get_business_metrics_sync` (used heavily by periodic websocket connections), multiple `func.sum(case(...))` clauses within a single SQLAlchemy `.query()` can be slow and put unnecessary load on the DB engine due to table scanning. It's an anti-pattern when pulling segmented aggregates.
-**Action:** When gathering status counts across an entire associated table, use a much more efficient `GROUP BY` query (`group_by(AgentTask.status)`) combined with a simple Python iteration mapping the output. This greatly mitigates event loop blocking risks from synchronous IO delays under load.
+**Action:** When gathering status counts across an entire associated table, use a much more efficient `GROUP BY` query (`group_by(AgentTask.status)`) combined with a simple Python iteration mapping the output. This greatly mitigates event loop blocking risks from synchronous IO delays under load.## 2026-05-28 - N+1 Queries in Level 6 Agent Autonomous Loops
+**Learning:** In autonomous operations like `manage_marketing_campaigns`, evaluating conditions item-by-item (like counting active marketing campaigns per business) inside a loop creates an N+1 query pattern that can significantly degrade performance when business counts scale, potentially blocking the event loop since these operations are synchronous or mixed-async.
+**Action:** Always pre-fetch required aggregated data or counts using `.in_()` clauses and `group_by()` before entering autonomous processing loops to ensure O(1) DB accesses inside the loop.
+
+## 2026-05-28 - Deprecated datetime.utcnow() usage
+**Learning:** `datetime.utcnow()` is deprecated in Python 3.12, which this app uses, and will be removed in future versions.
+**Action:** Replace `datetime.utcnow()` with `datetime.now(timezone.utc).replace(tzinfo=None)` to maintain compatibility with existing naive timestamps expected by SQLAlchemy models while adhering to current Python best practices.

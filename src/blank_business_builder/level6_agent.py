@@ -7,7 +7,7 @@ Handles 95%+ of business operations with minimal human intervention.
 """
 import asyncio
 from typing import Dict, List, Optional, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 import json
 from dataclasses import dataclass
@@ -175,7 +175,7 @@ class Level6Agent:
     def _needs_onboarding(self, user: User) -> bool:
         """Check if user needs onboarding."""
         # User created in last 7 days and hasn't created a business
-        days_since_creation = (datetime.utcnow() - user.created_at).days
+        days_since_creation = (datetime.now(timezone.utc).replace(tzinfo=None) - user.created_at).days
         return days_since_creation <= 7 and not user.businesses
 
     async def _create_onboarding_sequence(self, user: User, db: Session) -> AgentDecision:
@@ -206,7 +206,7 @@ class Level6Agent:
             confidence=0.95,
             reasoning=f"New user {user.email} needs onboarding to increase activation rate",
             data={"user_id": str(user.id), "email_sent": True},
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc).replace(tzinfo=None),
             requires_approval=False
         )
 
@@ -245,7 +245,7 @@ class Level6Agent:
             confidence=0.87,
             reasoning=f"User {user.email} hitting free tier limits, high conversion probability",
             data={"user_id": str(user.id), "current_tier": user.subscription_tier},
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc).replace(tzinfo=None),
             requires_approval=False
         )
 
@@ -254,7 +254,7 @@ class Level6Agent:
         if not user.last_login:
             return False
 
-        days_since_login = (datetime.utcnow() - user.last_login).days
+        days_since_login = (datetime.now(timezone.utc).replace(tzinfo=None) - user.last_login).days
         return days_since_login > 14  # No login in 14+ days
 
     async def _create_reengagement_campaign(self, user: User, db: Session) -> AgentDecision:
@@ -283,8 +283,8 @@ class Level6Agent:
             action="send_reengagement_email",
             confidence=0.72,
             reasoning=f"User {user.email} inactive for 14+ days, prevent churn",
-            data={"user_id": str(user.id), "days_inactive": (datetime.utcnow() - user.last_login).days},
-            timestamp=datetime.utcnow(),
+            data={"user_id": str(user.id), "days_inactive": (datetime.now(timezone.utc).replace(tzinfo=None) - user.last_login).days},
+            timestamp=datetime.now(timezone.utc).replace(tzinfo=None),
             requires_approval=False
         )
 
@@ -305,7 +305,7 @@ class Level6Agent:
             confidence=0.89,
             reasoning="Optimizing AI prompts based on user engagement metrics",
             data={"improvements": ["tone", "length", "specificity"]},
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc).replace(tzinfo=None),
             requires_approval=False
         )
 
@@ -362,7 +362,7 @@ class Level6Agent:
 
         # Factor 1: Login frequency
         if user.last_login:
-            days_since_login = (datetime.utcnow() - user.last_login).days
+            days_since_login = (datetime.now(timezone.utc).replace(tzinfo=None) - user.last_login).days
             if days_since_login > 30:
                 risk_score += 0.4
             elif days_since_login > 14:
@@ -407,7 +407,7 @@ class Level6Agent:
             confidence=risk_score,
             reasoning=f"User {user.email} has {risk_score:.0%} churn risk, proactive retention",
             data={"user_id": str(user.id), "churn_risk": risk_score},
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc).replace(tzinfo=None),
             requires_approval=risk_score > 0.9  # Require approval for very high risk
         )
 
@@ -446,7 +446,7 @@ class Level6Agent:
                     confidence=0.82,
                     reasoning=f"User {user.email} showing signals for tier upgrade",
                     data={"user_id": str(user.id), "recommended_tier": self._get_recommended_tier(user, business_count)},
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(timezone.utc).replace(tzinfo=None),
                     requires_approval=False
                 )
                 decisions.append(decision)
@@ -486,26 +486,32 @@ class Level6Agent:
         - A/B testing
         - Performance optimization
         """
+        # ⚡ Bolt Optimization: Fix N+1 query problem by pre-fetching campaign counts
+        # Impact: Reduces database queries from O(N) to O(1) in this loop.
         decisions = []
 
         # Auto-generate marketing campaigns for businesses without recent campaigns
         businesses = db.query(Business).filter(Business.status == "active").all()
 
+        from sqlalchemy import func
+        business_ids = [business.id for business in businesses]
+        recent_counts = {}
+        if business_ids:
+            counts = db.query(
+                MarketingCampaign.business_id, func.count(MarketingCampaign.id)
+            ).filter(
+                MarketingCampaign.business_id.in_(business_ids),
+                MarketingCampaign.created_at > datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=30)
+            ).group_by(MarketingCampaign.business_id).all()
+            recent_counts = {b_id: count for b_id, count in counts}
+
         for business in businesses:
-            if self._needs_marketing_campaign(business, db):
+            recent_campaigns = recent_counts.get(business.id, 0)
+            if recent_campaigns == 0:
                 decision = await self._create_auto_campaign(business, db)
                 decisions.append(decision)
 
         return decisions
-
-    def _needs_marketing_campaign(self, business: Business, db: Session) -> bool:
-        """Check if business needs a new marketing campaign."""
-        recent_campaigns = db.query(MarketingCampaign).filter(
-            MarketingCampaign.business_id == business.id,
-            MarketingCampaign.created_at > datetime.utcnow() - timedelta(days=30)
-        ).count()
-
-        return recent_campaigns == 0
 
     async def _create_auto_campaign(self, business: Business, db: Session) -> AgentDecision:
         """Automatically create marketing campaign for business."""
@@ -521,7 +527,7 @@ class Level6Agent:
         # Create campaign in database
         campaign = MarketingCampaign(
             business_id=business.id,
-            campaign_name=f"Auto-generated Campaign - {datetime.utcnow().strftime('%Y-%m-%d')}",
+            campaign_name=f"Auto-generated Campaign - {datetime.now(timezone.utc).replace(tzinfo=None).strftime('%Y-%m-%d')}",
             platform="multi-platform",
             campaign_type="awareness",
             content=campaign_copy,
@@ -536,7 +542,7 @@ class Level6Agent:
             confidence=0.85,
             reasoning=f"Business {business.business_name} has no recent campaigns, auto-generating",
             data={"business_id": str(business.id), "campaign_id": str(campaign.id)},
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc).replace(tzinfo=None),
             requires_approval=True  # Require approval before publishing
         )
 
@@ -556,7 +562,7 @@ class Level6Agent:
             confidence=0.91,
             reasoning="Handling 95% of support tickets automatically",
             data={"tickets_handled": 47, "escalated": 2},
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc).replace(tzinfo=None),
             requires_approval=False
         )
 
@@ -594,7 +600,7 @@ class Level6Agent:
                     "Expand marketing efforts" if total_users < 1000 else "Scale operations"
                 ]
             },
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc).replace(tzinfo=None),
             requires_approval=True
         )
 
@@ -625,7 +631,7 @@ class Level6Agent:
                     {"market": "SaaS companies", "potential": "high"}
                 ]
             },
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc).replace(tzinfo=None),
             requires_approval=True
         )
 
