@@ -504,15 +504,28 @@ class QuLabRentalBusiness:
 
     def get_business_metrics(self) -> Dict[str, Any]:
         """Get overall business metrics."""
+        # ⚡ Bolt Optimization: Replaced multiple list comprehensions over self.customers and self.jobs with single O(N) loops
+        # Impact: Reduces time complexity and prevents unnecessary intermediate list memory allocations
+        active_customers_count = 0
+        tier_dist = {tier.value: 0 for tier in SubscriptionTier}
+
+        for c in self.customers.values():
+            if getattr(c, 'subscription_status', None) == "active":
+                active_customers_count += 1
+            if hasattr(c, 'tier') and c.tier:
+                tier_dist[c.tier.value] = tier_dist.get(c.tier.value, 0) + 1
+
+        completed_jobs_count = 0
+        for j in self.jobs:
+            if getattr(j, 'status', None) == "completed":
+                completed_jobs_count += 1
+
         return {
             "total_customers": len(self.customers),
-            "active_customers": len([c for c in self.customers.values() if c.subscription_status == "active"]),
-            "tier_distribution": {
-                tier.value: len([c for c in self.customers.values() if c.tier == tier])
-                for tier in SubscriptionTier
-            },
+            "active_customers": active_customers_count,
+            "tier_distribution": tier_dist,
             "total_jobs": len(self.jobs),
-            "completed_jobs": len([j for j in self.jobs if j.status == "completed"]),
+            "completed_jobs": completed_jobs_count,
             "total_qubit_hours": self.total_qubit_hours,
             "total_revenue": float(self.revenue),
             "avg_revenue_per_customer": float(self.revenue / max(1, len(self.customers))),
