@@ -491,8 +491,24 @@ class Level6Agent:
         # Auto-generate marketing campaigns for businesses without recent campaigns
         businesses = db.query(Business).filter(Business.status == "active").all()
 
+        # ⚡ Bolt Optimization: Fixed N+1 query in marketing campaign generation to reduce database roundtrips.
+        # Impact: Reduces query count from O(N) to O(1) for large business pools.
+        from sqlalchemy import func
+        business_ids = [business.id for business in businesses]
+        recent_campaign_counts = {}
+        if business_ids:
+            counts = db.query(
+                MarketingCampaign.business_id, func.count(MarketingCampaign.id)
+            ).filter(
+                MarketingCampaign.business_id.in_(business_ids),
+                MarketingCampaign.created_at > datetime.utcnow() - timedelta(days=30)
+            ).group_by(MarketingCampaign.business_id).all()
+            recent_campaign_counts = {str(b_id): count for b_id, count in counts}
+
         for business in businesses:
-            if self._needs_marketing_campaign(business, db):
+            # Check if business needs a new marketing campaign
+            recent_count = recent_campaign_counts.get(str(business.id), 0)
+            if recent_count == 0:
                 decision = await self._create_auto_campaign(business, db)
                 decisions.append(decision)
 
