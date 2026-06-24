@@ -347,24 +347,33 @@ class MagicRDLab:
 
     def get_business_metrics(self) -> Dict[str, Any]:
         """Get business performance metrics."""
-        active_sessions = [s for s in self.sessions if s.status == "active"]
-        completed_sessions = [s for s in self.sessions if s.status == "completed"]
+        # ⚡ Bolt Optimization: Replace multiple O(N) list comprehensions over self.sessions with a single O(N) pass
+        # Impact: Reduces iteration overhead from O(M*N) to O(N) and prevents unnecessary list allocations
+        active_sessions = 0
+        completed_sessions = 0
+        total_computations = 0
+        package_dist = {package.value: 0 for package in RentalPackage}
 
-        # Package distribution
-        package_dist = {}
-        for package in RentalPackage:
-            count = len([s for s in self.sessions if s.package == package])
-            package_dist[package.value] = count
+        for s in self.sessions:
+            if s.status == "active":
+                active_sessions += 1
+            elif s.status == "completed":
+                completed_sessions += 1
+
+            if s.package:
+                package_dist[s.package.value] = package_dist.get(s.package.value, 0) + 1
+
+            total_computations += len(s.results)
 
         return {
             "total_revenue": float(self.revenue),
             "total_customers": len(self.customers),
             "total_sessions": len(self.sessions),
-            "active_sessions": len(active_sessions),
-            "completed_sessions": len(completed_sessions),
+            "active_sessions": active_sessions,
+            "completed_sessions": completed_sessions,
             "package_distribution": package_dist,
             "avg_revenue_per_customer": float(self.revenue / max(1, len(self.customers))),
-            "total_computations": sum(len(s.results) for s in self.sessions)
+            "total_computations": total_computations
         }
 
 

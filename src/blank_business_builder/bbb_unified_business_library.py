@@ -348,23 +348,27 @@ class BBBUnifiedLibrary:
     def generate_summary_report(self) -> Dict:
         businesses = self.get_all_businesses()
         categories = sorted({business.category for business in businesses})
+
+        # ⚡ Bolt Optimization: Calculate total sum metrics with a single O(N) pass rather than multiple O(N) iterations
+        # Impact: Reduces memory usage and event loop blocking overhead by performing calculations together
+        total_startup_cost = 0
+        total_monthly_revenue = 0
+        total_automation_level = 0
+
+        for business in businesses:
+            total_startup_cost += business.startup_cost
+            total_monthly_revenue += business.monthly_revenue_potential
+            total_automation_level += business.automation_level
+
+        num_businesses = max(len(businesses), 1)
+
         return {
             "total_businesses": len(businesses),
             "total_categories": len(categories),
             "categories": categories,
             "ai_automation_count": len(self.ai_automation_businesses),
             "legacy_count": len(self.legacy_businesses),
-            "average_startup_cost": round(
-                sum(business.startup_cost for business in businesses) / max(len(businesses), 1),
-                2,
-            ),
-            "average_monthly_revenue": round(
-                sum(business.monthly_revenue_potential for business in businesses)
-                / max(len(businesses), 1),
-                2,
-            ),
-            "average_automation_level": round(
-                sum(business.automation_level for business in businesses) / max(len(businesses), 1),
-                2,
-            ),
+            "average_startup_cost": round(total_startup_cost / num_businesses, 2),
+            "average_monthly_revenue": round(total_monthly_revenue / num_businesses, 2),
+            "average_automation_level": round(total_automation_level / num_businesses, 2),
         }
