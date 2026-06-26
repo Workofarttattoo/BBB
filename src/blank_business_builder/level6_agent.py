@@ -7,7 +7,7 @@ Handles 95%+ of business operations with minimal human intervention.
 """
 import asyncio
 from typing import Dict, List, Optional, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 import json
 from dataclasses import dataclass
@@ -491,21 +491,32 @@ class Level6Agent:
         # Auto-generate marketing campaigns for businesses without recent campaigns
         businesses = db.query(Business).filter(Business.status == "active").all()
 
+        # Pre-fetch recent campaign counts for all active businesses to avoid N+1 queries
+        # ⚡ Bolt Optimization: Pre-fetch campaign counts instead of looping
+        # Impact: Reduces queries from O(N) to O(1)
+        from sqlalchemy import func
+        business_ids = [business.id for business in businesses]
+        recent_campaign_counts = {}
+        if business_ids:
+            counts = db.query(
+                MarketingCampaign.business_id, func.count(MarketingCampaign.business_id)
+            ).filter(
+                MarketingCampaign.business_id.in_(business_ids),
+                MarketingCampaign.created_at > datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=30)
+            ).group_by(MarketingCampaign.business_id).all()
+            recent_campaign_counts = {biz_id: count for biz_id, count in counts}
+
         for business in businesses:
-            if self._needs_marketing_campaign(business, db):
+            recent_count = recent_campaign_counts.get(business.id, 0)
+            if self._needs_marketing_campaign(business, recent_count):
                 decision = await self._create_auto_campaign(business, db)
                 decisions.append(decision)
 
         return decisions
 
-    def _needs_marketing_campaign(self, business: Business, db: Session) -> bool:
+    def _needs_marketing_campaign(self, business: Business, recent_campaign_count: int) -> bool:
         """Check if business needs a new marketing campaign."""
-        recent_campaigns = db.query(MarketingCampaign).filter(
-            MarketingCampaign.business_id == business.id,
-            MarketingCampaign.created_at > datetime.utcnow() - timedelta(days=30)
-        ).count()
-
-        return recent_campaigns == 0
+        return recent_campaign_count == 0
 
     async def _create_auto_campaign(self, business: Business, db: Session) -> AgentDecision:
         """Automatically create marketing campaign for business."""
