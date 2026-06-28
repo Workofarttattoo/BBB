@@ -7,7 +7,7 @@ Handles 95%+ of business operations with minimal human intervention.
 """
 import asyncio
 from typing import Dict, List, Optional, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 import json
 from dataclasses import dataclass
@@ -491,8 +491,19 @@ class Level6Agent:
         # Auto-generate marketing campaigns for businesses without recent campaigns
         businesses = db.query(Business).filter(Business.status == "active").all()
 
+        # ⚡ Bolt Optimization: Fix N+1 query when checking for recent marketing campaigns
+        # Impact: Reduces database queries from O(N) to O(1) for marketing loop
+        business_ids = [b.id for b in businesses]
+        recent_campaign_business_ids = set()
+        if business_ids:
+            recent_campaigns = db.query(MarketingCampaign.business_id).filter(
+                MarketingCampaign.business_id.in_(business_ids),
+                MarketingCampaign.created_at > datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=30)
+            ).all()
+            recent_campaign_business_ids = {c[0] for c in recent_campaigns}
+
         for business in businesses:
-            if self._needs_marketing_campaign(business, db):
+            if business.id not in recent_campaign_business_ids:
                 decision = await self._create_auto_campaign(business, db)
                 decisions.append(decision)
 
@@ -500,9 +511,11 @@ class Level6Agent:
 
     def _needs_marketing_campaign(self, business: Business, db: Session) -> bool:
         """Check if business needs a new marketing campaign."""
+        # Note: This is preserved for backward compatibility or single-business checks,
+        # but bulk loops should use pre-fetched sets to avoid N+1 queries.
         recent_campaigns = db.query(MarketingCampaign).filter(
             MarketingCampaign.business_id == business.id,
-            MarketingCampaign.created_at > datetime.utcnow() - timedelta(days=30)
+            MarketingCampaign.created_at > datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=30)
         ).count()
 
         return recent_campaigns == 0
