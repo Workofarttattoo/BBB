@@ -113,6 +113,11 @@ class AutonomousTask:
     dependencies: List[str] = field(default_factory=list)
     priority: int = 5  # 1-10, higher = more urgent
 
+    # ⚡ Bolt Optimization: Made AutonomousTask hashable for O(1) set operations
+    # Impact: Enables O(1) tracking, removing O(N) queue traversal bottlenecks.
+    def __hash__(self):
+        return hash(self.task_id)
+
 
 @dataclass
 class BusinessMetrics:
@@ -841,18 +846,20 @@ class ChiefEnhancementOfficer:
 
     async def _check_bottlenecks(self):
         """Analyze task queues for blocked tasks."""
-        blocked_tasks = [t for t in self.orchestrator.task_queue if t.status == TaskStatus.BLOCKED]
-        pending_tasks = [t for t in self.orchestrator.task_queue if t.status == TaskStatus.PENDING]
+        # ⚡ Bolt Optimization: Read state from dynamic O(1) counters instead of running dual O(N) queue comprehensions
+        # Impact: Prevent CEO daemon from stalling the event loop while checking queue lengths
+        blocked_tasks_count = self.orchestrator.task_status_counts[TaskStatus.BLOCKED]
+        pending_tasks_count = self.orchestrator.task_status_counts[TaskStatus.PENDING]
 
-        if len(blocked_tasks) > 2:
+        if blocked_tasks_count > 2:
             logger.warning(
-                f"[CEO Daemon] Detected {len(blocked_tasks)} blocked tasks. Analyzing root cause..."
+                f"[CEO Daemon] Detected {blocked_tasks_count} blocked tasks. Analyzing root cause..."
             )
             # In a real system, this would trigger a re-planning or resource reallocation
 
-        if len(pending_tasks) > 10:
+        if pending_tasks_count > 10:
             logger.warning(
-                f"[CEO Daemon] High backlog detected ({len(pending_tasks)} tasks). Suggesting scale-up."
+                f"[CEO Daemon] High backlog detected ({pending_tasks_count} tasks). Suggesting scale-up."
             )
 
     async def _make_improvement(self):
@@ -944,6 +951,9 @@ class AutonomousBusinessOrchestrator:
         self.agents: Dict[str, Level6BusinessAgent] = {}
         self.task_queue: List[AutonomousTask] = []
         self.pending_tasks: deque[AutonomousTask] = deque()
+        # ⚡ Bolt Optimization: Track active tasks in O(1) hash set
+        # Impact: Removes O(N) filtering of task history when resolving active execution queues
+        self.in_progress_tasks: Set[AutonomousTask] = set()
         self.completed_task_ids: Set[str] = set()
         self.task_transition_counts: Dict[str, int] = {}
         self.task_execution_attempts: Dict[str, int] = {}
@@ -1340,6 +1350,13 @@ class AutonomousBusinessOrchestrator:
         if result:
             task.result = result
 
+        # ⚡ Bolt Optimization: Synchronize active set dynamically in O(1) time
+        # Impact: Eliminates unbounded history scans when querying for active task load
+        if status == TaskStatus.IN_PROGRESS:
+            self.in_progress_tasks.add(task)
+        else:
+            self.in_progress_tasks.discard(task)
+
         if status == TaskStatus.COMPLETED:
             task.completed_at = datetime.now()
             self.completed_task_ids.add(task.task_id)
@@ -1354,29 +1371,25 @@ class AutonomousBusinessOrchestrator:
         """
         Check for IN_PROGRESS tasks assigned to inactive/missing agents and requeue them.
         """
-        # We can't iterate efficiently over just IN_PROGRESS without a separate list,
-        # but iterating task_queue is unavoidable unless we index it.
-        # However, we only care about 'IN_PROGRESS' which should be small.
-        # Let's iterate task_queue for now, but in a real massive system we'd want a set of in_progress tasks.
-        # For optimization, let's skip if count is 0
         if self.task_status_counts[TaskStatus.IN_PROGRESS] == 0:
             return
 
-        for task in self.task_queue:
-            if task.status == TaskStatus.IN_PROGRESS:
-                agent = self.agents.get(task.assigned_to)
-                if not agent or not agent.active:
-                    logger.warning(
-                        f"Found orphaned task {task.task_id} assigned to {task.assigned_to}. Re-queuing."
-                    )
-                    self._set_task_status(
-                        task,
-                        TaskStatus.PENDING,
-                        result={"error": "Agent orphaned task"},
-                        clear_assignment=True,
-                    )
-                    # Add back to pending queue for reassignment
-                    self.pending_tasks.append(task)
+        # ⚡ Bolt Optimization: Replaced O(N) task_queue traversal with O(1) in_progress_tasks set evaluation
+        # Impact: Stops event loop delays parsing large task history when hunting for orphan items.
+        for task in list(self.in_progress_tasks):
+            agent = self.agents.get(task.assigned_to)
+            if not agent or not agent.active:
+                logger.warning(
+                    f"Found orphaned task {task.task_id} assigned to {task.assigned_to}. Re-queuing."
+                )
+                self._set_task_status(
+                    task,
+                    TaskStatus.PENDING,
+                    result={"error": "Agent orphaned task"},
+                    clear_assignment=True,
+                )
+                # Add back to pending queue for reassignment
+                self.pending_tasks.append(task)
 
     def get_task_status_counts(self) -> Dict[str, int]:
         """Return O(1) counts of tasks by status."""
@@ -1386,7 +1399,10 @@ class AutonomousBusinessOrchestrator:
         """Execute all in-progress tasks in parallel."""
         # Requeue stale in-progress tasks before execution to avoid deadlocks.
         self._reconcile_orphaned_in_progress_tasks()
-        in_progress = [t for t in self.task_queue if t.status == TaskStatus.IN_PROGRESS]
+
+        # ⚡ Bolt Optimization: Eliminated O(N) list comprehension filtering on entire task history queue
+        # Impact: Substantial unblocking of event loop in the central execution orchestration.
+        in_progress = list(self.in_progress_tasks)
 
         if not in_progress:
             return []
