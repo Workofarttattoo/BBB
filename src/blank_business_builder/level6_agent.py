@@ -7,7 +7,7 @@ Handles 95%+ of business operations with minimal human intervention.
 """
 import asyncio
 from typing import Dict, List, Optional, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 import json
 from dataclasses import dataclass
@@ -154,13 +154,16 @@ class Level6Agent:
             business_counts = {user_id: count for user_id, count in counts}
 
         for user in users:
+            business_count = business_counts.get(user.id, 0)
+
             # Check if user needs onboarding
-            if self._needs_onboarding(user):
+            # ⚡ Bolt Optimization: Use pre-fetched business_count to avoid lazy-load N+1 query
+            # Impact: Prevents N database queries during active user lifecycle checking
+            if self._needs_onboarding(user, business_count):
                 decision = await self._create_onboarding_sequence(user, db)
                 decisions.append(decision)
 
             # Check for upgrade opportunities
-            business_count = business_counts.get(user.id, 0)
             if self._should_suggest_upgrade(user, business_count):
                 decision = await self._create_upgrade_campaign(user, db)
                 decisions.append(decision)
@@ -172,11 +175,16 @@ class Level6Agent:
 
         return decisions
 
-    def _needs_onboarding(self, user: User) -> bool:
+    def _needs_onboarding(self, user: User, business_count: int = None) -> bool:
         """Check if user needs onboarding."""
         # User created in last 7 days and hasn't created a business
-        days_since_creation = (datetime.utcnow() - user.created_at).days
-        return days_since_creation <= 7 and not user.businesses
+        now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
+        days_since_creation = (now_utc - user.created_at).days
+        if business_count is not None:
+            has_businesses = business_count > 0
+        else:
+            has_businesses = bool(user.businesses)
+        return days_since_creation <= 7 and not has_businesses
 
     async def _create_onboarding_sequence(self, user: User, db: Session) -> AgentDecision:
         """Create personalized onboarding email sequence."""
@@ -491,18 +499,29 @@ class Level6Agent:
         # Auto-generate marketing campaigns for businesses without recent campaigns
         businesses = db.query(Business).filter(Business.status == "active").all()
 
+        # ⚡ Bolt Optimization: Pre-fetch businesses with recent campaigns to fix N+1 query
+        # Impact: Reduces O(N) database queries to O(1) for large business lists
+        thirty_days_ago = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=30)
+        recent_campaigns_raw = db.query(MarketingCampaign.business_id).filter(
+            MarketingCampaign.created_at > thirty_days_ago
+        ).all()
+        recent_campaign_business_ids = {campaign.business_id for campaign in recent_campaigns_raw}
+
         for business in businesses:
-            if self._needs_marketing_campaign(business, db):
+            if self._needs_marketing_campaign(business, db, recent_campaign_business_ids):
                 decision = await self._create_auto_campaign(business, db)
                 decisions.append(decision)
 
         return decisions
 
-    def _needs_marketing_campaign(self, business: Business, db: Session) -> bool:
+    def _needs_marketing_campaign(self, business: Business, db: Session, recent_campaign_business_ids: set = None) -> bool:
         """Check if business needs a new marketing campaign."""
+        if recent_campaign_business_ids is not None:
+            return business.id not in recent_campaign_business_ids
+
         recent_campaigns = db.query(MarketingCampaign).filter(
             MarketingCampaign.business_id == business.id,
-            MarketingCampaign.created_at > datetime.utcnow() - timedelta(days=30)
+            MarketingCampaign.created_at > datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=30)
         ).count()
 
         return recent_campaigns == 0
