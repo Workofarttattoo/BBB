@@ -20,3 +20,12 @@
 ## 2026-03-04 - Optimize WebSocket Metrics Gathering
 **Learning:** In `_get_business_metrics_sync` (used heavily by periodic websocket connections), multiple `func.sum(case(...))` clauses within a single SQLAlchemy `.query()` can be slow and put unnecessary load on the DB engine due to table scanning. It's an anti-pattern when pulling segmented aggregates.
 **Action:** When gathering status counts across an entire associated table, use a much more efficient `GROUP BY` query (`group_by(AgentTask.status)`) combined with a simple Python iteration mapping the output. This greatly mitigates event loop blocking risks from synchronous IO delays under load.
+## 2025-04-28 - 🧪 Testing Improvement Task: Untested API functionality for payment processing
+**Learning:** When testing FastAPI routes in a local environment where dependencies like FastAPI, SQLAlchemy, or Pydantic might be missing, injecting Mock dummy objects into sys.modules allows pytest to successfully collect and run the test file, bypassing ImportError.
+**Action:** Applied conditional sys.modules mocking using custom stub classes for missing dependencies (FastAPI, Pydantic, SQLAlchemy) to ensure test collection and execution pass without network reliance or polluting other tests.
+
+**Learning:** Standard unittest.mock.MagicMock() will cause StopIteration errors when SQLAlchemy attempts to evaluate Column definitions during test collection. To prevent this, lightweight mock classes (e.g. class MockColumn) should be used instead of MagicMock when mocking SQLAlchemy.
+**Action:** Applied conditional sys.modules mocking using custom stub classes for missing dependencies (FastAPI, Pydantic, SQLAlchemy) to ensure test collection and execution pass without network reliance or polluting other tests.
+
+**Learning:** To properly patch sys.modules without poisoning the global test suite in Pytest, conditionally inject these mock classes only if the module is not already present in sys.modules, rather than replacing it outright.
+**Action:** Applied conditional sys.modules mocking using custom stub classes for missing dependencies (FastAPI, Pydantic, SQLAlchemy) to ensure test collection and execution pass without network reliance or polluting other tests.
