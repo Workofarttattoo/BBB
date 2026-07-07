@@ -102,6 +102,14 @@ class TaskStatus(Enum):
 class AutonomousTask:
     """Represents a task for autonomous agents."""
 
+    def __hash__(self):
+        return hash(self.task_id)
+
+    def __eq__(self, other):
+        if not isinstance(other, AutonomousTask):
+            return NotImplemented
+        return self.task_id == other.task_id
+
     task_id: str
     role: AgentRole
     description: str
@@ -841,18 +849,18 @@ class ChiefEnhancementOfficer:
 
     async def _check_bottlenecks(self):
         """Analyze task queues for blocked tasks."""
-        blocked_tasks = [t for t in self.orchestrator.task_queue if t.status == TaskStatus.BLOCKED]
-        pending_tasks = [t for t in self.orchestrator.task_queue if t.status == TaskStatus.PENDING]
+        blocked_count = self.orchestrator.task_status_counts.get(TaskStatus.BLOCKED, 0)
+        pending_count = self.orchestrator.task_status_counts.get(TaskStatus.PENDING, 0)
 
-        if len(blocked_tasks) > 2:
+        if blocked_count > 2:
             logger.warning(
-                f"[CEO Daemon] Detected {len(blocked_tasks)} blocked tasks. Analyzing root cause..."
+                f"[CEO Daemon] Detected {blocked_count} blocked tasks. Analyzing root cause..."
             )
             # In a real system, this would trigger a re-planning or resource reallocation
 
-        if len(pending_tasks) > 10:
+        if pending_count > 10:
             logger.warning(
-                f"[CEO Daemon] High backlog detected ({len(pending_tasks)} tasks). Suggesting scale-up."
+                f"[CEO Daemon] High backlog detected ({pending_count} tasks). Suggesting scale-up."
             )
 
     async def _make_improvement(self):
@@ -944,6 +952,7 @@ class AutonomousBusinessOrchestrator:
         self.agents: Dict[str, Level6BusinessAgent] = {}
         self.task_queue: List[AutonomousTask] = []
         self.pending_tasks: deque[AutonomousTask] = deque()
+        self.in_progress_tasks: Set[AutonomousTask] = set()
         self.completed_task_ids: Set[str] = set()
         self.task_transition_counts: Dict[str, int] = {}
         self.task_execution_attempts: Dict[str, int] = {}
@@ -1335,6 +1344,10 @@ class AutonomousBusinessOrchestrator:
             self.task_transition_counts.get(transition_key, 0) + 1
         )
 
+        # If task is leaving IN_PROGRESS state, remove it from the set
+        if task.status == TaskStatus.IN_PROGRESS and task in self.in_progress_tasks:
+            self.in_progress_tasks.remove(task)
+
         # Update task state
         task.status = status
         if result:
@@ -1346,6 +1359,8 @@ class AutonomousBusinessOrchestrator:
         elif status == TaskStatus.FAILED:
             # Don't add to completed_task_ids
             pass
+        elif status == TaskStatus.IN_PROGRESS:
+            self.in_progress_tasks.add(task)
 
         if clear_assignment:
             task.assigned_to = None
@@ -1354,29 +1369,26 @@ class AutonomousBusinessOrchestrator:
         """
         Check for IN_PROGRESS tasks assigned to inactive/missing agents and requeue them.
         """
-        # We can't iterate efficiently over just IN_PROGRESS without a separate list,
-        # but iterating task_queue is unavoidable unless we index it.
-        # However, we only care about 'IN_PROGRESS' which should be small.
-        # Let's iterate task_queue for now, but in a real massive system we'd want a set of in_progress tasks.
-        # For optimization, let's skip if count is 0
         if self.task_status_counts[TaskStatus.IN_PROGRESS] == 0:
             return
 
-        for task in self.task_queue:
-            if task.status == TaskStatus.IN_PROGRESS:
-                agent = self.agents.get(task.assigned_to)
-                if not agent or not agent.active:
-                    logger.warning(
-                        f"Found orphaned task {task.task_id} assigned to {task.assigned_to}. Re-queuing."
-                    )
-                    self._set_task_status(
-                        task,
-                        TaskStatus.PENDING,
-                        result={"error": "Agent orphaned task"},
-                        clear_assignment=True,
-                    )
-                    # Add back to pending queue for reassignment
-                    self.pending_tasks.append(task)
+        orphaned_tasks = []
+        for task in self.in_progress_tasks:
+            agent = self.agents.get(task.assigned_to)
+            if not agent or not agent.active:
+                logger.warning(
+                    f"Found orphaned task {task.task_id} assigned to {task.assigned_to}. Re-queuing."
+                )
+                orphaned_tasks.append(task)
+
+        for task in orphaned_tasks:
+            self._set_task_status(
+                task,
+                TaskStatus.PENDING,
+                result={"error": "Agent orphaned task"},
+                clear_assignment=True,
+            )
+            self.pending_tasks.append(task)
 
     def get_task_status_counts(self) -> Dict[str, int]:
         """Return O(1) counts of tasks by status."""
@@ -1386,15 +1398,16 @@ class AutonomousBusinessOrchestrator:
         """Execute all in-progress tasks in parallel."""
         # Requeue stale in-progress tasks before execution to avoid deadlocks.
         self._reconcile_orphaned_in_progress_tasks()
-        in_progress = [t for t in self.task_queue if t.status == TaskStatus.IN_PROGRESS]
 
-        if not in_progress:
+        if not self.in_progress_tasks:
             return []
 
         # Execute tasks concurrently
         task_coroutines: List[Any] = []
         executable_tasks: List[AutonomousTask] = []
-        for task in in_progress:
+
+        # Make a copy since we might mutate it (or it might mutate) during iteration
+        for task in list(self.in_progress_tasks):
             agent = self.agents.get(task.assigned_to) if task.assigned_to else None
             if not agent or not agent.active:
                 self._set_task_status(
