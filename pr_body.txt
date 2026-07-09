@@ -1,3 +1,7 @@
-🎯 **What:** Adds unit tests for the asynchronous `run_autonomous_loop` and `launch_magic_rd_lab_business` functions in `magic_rd_lab_autonomous_agents.py`. The infinite loop and sleeping functionality are mocked to allow fast, deterministic tests without running into timeout issues.
-📊 **Coverage:** Covered loop entry, loop exit conditions via mocked exceptions, agent deployments, invocation of underlying methods, and ensuring metrics sum exactly appropriately after 1 pass through the loop.
-✨ **Result:** Enhanced test coverage that protects core async loop functionality from regressions.
+💡 **What**: Refactored `AutonomousBusinessOrchestrator` to use an O(1) `task_map` (Dict[str, AutonomousTask]) and an `in_progress_tasks` Set[str], avoiding O(N) list comprehensions over the unbounded `task_queue` in `_reconcile_orphaned_in_progress_tasks` and `_execute_tasks_parallel`.
+
+🎯 **Why**: As the `task_queue` grows over the lifetime of a business, iterating through it on every run loop iteration (every 5 seconds via CEO daemon) to find the tiny subset of `IN_PROGRESS` tasks causes measurable and unnecessary CPU spikes, risking event loop blocking.
+
+📊 **Impact**: Reduces time complexity for fetching active tasks from O(N) (where N is total historical tasks) to O(K) (where K is the number of currently active agents, usually <10). Prevents performance degradation over time as historical tasks accumulate.
+
+🔬 **Measurement**: Verified via `test_autonomous_orchestrator.py`. Can be monitored in production by observing lower CPU utilization metrics during the business orchestration loop for long-running businesses.
