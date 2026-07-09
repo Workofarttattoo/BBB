@@ -1,7 +1,7 @@
 import sys
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
-import pytest
+
 
 # Mock missing dependencies
 mock_openai = MagicMock()
@@ -15,6 +15,26 @@ mock_fastapi = MagicMock()
 mock_fastapi.HTTPException = Exception
 mock_fastapi.status = MagicMock()
 sys.modules['fastapi'] = mock_fastapi
+
+class MockSQLAlchemy(MagicMock):
+    pass
+mock_sqla = MockSQLAlchemy()
+sys.modules['sqlalchemy'] = mock_sqla
+sys.modules['sqlalchemy.orm'] = MagicMock()
+sys.modules['sqlalchemy.ext'] = MagicMock()
+sys.modules['sqlalchemy.ext.declarative'] = MagicMock()
+sys.modules['sqlalchemy.types'] = MagicMock()
+
+import types
+mock_sqla_dialects = MagicMock()
+mock_sqla_postgresql = MagicMock()
+sys.modules['sqlalchemy.dialects'] = mock_sqla_dialects
+sys.modules['sqlalchemy.dialects.postgresql'] = mock_sqla_postgresql
+
+# completely mock the database module to bypass SQLAlchemy StopIteration
+sys.modules['src.blank_business_builder.database'] = MagicMock()
+sys.modules['src.blank_business_builder.level6_agent'] = MagicMock()
+sys.modules['src.blank_business_builder.features.marketing_automation'] = MagicMock()
 
 # Now import the module under test
 # We no longer need to mock ech0_service module because we fixed the import in source
@@ -68,3 +88,29 @@ def test_generate_content_gpt4():
 
 if __name__ == "__main__":
     test_generate_content_gpt4()
+
+def test_generate_placeholder_content():
+    """Verify that _generate_placeholder_content returns the correctly formatted string."""
+    generator = AIContentGenerator()
+
+    request = ContentRequest(
+        content_type=ContentType.BLOG_POST,
+        topic="Testing Placeholders",
+        tone="professional",
+        length="short",
+        keywords=[],
+        target_audience="developers",
+        ai_model=AIModel.GPT4
+    )
+
+    model_name = "TEST_MODEL"
+    result = generator._generate_placeholder_content(model_name, request)
+
+    assert "[TEST_MODEL-Generated Content]" in result
+    assert "Testing Placeholders" in result
+    assert result == f"[{model_name}-Generated Content]\n\nHigh-quality content about {request.topic}"
+
+if __name__ == "__main__":
+    test_generate_content_gpt4()
+    test_generate_placeholder_content()
+    print("All tests passed.")
