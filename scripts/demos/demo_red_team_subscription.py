@@ -88,8 +88,11 @@ async def demo():
     except Exception as e:
         print(f"\nError during demo: {e}")
 
-if __name__ == "__main__":
+def main():
     try:
         asyncio.run(demo())
     except KeyboardInterrupt:
         print("\nDemo interrupted.")
+
+if __name__ == "__main__":
+    main()
