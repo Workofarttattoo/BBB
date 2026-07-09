@@ -366,6 +366,7 @@ class QuantumStackOptimizer:
         """Calculate optimal resource allocation across feature categories."""
 
         # Categorize features
+        # ⚡ Bolt Optimization: Calculate total priority and categorize in a single pass
         categories = {
             'ai_ml': 0.0,
             'infrastructure': 0.0,
@@ -375,25 +376,28 @@ class QuantumStackOptimizer:
             'security': 0.0
         }
 
-        total_priority = sum(f.quantum_priority for f in features)
-
+        total_priority = 0.0
         for feature in features:
-            # Simple categorization based on keywords
+            total_priority += feature.quantum_priority
+            # Accumulate raw priority first
             name_lower = feature.name.lower()
-            weight = feature.quantum_priority / total_priority if total_priority > 0 else 0
-
             if any(kw in name_lower for kw in ['ai', 'ml', 'quantum', 'prediction']):
-                categories['ai_ml'] += weight
+                categories['ai_ml'] += feature.quantum_priority
             elif any(kw in name_lower for kw in ['k8s', 'deploy', 'scale', 'infrastructure']):
-                categories['infrastructure'] += weight
+                categories['infrastructure'] += feature.quantum_priority
             elif any(kw in name_lower for kw in ['ui', 'ux', 'dashboard', 'interface']):
-                categories['user_experience'] += weight
+                categories['user_experience'] += feature.quantum_priority
             elif any(kw in name_lower for kw in ['api', 'integration', 'webhook']):
-                categories['integrations'] += weight
+                categories['integrations'] += feature.quantum_priority
             elif any(kw in name_lower for kw in ['analytics', 'metrics', 'tracking']):
-                categories['analytics'] += weight
+                categories['analytics'] += feature.quantum_priority
             elif any(kw in name_lower for kw in ['security', 'auth', 'compliance']):
-                categories['security'] += weight
+                categories['security'] += feature.quantum_priority
+
+        # Normalize weights
+        if total_priority > 0:
+            for k in categories:
+                categories[k] /= total_priority
 
         return categories
 
@@ -408,8 +412,13 @@ class QuantumStackOptimizer:
         if not features:
             return 0.5
 
-        top_10_priority = sum(f.quantum_priority for f in features[:10])
-        total_priority = sum(f.quantum_priority for f in features)
+        # ⚡ Bolt Optimization: Calculate total and top 10 in a single O(N) pass
+        top_10_priority = 0.0
+        total_priority = 0.0
+        for i, f in enumerate(features):
+            total_priority += f.quantum_priority
+            if i < 10:
+                top_10_priority += f.quantum_priority
 
         concentration = top_10_priority / total_priority if total_priority > 0 else 0.5
 

@@ -356,8 +356,13 @@ class HiveMindCoordinator:
         if not votes:
             return {'approved': False, 'vote_percentage': 0.0, 'reason': 'No active agents'}
 
-        total_weight = sum(v['weight'] for v in votes)
-        approval_weight = sum(v['weight'] for v in votes if v['vote'])
+        # ⚡ Bolt Optimization: Calculate weights in single O(N) loop
+        total_weight = 0.0
+        approval_weight = 0.0
+        for v in votes:
+            total_weight += v['weight']
+            if v['vote']:
+                approval_weight += v['weight']
 
         vote_percentage = approval_weight / total_weight if total_weight > 0 else 0
         approved = vote_percentage >= self.consensus_threshold
