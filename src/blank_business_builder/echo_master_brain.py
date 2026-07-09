@@ -13,6 +13,12 @@ from typing import Any, Dict, Optional
 
 import requests
 
+EXEC_TOKENS = ("finance", "cfo", "board", "vp", "ceo")
+MARKETING_TOKENS = ("marketing", "growth", "brand")
+SUPPORT_TOKENS = ("support", "helpdesk", "success")
+OPS_TOKENS = ("ops", "operations", "supply")
+INTEREST_TOKENS = ("interested", "book", "meeting", "demo")
+
 
 class EchoMasterBrain:
     """Decisioning client for outreach and follow-up actions."""
@@ -52,14 +58,18 @@ class EchoMasterBrain:
                 str(lead_event.get("notes", "")),
             ]
         ).lower()
-        if any(token in text for token in ("finance", "cfo", "board", "vp", "ceo")):
-            return "exec"
-        if any(token in text for token in ("marketing", "growth", "brand")):
-            return "marketing"
-        if any(token in text for token in ("support", "helpdesk", "success")):
-            return "support"
-        if any(token in text for token in ("ops", "operations", "supply")):
-            return "ops"
+        for token in EXEC_TOKENS:
+            if token in text:
+                return "exec"
+        for token in MARKETING_TOKENS:
+            if token in text:
+                return "marketing"
+        for token in SUPPORT_TOKENS:
+            if token in text:
+                return "support"
+        for token in OPS_TOKENS:
+            if token in text:
+                return "ops"
         return "sales"
 
     def decide_outreach(self, lead_event: Dict[str, Any]) -> Dict[str, Any]:
@@ -104,9 +114,15 @@ class EchoMasterBrain:
 
         status = str(call_event.get("status", "")).lower()
         transcript = str(call_event.get("transcript", "")).lower()
-        if status in {"completed", "success"} and any(
-            token in transcript for token in ("interested", "book", "meeting", "demo")
-        ):
+
+        has_interest = False
+        if status in {"completed", "success"}:
+            for token in INTEREST_TOKENS:
+                if token in transcript:
+                    has_interest = True
+                    break
+
+        if has_interest:
             return {
                 "next_action": "schedule_meeting",
                 "follow_up_in_minutes": 30,
