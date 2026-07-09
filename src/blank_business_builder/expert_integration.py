@@ -40,6 +40,22 @@ from .autonomous_business import (
 
 logger = logging.getLogger(__name__)
 
+# Pre-defined keyword mappings to avoid recreating lists per loop iteration
+DOMAIN_KEYWORD_MAPPING = [
+    # Science & engineering domains
+    (('chemistry', 'chemical', 'molecule', 'compound'), ExpertDomain.CHEMISTRY),
+    (('biology', 'biological', 'organism', 'cell', 'dna'), ExpertDomain.BIOLOGY),
+    (('physics', 'physical', 'quantum', 'mechanics'), ExpertDomain.PHYSICS),
+    (('material', 'crystalline', 'properties'), ExpertDomain.MATERIALS_SCIENCE),
+    # Business domains
+    (('marketing', 'advertising', 'campaign'), ExpertDomain.MARKETING),
+    (('finance', 'financial', 'accounting', 'revenue'), ExpertDomain.FINANCE),
+    (('sales', 'selling', 'customer'), ExpertDomain.SALES),
+    # Data & AI domains
+    (('data', 'analytics', 'statistics'), ExpertDomain.DATA_SCIENCE),
+    (('machine learning', 'ai', 'neural', 'model'), ExpertDomain.MACHINE_LEARNING),
+]
+
 
 class ExpertEnhancedBusinessAgent(Level6BusinessAgent):
     """
@@ -129,29 +145,9 @@ class ExpertEnhancedBusinessAgent(Level6BusinessAgent):
         """Map business task to expert domain."""
         description = task.description.lower()
 
-        # Science & engineering domains
-        if any(word in description for word in ['chemistry', 'chemical', 'molecule', 'compound']):
-            return ExpertDomain.CHEMISTRY
-        elif any(word in description for word in ['biology', 'biological', 'organism', 'cell', 'dna']):
-            return ExpertDomain.BIOLOGY
-        elif any(word in description for word in ['physics', 'physical', 'quantum', 'mechanics']):
-            return ExpertDomain.PHYSICS
-        elif any(word in description for word in ['material', 'crystalline', 'properties']):
-            return ExpertDomain.MATERIALS_SCIENCE
-
-        # Business domains
-        elif any(word in description for word in ['marketing', 'advertising', 'campaign']):
-            return ExpertDomain.MARKETING
-        elif any(word in description for word in ['finance', 'financial', 'accounting', 'revenue']):
-            return ExpertDomain.FINANCE
-        elif any(word in description for word in ['sales', 'selling', 'customer']):
-            return ExpertDomain.SALES
-
-        # Data & AI domains
-        elif any(word in description for word in ['data', 'analytics', 'statistics']):
-            return ExpertDomain.DATA_SCIENCE
-        elif any(word in description for word in ['machine learning', 'ai', 'neural', 'model']):
-            return ExpertDomain.MACHINE_LEARNING
+        for keywords, domain in DOMAIN_KEYWORD_MAPPING:
+            if any(word in description for word in keywords):
+                return domain
 
         return None
 
