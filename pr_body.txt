@@ -1,3 +1,11 @@
-🎯 **What:** Adds unit tests for the asynchronous `run_autonomous_loop` and `launch_magic_rd_lab_business` functions in `magic_rd_lab_autonomous_agents.py`. The infinite loop and sleeping functionality are mocked to allow fast, deterministic tests without running into timeout issues.
-📊 **Coverage:** Covered loop entry, loop exit conditions via mocked exceptions, agent deployments, invocation of underlying methods, and ensuring metrics sum exactly appropriately after 1 pass through the loop.
-✨ **Result:** Enhanced test coverage that protects core async loop functionality from regressions.
+💡 What
+Fixed an N+1 query issue in the `manage_marketing_campaigns` method within `src/blank_business_builder/level6_agent.py`. The `_needs_marketing_campaign` function was changed to accept a pre-fetched set of business IDs rather than performing a database query for each individual active business.
+
+🎯 Why
+When executing autonomous marketing campaign management, `_needs_marketing_campaign` previously made a separate query for every single active business to check if they had a recent campaign. This resulted in O(N) database queries where N is the number of active businesses, causing unnecessary database load and latency as the number of businesses grows.
+
+📊 Impact
+Reduces the number of database queries in `manage_marketing_campaigns` from O(N) to O(1) for active businesses, significantly lowering DB load and processing time for this routine.
+
+🔬 Measurement
+Review the SQL queries generated during the execution of `manage_marketing_campaigns`. Instead of a query per active business, there should now be exactly two queries: one to fetch all active businesses, and a second to bulk-fetch the recent marketing campaigns for those businesses. Tests can be run locally using a customized test runner, although this environment's mocked setup continues to have pre-existing setup errors in the suite as expected.
