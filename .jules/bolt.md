@@ -19,4 +19,6 @@
 
 ## 2026-03-04 - Optimize WebSocket Metrics Gathering
 **Learning:** In `_get_business_metrics_sync` (used heavily by periodic websocket connections), multiple `func.sum(case(...))` clauses within a single SQLAlchemy `.query()` can be slow and put unnecessary load on the DB engine due to table scanning. It's an anti-pattern when pulling segmented aggregates.
-**Action:** When gathering status counts across an entire associated table, use a much more efficient `GROUP BY` query (`group_by(AgentTask.status)`) combined with a simple Python iteration mapping the output. This greatly mitigates event loop blocking risks from synchronous IO delays under load.
+**Action:** When gathering status counts across an entire associated table, use a much more efficient `GROUP BY` query (`group_by(AgentTask.status)`) combined with a simple Python iteration mapping the output. This greatly mitigates event loop blocking risks from synchronous IO delays under load.## 2026-03-04 - [N+1 Queries in Level6Agent]
+**Learning:** Found explicit and implicit N+1 queries in `Level6Agent` loops. `manage_marketing_campaigns` ran a `COUNT` query inside a loop per business, and `manage_customer_lifecycle` implicitly lazy-loaded `user.businesses` triggering an N+1.
+**Action:** Use an `IN` clause to pre-fetch aggregate data (like counts) or related keys before loops and store them in a dictionary or `set` for O(1) membership checking to avoid repeating queries within the loop.
