@@ -1,3 +1,7 @@
-🎯 **What:** Adds unit tests for the asynchronous `run_autonomous_loop` and `launch_magic_rd_lab_business` functions in `magic_rd_lab_autonomous_agents.py`. The infinite loop and sleeping functionality are mocked to allow fast, deterministic tests without running into timeout issues.
-📊 **Coverage:** Covered loop entry, loop exit conditions via mocked exceptions, agent deployments, invocation of underlying methods, and ensuring metrics sum exactly appropriately after 1 pass through the loop.
-✨ **Result:** Enhanced test coverage that protects core async loop functionality from regressions.
+💡 What: Replaced multiple list comprehensions and sequential loops in the `get_business_metrics` methods of `magic_rd_lab.py` and `qulab_rental_business.py` with single O(N) loops.
+
+🎯 Why: The original implementations iterated over the same unbounded collections (`self.sessions`, `self.customers`, `self.jobs`) multiple times to calculate different metrics (like active sessions, completed sessions, and package/tier distributions). This caused redundant memory allocations and event loop blocking, which scales poorly as the number of items grows.
+
+📊 Impact: Reduces computational complexity from O(k*N) to O(N) where k is the number of distinct metrics being gathered, and prevents unnecessary list creation/destruction in memory.
+
+🔬 Measurement: Verify changes via tests (`pytest tests/test_magic_rd_lab.py`) and by executing the direct scripts (`python3 src/blank_business_builder/magic_rd_lab.py` and `python3 src/blank_business_builder/qulab_rental_business.py`) to ensure no regressions occur.
