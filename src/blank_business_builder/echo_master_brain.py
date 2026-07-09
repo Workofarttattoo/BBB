@@ -11,6 +11,13 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, Optional
 
+# Performance: Module-level constants for matching
+EXEC_TOKENS = ("finance", "cfo", "board", "vp", "ceo")
+MARKETING_TOKENS = ("marketing", "growth", "brand")
+SUPPORT_TOKENS = ("support", "helpdesk", "success")
+OPS_TOKENS = ("ops", "operations", "supply")
+INTEREST_TOKENS = ("interested", "book", "meeting", "demo")
+
 import requests
 
 
@@ -52,13 +59,14 @@ class EchoMasterBrain:
                 str(lead_event.get("notes", "")),
             ]
         ).lower()
-        if any(token in text for token in ("finance", "cfo", "board", "vp", "ceo")):
+
+        if any(token in text for token in EXEC_TOKENS):
             return "exec"
-        if any(token in text for token in ("marketing", "growth", "brand")):
+        if any(token in text for token in MARKETING_TOKENS):
             return "marketing"
-        if any(token in text for token in ("support", "helpdesk", "success")):
+        if any(token in text for token in SUPPORT_TOKENS):
             return "support"
-        if any(token in text for token in ("ops", "operations", "supply")):
+        if any(token in text for token in OPS_TOKENS):
             return "ops"
         return "sales"
 
@@ -104,8 +112,9 @@ class EchoMasterBrain:
 
         status = str(call_event.get("status", "")).lower()
         transcript = str(call_event.get("transcript", "")).lower()
+
         if status in {"completed", "success"} and any(
-            token in transcript for token in ("interested", "book", "meeting", "demo")
+            token in transcript for token in INTEREST_TOKENS
         ):
             return {
                 "next_action": "schedule_meeting",

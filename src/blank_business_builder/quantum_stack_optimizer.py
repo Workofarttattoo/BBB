@@ -16,6 +16,14 @@ from dataclasses import dataclass
 import json
 from datetime import datetime
 
+# Performance: Module-level constants for resource allocation keyword matching
+AI_ML_KEYWORDS = ('ai', 'ml', 'quantum', 'prediction')
+INFRASTRUCTURE_KEYWORDS = ('k8s', 'deploy', 'scale', 'infrastructure')
+UX_KEYWORDS = ('ui', 'ux', 'dashboard', 'interface')
+INTEGRATION_KEYWORDS = ('api', 'integration', 'webhook')
+ANALYTICS_KEYWORDS = ('analytics', 'metrics', 'tracking')
+SECURITY_KEYWORDS = ('security', 'auth', 'compliance')
+
 
 @dataclass
 class QuantumFeature:
@@ -382,17 +390,17 @@ class QuantumStackOptimizer:
             name_lower = feature.name.lower()
             weight = feature.quantum_priority / total_priority if total_priority > 0 else 0
 
-            if any(kw in name_lower for kw in ['ai', 'ml', 'quantum', 'prediction']):
+            if any(kw in name_lower for kw in AI_ML_KEYWORDS):
                 categories['ai_ml'] += weight
-            elif any(kw in name_lower for kw in ['k8s', 'deploy', 'scale', 'infrastructure']):
+            elif any(kw in name_lower for kw in INFRASTRUCTURE_KEYWORDS):
                 categories['infrastructure'] += weight
-            elif any(kw in name_lower for kw in ['ui', 'ux', 'dashboard', 'interface']):
+            elif any(kw in name_lower for kw in UX_KEYWORDS):
                 categories['user_experience'] += weight
-            elif any(kw in name_lower for kw in ['api', 'integration', 'webhook']):
+            elif any(kw in name_lower for kw in INTEGRATION_KEYWORDS):
                 categories['integrations'] += weight
-            elif any(kw in name_lower for kw in ['analytics', 'metrics', 'tracking']):
+            elif any(kw in name_lower for kw in ANALYTICS_KEYWORDS):
                 categories['analytics'] += weight
-            elif any(kw in name_lower for kw in ['security', 'auth', 'compliance']):
+            elif any(kw in name_lower for kw in SECURITY_KEYWORDS):
                 categories['security'] += weight
 
         return categories

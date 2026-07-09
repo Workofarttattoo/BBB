@@ -9,6 +9,10 @@ from typing import List
 from .semantic_framework import Lead, Sale, db
 from .autonomous_tools import AutonomousTools
 
+# Performance: Module-level constants for matching
+TARGET_INDUSTRIES = ('saas', 'ai', 'b2b', 'technology')
+TARGET_ROLES = ('cto', 'ceo', 'founder', 'vp', 'director')
+
 class SalesEngineer:
     def __init__(self, core_system):
         self.core = core_system
@@ -38,13 +42,11 @@ class SalesEngineer:
         score = 50 # Base score
         
         # Industry match
-        target_industries = ["SaaS", "AI", "B2B", "Technology"]
-        if any(ind.lower() in lead.organization.industry.lower() for ind in target_industries):
+        if any(ind in lead.organization.industry.lower() for ind in TARGET_INDUSTRIES):
             score += 20
         
         # Role match
-        target_roles = ["CTO", "CEO", "Founder", "VP", "Director"]
-        if any(role.lower() in lead.person.role.lower() for role in target_roles):
+        if any(role in lead.person.role.lower() for role in TARGET_ROLES):
             score += 20
             
         lead.score = score
