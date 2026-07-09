@@ -11,6 +11,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 sys.modules['numpy'] = MagicMock()
 sys.modules['chromadb'] = MagicMock()
 sys.modules['faiss'] = MagicMock()
+sys.modules['src.blank_business_builder.database'] = MagicMock()
+sys.modules['blank_business_builder.database'] = MagicMock()
 
 from blank_business_builder.expert_integration import ExpertEnhancedOrchestrator
 from blank_business_builder.expert_system import MultiDomainExpertSystem, ExpertQuery, ExpertDomain, EnsembleResponse, ExpertResponse

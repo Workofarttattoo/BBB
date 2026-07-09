@@ -20,3 +20,6 @@
 ## 2026-03-04 - Optimize WebSocket Metrics Gathering
 **Learning:** In `_get_business_metrics_sync` (used heavily by periodic websocket connections), multiple `func.sum(case(...))` clauses within a single SQLAlchemy `.query()` can be slow and put unnecessary load on the DB engine due to table scanning. It's an anti-pattern when pulling segmented aggregates.
 **Action:** When gathering status counts across an entire associated table, use a much more efficient `GROUP BY` query (`group_by(AgentTask.status)`) combined with a simple Python iteration mapping the output. This greatly mitigates event loop blocking risks from synchronous IO delays under load.
+## 2026-03-05 - Optimize redundant memory allocation in any() calls
+**Learning:** Hardcoded inline lists used in generator expressions like `any(kw in ... for kw in ['a', 'b'])` cause redundant memory allocation for the list on every single iteration of the loop or every function call. For high-frequency operations, this adds up to measurable overhead.
+**Action:** Extract inline lists into module-level dictionary mappings and use native nested `for` loops with short-circuiting logic (`break` / `return`) to bypass `any()` generator overhead entirely and eliminate redundant memory allocation.
