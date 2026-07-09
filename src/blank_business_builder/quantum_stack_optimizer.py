@@ -15,6 +15,17 @@ from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass
 import json
 from datetime import datetime
+import itertools
+
+# ⚡ Bolt Optimization: Pre-defined keyword mapping for fast feature categorization
+CATEGORY_KEYWORD_MAPPING = [
+    (['ai', 'ml', 'quantum', 'prediction'], 'ai_ml'),
+    (['k8s', 'deploy', 'scale', 'infrastructure'], 'infrastructure'),
+    (['ui', 'ux', 'dashboard', 'interface'], 'user_experience'),
+    (['api', 'integration', 'webhook'], 'integrations'),
+    (['analytics', 'metrics', 'tracking'], 'analytics'),
+    (['security', 'auth', 'compliance'], 'security')
+]
 
 
 @dataclass
@@ -377,23 +388,15 @@ class QuantumStackOptimizer:
 
         total_priority = sum(f.quantum_priority for f in features)
 
+        # ⚡ Bolt Optimization: Fast categorization using predefined mapping
         for feature in features:
-            # Simple categorization based on keywords
             name_lower = feature.name.lower()
             weight = feature.quantum_priority / total_priority if total_priority > 0 else 0
 
-            if any(kw in name_lower for kw in ['ai', 'ml', 'quantum', 'prediction']):
-                categories['ai_ml'] += weight
-            elif any(kw in name_lower for kw in ['k8s', 'deploy', 'scale', 'infrastructure']):
-                categories['infrastructure'] += weight
-            elif any(kw in name_lower for kw in ['ui', 'ux', 'dashboard', 'interface']):
-                categories['user_experience'] += weight
-            elif any(kw in name_lower for kw in ['api', 'integration', 'webhook']):
-                categories['integrations'] += weight
-            elif any(kw in name_lower for kw in ['analytics', 'metrics', 'tracking']):
-                categories['analytics'] += weight
-            elif any(kw in name_lower for kw in ['security', 'auth', 'compliance']):
-                categories['security'] += weight
+            for keywords, category in CATEGORY_KEYWORD_MAPPING:
+                if any(kw in name_lower for kw in keywords):
+                    categories[category] += weight
+                    break
 
         return categories
 
@@ -408,7 +411,8 @@ class QuantumStackOptimizer:
         if not features:
             return 0.5
 
-        top_10_priority = sum(f.quantum_priority for f in features[:10])
+        # ⚡ Bolt Optimization: Use itertools.islice to avoid list slicing memory allocation
+        top_10_priority = sum(f.quantum_priority for f in itertools.islice(features, 10))
         total_priority = sum(f.quantum_priority for f in features)
 
         concentration = top_10_priority / total_priority if total_priority > 0 else 0.5
