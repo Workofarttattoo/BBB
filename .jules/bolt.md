@@ -20,3 +20,10 @@
 ## 2026-03-04 - Optimize WebSocket Metrics Gathering
 **Learning:** In `_get_business_metrics_sync` (used heavily by periodic websocket connections), multiple `func.sum(case(...))` clauses within a single SQLAlchemy `.query()` can be slow and put unnecessary load on the DB engine due to table scanning. It's an anti-pattern when pulling segmented aggregates.
 **Action:** When gathering status counts across an entire associated table, use a much more efficient `GROUP BY` query (`group_by(AgentTask.status)`) combined with a simple Python iteration mapping the output. This greatly mitigates event loop blocking risks from synchronous IO delays under load.
+## 2026-07-10 - Optimize In-Progress Tasks
+**Learning:** Iterating over unbounded task history to find in-progress tasks causes O(N) bottlenecks and blocks the async event loop.
+**Action:** Use an O(1) tracking set (like in_progress_tasks) to track states dynamically and iterate over a copy of it using list() to avoid RuntimeErrors.
+
+## 2026-07-10 - Equality Overrides on Dataclasses
+**Learning:** Overriding the `__eq__` method on a dataclass (e.g., to only check a primary key for set hashing) breaks structural equality and causes regressions in state comparisons elsewhere in the application.
+**Action:** Use a Dictionary mapping (e.g., `Dict[id, object]`) for O(1) lookups instead of forcing objects into a Set by stripping their equality semantics.
