@@ -2,7 +2,7 @@
 Better Business Builder - Licensing and Revenue Share API
 Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field
@@ -179,20 +179,25 @@ async def get_license_status(
         LicenseAgreement.status == "active"
     ).first()
 
-    # Get revenue reports aggregation
-    report_stats = db.query(
-        func.sum(RevenueReport.gross_revenue),
-        func.sum(RevenueReport.revenue_share_owed),
-        func.sum(case((RevenueReport.status == "paid", func.coalesce(RevenueReport.payment_amount, 0.0)), else_=0.0)),
-        func.count(case(((RevenueReport.status == "pending") & (RevenueReport.payment_due_date < datetime.utcnow()), 1), else_=None))
-    ).filter(
+    # ⚡ Bolt Optimization: Replace multiple sum() cases with a single O(N) loop
+    # Reduces database engine load and prevents full table scanning
+    reports = db.query(RevenueReport).filter(
         RevenueReport.user_id == str(current_user.id)
-    ).first()
+    ).all()
 
-    total_reported = report_stats[0] or 0.0
-    total_owed = report_stats[1] or 0.0
-    total_paid = report_stats[2] or 0.0
-    overdue_count = report_stats[3] or 0
+    total_reported = 0.0
+    total_owed = 0.0
+    total_paid = 0.0
+    overdue_count = 0
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    for r in reports:
+        total_reported += r.gross_revenue or 0.0
+        total_owed += r.revenue_share_owed or 0.0
+        if r.status == "paid":
+            total_paid += r.payment_amount or 0.0
+        elif r.status == "pending" and r.payment_due_date and r.payment_due_date < now:
+            overdue_count += 1
     outstanding = total_owed - total_paid
 
     # Calculate days remaining in trial
