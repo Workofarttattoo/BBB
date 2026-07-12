@@ -490,19 +490,38 @@ class Level6Agent:
 
         # Auto-generate marketing campaigns for businesses without recent campaigns
         businesses = db.query(Business).filter(Business.status == "active").all()
+        business_ids = [b.id for b in businesses]
+
+        # ⚡ Bolt Optimization: Replace O(N) database queries with O(1) set lookup
+        # Impact: Reduces N queries down to a single query for identifying missing marketing campaigns.
+        from datetime import timezone
+        thirty_days_ago = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=30)
+
+        recent_campaign_business_ids = set()
+        if business_ids:
+            recent_campaigns = db.query(MarketingCampaign.business_id).filter(
+                MarketingCampaign.business_id.in_(business_ids),
+                MarketingCampaign.created_at > thirty_days_ago
+            ).all()
+            recent_campaign_business_ids = {row[0] for row in recent_campaigns}
 
         for business in businesses:
-            if self._needs_marketing_campaign(business, db):
+            if self._needs_marketing_campaign(business, db, recent_campaign_business_ids):
                 decision = await self._create_auto_campaign(business, db)
                 decisions.append(decision)
 
         return decisions
 
-    def _needs_marketing_campaign(self, business: Business, db: Session) -> bool:
+    def _needs_marketing_campaign(self, business: Business, db: Session, recent_campaign_business_ids: set = None) -> bool:
         """Check if business needs a new marketing campaign."""
+        if recent_campaign_business_ids is not None:
+            return business.id not in recent_campaign_business_ids
+
+        from datetime import timezone
+        thirty_days_ago = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=30)
         recent_campaigns = db.query(MarketingCampaign).filter(
             MarketingCampaign.business_id == business.id,
-            MarketingCampaign.created_at > datetime.utcnow() - timedelta(days=30)
+            MarketingCampaign.created_at > thirty_days_ago
         ).count()
 
         return recent_campaigns == 0
