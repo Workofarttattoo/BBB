@@ -20,3 +20,6 @@
 ## 2026-03-04 - Optimize WebSocket Metrics Gathering
 **Learning:** In `_get_business_metrics_sync` (used heavily by periodic websocket connections), multiple `func.sum(case(...))` clauses within a single SQLAlchemy `.query()` can be slow and put unnecessary load on the DB engine due to table scanning. It's an anti-pattern when pulling segmented aggregates.
 **Action:** When gathering status counts across an entire associated table, use a much more efficient `GROUP BY` query (`group_by(AgentTask.status)`) combined with a simple Python iteration mapping the output. This greatly mitigates event loop blocking risks from synchronous IO delays under load.
+## 2026-07-13 - Optimize AutonomousBusinessOrchestrator Task Traversal
+**Learning:** Found O(N) traversals of the unbounded task_queue in _check_bottlenecks and in_progress task resolution. Relying on list comprehensions over full queues blocks the event loop and scales poorly as the business runs.
+**Action:** Replaced O(N) comprehensions with O(1) lookups by using task_status_counts for queue depths and maintaining an in_progress_tasks dictionary mapped by task_id.

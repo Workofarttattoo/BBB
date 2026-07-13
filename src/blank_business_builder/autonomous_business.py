@@ -841,18 +841,20 @@ class ChiefEnhancementOfficer:
 
     async def _check_bottlenecks(self):
         """Analyze task queues for blocked tasks."""
-        blocked_tasks = [t for t in self.orchestrator.task_queue if t.status == TaskStatus.BLOCKED]
-        pending_tasks = [t for t in self.orchestrator.task_queue if t.status == TaskStatus.PENDING]
+        # ⚡ Bolt Optimization: Using O(1) lookup instead of O(N) comprehension
+        # Impact: Reduces event loop blocking from O(N) to O(1)
+        blocked_count = self.orchestrator.task_status_counts.get(TaskStatus.BLOCKED, 0)
+        pending_count = self.orchestrator.task_status_counts.get(TaskStatus.PENDING, 0)
 
-        if len(blocked_tasks) > 2:
+        if blocked_count > 2:
             logger.warning(
-                f"[CEO Daemon] Detected {len(blocked_tasks)} blocked tasks. Analyzing root cause..."
+                f"[CEO Daemon] Detected {blocked_count} blocked tasks. Analyzing root cause..."
             )
             # In a real system, this would trigger a re-planning or resource reallocation
 
-        if len(pending_tasks) > 10:
+        if pending_count > 10:
             logger.warning(
-                f"[CEO Daemon] High backlog detected ({len(pending_tasks)} tasks). Suggesting scale-up."
+                f"[CEO Daemon] High backlog detected ({pending_count} tasks). Suggesting scale-up."
             )
 
     async def _make_improvement(self):
@@ -943,6 +945,7 @@ class AutonomousBusinessOrchestrator:
         self.founder_name = founder_name
         self.agents: Dict[str, Level6BusinessAgent] = {}
         self.task_queue: List[AutonomousTask] = []
+        self.in_progress_tasks: Dict[str, AutonomousTask] = {}
         self.pending_tasks: deque[AutonomousTask] = deque()
         self.completed_task_ids: Set[str] = set()
         self.task_transition_counts: Dict[str, int] = {}
@@ -1329,6 +1332,13 @@ class AutonomousBusinessOrchestrator:
         self.task_status_counts[task.status] -= 1
         self.task_status_counts[status] += 1
 
+        # ⚡ Bolt Optimization: Using O(1) lookup instead of O(N) comprehension
+        # Impact: Reduces event loop blocking from O(N) to O(1)
+        if task.status == TaskStatus.IN_PROGRESS and status != TaskStatus.IN_PROGRESS:
+            self.in_progress_tasks.pop(task.task_id, None)
+        elif status == TaskStatus.IN_PROGRESS and task.status != TaskStatus.IN_PROGRESS:
+            self.in_progress_tasks[task.task_id] = task
+
         # Track transition
         transition_key = f"{task.status.value}_to_{status.value}"
         self.task_transition_counts[transition_key] = (
@@ -1354,15 +1364,9 @@ class AutonomousBusinessOrchestrator:
         """
         Check for IN_PROGRESS tasks assigned to inactive/missing agents and requeue them.
         """
-        # We can't iterate efficiently over just IN_PROGRESS without a separate list,
-        # but iterating task_queue is unavoidable unless we index it.
-        # However, we only care about 'IN_PROGRESS' which should be small.
-        # Let's iterate task_queue for now, but in a real massive system we'd want a set of in_progress tasks.
-        # For optimization, let's skip if count is 0
-        if self.task_status_counts[TaskStatus.IN_PROGRESS] == 0:
-            return
-
-        for task in self.task_queue:
+        # ⚡ Bolt Optimization: Using O(1) lookup instead of O(N) comprehension
+        # Impact: Reduces event loop blocking from O(N) to O(1)
+        for task in list(self.in_progress_tasks.values()):
             if task.status == TaskStatus.IN_PROGRESS:
                 agent = self.agents.get(task.assigned_to)
                 if not agent or not agent.active:
@@ -1386,7 +1390,9 @@ class AutonomousBusinessOrchestrator:
         """Execute all in-progress tasks in parallel."""
         # Requeue stale in-progress tasks before execution to avoid deadlocks.
         self._reconcile_orphaned_in_progress_tasks()
-        in_progress = [t for t in self.task_queue if t.status == TaskStatus.IN_PROGRESS]
+        # ⚡ Bolt Optimization: Using O(1) lookup instead of O(N) comprehension
+        # Impact: Reduces event loop blocking from O(N) to O(1)
+        in_progress = list(self.in_progress_tasks.values())
 
         if not in_progress:
             return []
