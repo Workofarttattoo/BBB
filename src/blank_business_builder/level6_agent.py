@@ -491,15 +491,32 @@ class Level6Agent:
         # Auto-generate marketing campaigns for businesses without recent campaigns
         businesses = db.query(Business).filter(Business.status == "active").all()
 
+        # ⚡ Bolt Optimization: Pre-fetch businesses with recent campaigns to prevent N+1 queries
+        # Impact: Reduces O(N) database queries to O(1) when checking campaign needs
+        active_business_ids = [b.id for b in businesses]
+        if active_business_ids:
+            recent_campaigns = db.query(MarketingCampaign.business_id).filter(
+                MarketingCampaign.business_id.in_(active_business_ids),
+                MarketingCampaign.created_at > datetime.utcnow() - timedelta(days=30)
+            ).all()
+            recent_campaign_business_ids = {row[0] for row in recent_campaigns}
+        else:
+            recent_campaign_business_ids = set()
+
         for business in businesses:
-            if self._needs_marketing_campaign(business, db):
+            if self._needs_marketing_campaign(business, db, recent_campaign_business_ids):
                 decision = await self._create_auto_campaign(business, db)
                 decisions.append(decision)
 
         return decisions
 
-    def _needs_marketing_campaign(self, business: Business, db: Session) -> bool:
+    def _needs_marketing_campaign(self, business: Business, db: Session, recent_campaign_business_ids: Optional[set] = None) -> bool:
         """Check if business needs a new marketing campaign."""
+        if recent_campaign_business_ids is not None:
+            # ⚡ Bolt Optimization: Use O(1) set lookup instead of database query
+            # Impact: Eliminates a database trip per business
+            return business.id not in recent_campaign_business_ids
+
         recent_campaigns = db.query(MarketingCampaign).filter(
             MarketingCampaign.business_id == business.id,
             MarketingCampaign.created_at > datetime.utcnow() - timedelta(days=30)
