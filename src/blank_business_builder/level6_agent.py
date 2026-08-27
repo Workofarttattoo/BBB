@@ -154,13 +154,16 @@ class Level6Agent:
             business_counts = {user_id: count for user_id, count in counts}
 
         for user in users:
+            # ⚡ Bolt Optimization: Use pre-fetched business_count to avoid N+1 query on user.businesses
+            # Impact: Reduces DB queries from O(N) to O(1) during lifecycle management loop
+            business_count = business_counts.get(user.id, 0)
+
             # Check if user needs onboarding
-            if self._needs_onboarding(user):
+            if self._needs_onboarding(user, business_count):
                 decision = await self._create_onboarding_sequence(user, db)
                 decisions.append(decision)
 
             # Check for upgrade opportunities
-            business_count = business_counts.get(user.id, 0)
             if self._should_suggest_upgrade(user, business_count):
                 decision = await self._create_upgrade_campaign(user, db)
                 decisions.append(decision)
@@ -172,11 +175,11 @@ class Level6Agent:
 
         return decisions
 
-    def _needs_onboarding(self, user: User) -> bool:
+    def _needs_onboarding(self, user: User, business_count: int) -> bool:
         """Check if user needs onboarding."""
         # User created in last 7 days and hasn't created a business
         days_since_creation = (datetime.utcnow() - user.created_at).days
-        return days_since_creation <= 7 and not user.businesses
+        return days_since_creation <= 7 and business_count == 0
 
     async def _create_onboarding_sequence(self, user: User, db: Session) -> AgentDecision:
         """Create personalized onboarding email sequence."""
