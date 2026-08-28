@@ -945,6 +945,9 @@ class AutonomousBusinessOrchestrator:
         self.task_queue: List[AutonomousTask] = []
         self.pending_tasks: deque[AutonomousTask] = deque()
         self.completed_task_ids: Set[str] = set()
+        # ⚡ Bolt Optimization: Use dictionary for O(1) state lookups instead of O(N) list comprehensions over task_queue
+        # Impact: Eliminates event loop blocking when iterating over long task histories
+        self.in_progress_tasks: Dict[str, AutonomousTask] = {}
         self.task_transition_counts: Dict[str, int] = {}
         self.task_execution_attempts: Dict[str, int] = {}
         self.metrics = BusinessMetrics()
@@ -1335,6 +1338,13 @@ class AutonomousBusinessOrchestrator:
             self.task_transition_counts.get(transition_key, 0) + 1
         )
 
+        # ⚡ Bolt Optimization: Synchronize O(1) dictionary with state transitions
+        # Impact: Maintains O(1) tracking for active tasks
+        if task.status == TaskStatus.IN_PROGRESS and status != TaskStatus.IN_PROGRESS:
+            self.in_progress_tasks.pop(task.task_id, None)
+        elif status == TaskStatus.IN_PROGRESS and task.status != TaskStatus.IN_PROGRESS:
+            self.in_progress_tasks[task.task_id] = task
+
         # Update task state
         task.status = status
         if result:
@@ -1354,15 +1364,12 @@ class AutonomousBusinessOrchestrator:
         """
         Check for IN_PROGRESS tasks assigned to inactive/missing agents and requeue them.
         """
-        # We can't iterate efficiently over just IN_PROGRESS without a separate list,
-        # but iterating task_queue is unavoidable unless we index it.
-        # However, we only care about 'IN_PROGRESS' which should be small.
-        # Let's iterate task_queue for now, but in a real massive system we'd want a set of in_progress tasks.
-        # For optimization, let's skip if count is 0
-        if self.task_status_counts[TaskStatus.IN_PROGRESS] == 0:
+        if not self.in_progress_tasks:
             return
 
-        for task in self.task_queue:
+        # ⚡ Bolt Optimization: Iterate over pre-computed O(1) in_progress_tasks dict
+        # Impact: Reduces time complexity from O(N) over all tasks to O(1) over active tasks
+        for task in list(self.in_progress_tasks.values()):
             if task.status == TaskStatus.IN_PROGRESS:
                 agent = self.agents.get(task.assigned_to)
                 if not agent or not agent.active:
@@ -1386,7 +1393,10 @@ class AutonomousBusinessOrchestrator:
         """Execute all in-progress tasks in parallel."""
         # Requeue stale in-progress tasks before execution to avoid deadlocks.
         self._reconcile_orphaned_in_progress_tasks()
-        in_progress = [t for t in self.task_queue if t.status == TaskStatus.IN_PROGRESS]
+
+        # ⚡ Bolt Optimization: Use pre-computed O(1) in_progress_tasks dict instead of O(N) list comprehension
+        # Impact: Eliminates event loop blocking and prevents O(N*M) bottlenecks during task execution loops
+        in_progress = list(self.in_progress_tasks.values())
 
         if not in_progress:
             return []
