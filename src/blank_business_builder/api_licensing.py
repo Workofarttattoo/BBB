@@ -2,7 +2,7 @@
 Better Business Builder - Licensing and Revenue Share API
 Copyright (c) 2025 Joshua Hendricks Cole (DBA: Corporation of Light). All Rights Reserved. PATENT PENDING.
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field
@@ -179,26 +179,41 @@ async def get_license_status(
         LicenseAgreement.status == "active"
     ).first()
 
+    # ⚡ Bolt Optimization: Replace slow case() aggregations with GROUP BY and simple filters
+    # Impact: Prevents slow table scans and high DB engine load when retrieving license status
     # Get revenue reports aggregation
     report_stats = db.query(
+        RevenueReport.status,
         func.sum(RevenueReport.gross_revenue),
         func.sum(RevenueReport.revenue_share_owed),
-        func.sum(case((RevenueReport.status == "paid", func.coalesce(RevenueReport.payment_amount, 0.0)), else_=0.0)),
-        func.count(case(((RevenueReport.status == "pending") & (RevenueReport.payment_due_date < datetime.utcnow()), 1), else_=None))
+        func.sum(RevenueReport.payment_amount)
     ).filter(
         RevenueReport.user_id == str(current_user.id)
-    ).first()
+    ).group_by(RevenueReport.status).all()
 
-    total_reported = report_stats[0] or 0.0
-    total_owed = report_stats[1] or 0.0
-    total_paid = report_stats[2] or 0.0
-    overdue_count = report_stats[3] or 0
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    overdue_count = db.query(func.count(RevenueReport.id)).filter(
+        RevenueReport.user_id == str(current_user.id),
+        RevenueReport.status == "pending",
+        RevenueReport.payment_due_date < now
+    ).scalar() or 0
+
+    total_reported = 0.0
+    total_owed = 0.0
+    total_paid = 0.0
+
+    for status, gross, owed, paid in report_stats:
+        total_reported += gross or 0.0
+        total_owed += owed or 0.0
+        if status == "paid":
+            total_paid += paid or 0.0
+
     outstanding = total_owed - total_paid
 
     # Calculate days remaining in trial
     days_remaining = None
     if current_user.license_status == "trial" and current_user.trial_expires_at:
-        delta = current_user.trial_expires_at - datetime.utcnow()
+        delta = current_user.trial_expires_at - now
         days_remaining = max(0, delta.days)
 
     return LicenseStatusResponse(
