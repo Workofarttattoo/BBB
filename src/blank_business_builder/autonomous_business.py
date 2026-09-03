@@ -945,6 +945,7 @@ class AutonomousBusinessOrchestrator:
         self.task_queue: List[AutonomousTask] = []
         self.pending_tasks: deque[AutonomousTask] = deque()
         self.completed_task_ids: Set[str] = set()
+        self.in_progress_tasks: Dict[str, AutonomousTask] = {}
         self.task_transition_counts: Dict[str, int] = {}
         self.task_execution_attempts: Dict[str, int] = {}
         self.metrics = BusinessMetrics()
@@ -1335,6 +1336,13 @@ class AutonomousBusinessOrchestrator:
             self.task_transition_counts.get(transition_key, 0) + 1
         )
 
+        # ⚡ Bolt Optimization: Replace O(N) iteration over task_queue with O(1) dictionary lookup
+        # Impact: Eliminates unbounded iteration over historical tasks, preventing event loop blocks
+        if status == TaskStatus.IN_PROGRESS:
+            self.in_progress_tasks[task.task_id] = task
+        elif task.task_id in self.in_progress_tasks:
+            del self.in_progress_tasks[task.task_id]
+
         # Update task state
         task.status = status
         if result:
@@ -1362,21 +1370,20 @@ class AutonomousBusinessOrchestrator:
         if self.task_status_counts[TaskStatus.IN_PROGRESS] == 0:
             return
 
-        for task in self.task_queue:
-            if task.status == TaskStatus.IN_PROGRESS:
-                agent = self.agents.get(task.assigned_to)
-                if not agent or not agent.active:
-                    logger.warning(
-                        f"Found orphaned task {task.task_id} assigned to {task.assigned_to}. Re-queuing."
-                    )
-                    self._set_task_status(
-                        task,
-                        TaskStatus.PENDING,
-                        result={"error": "Agent orphaned task"},
-                        clear_assignment=True,
-                    )
-                    # Add back to pending queue for reassignment
-                    self.pending_tasks.append(task)
+        for task in list(self.in_progress_tasks.values()):
+            agent = self.agents.get(task.assigned_to)
+            if not agent or not agent.active:
+                logger.warning(
+                    f"Found orphaned task {task.task_id} assigned to {task.assigned_to}. Re-queuing."
+                )
+                self._set_task_status(
+                    task,
+                    TaskStatus.PENDING,
+                    result={"error": "Agent orphaned task"},
+                    clear_assignment=True,
+                )
+                # Add back to pending queue for reassignment
+                self.pending_tasks.append(task)
 
     def get_task_status_counts(self) -> Dict[str, int]:
         """Return O(1) counts of tasks by status."""
@@ -1386,7 +1393,7 @@ class AutonomousBusinessOrchestrator:
         """Execute all in-progress tasks in parallel."""
         # Requeue stale in-progress tasks before execution to avoid deadlocks.
         self._reconcile_orphaned_in_progress_tasks()
-        in_progress = [t for t in self.task_queue if t.status == TaskStatus.IN_PROGRESS]
+        in_progress = list(self.in_progress_tasks.values())
 
         if not in_progress:
             return []
